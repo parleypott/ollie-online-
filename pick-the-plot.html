@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick the Plot - Ollie's Universe</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #particles {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 700px; margin: 0 auto; padding: 20px;
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center;
+  }
+
+  h1 {
+    text-align: center; font-size: 2.5em; margin-bottom: 10px;
+    background: linear-gradient(135deg, #f093fb, #f5576c, #4facfe);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+
+  .subtitle { text-align: center; color: #888; margin-bottom: 30px; font-size: 1.1em; }
+
+  .stats-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.05); border-radius: 12px;
+    padding: 12px 20px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
+  }
+
+  .stat { font-size: 0.9em; color: #aaa; }
+  .stat span { color: #4facfe; font-weight: bold; }
+
+  .theme-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: 0.85em; font-weight: bold; color: #fff;
+    background: linear-gradient(135deg, var(--theme-color1), var(--theme-color2));
+  }
+
+  .card {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 30px; margin-bottom: 20px;
+    backdrop-filter: blur(10px); animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .story-text { font-size: 1.15em; line-height: 1.7; margin-bottom: 25px; color: #d0d0d0; }
+
+  .choices { display: flex; flex-direction: column; gap: 12px; }
+
+  .choice-btn {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px; padding: 16px 20px; color: #e0e0e0;
+    font-size: 1.05em; cursor: pointer; transition: all 0.3s ease;
+    text-align: left; position: relative; overflow: hidden;
+  }
+
+  .choice-btn:hover {
+    background: rgba(79, 172, 254, 0.15); border-color: #4facfe;
+    transform: translateX(8px); box-shadow: 0 0 20px rgba(79,172,254,0.2);
+  }
+
+  .choice-btn::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--theme-color1), var(--theme-color2));
+    opacity: 0; transition: opacity 0.3s;
+  }
+
+  .choice-btn:hover::before { opacity: 1; }
+
+  .choice-btn.glow-green {
+    border-color: #4ade80; background: rgba(74,222,128,0.13);
+    pointer-events: none;
+  }
+  .choice-btn.glow-red {
+    border-color: #f87171; background: rgba(248,113,113,0.13);
+    pointer-events: none;
+  }
+  .choice-btn.dim {
+    opacity: 0.4; pointer-events: none;
+  }
+
+  .result-card { text-align: center; padding: 40px 30px; }
+  .result-icon { font-size: 4em; margin-bottom: 15px; }
+  .result-title { font-size: 1.8em; margin-bottom: 15px; font-weight: bold; }
+  .win .result-title { color: #4ade80; }
+  .lose .result-title { color: #f87171; }
+  .result-msg { font-size: 1.1em; color: #aaa; margin-bottom: 25px; line-height: 1.6; }
+
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .action-btn {
+    padding: 12px 28px; border-radius: 10px; border: none;
+    font-size: 1em; cursor: pointer; font-weight: bold; transition: all 0.3s;
+  }
+
+  .btn-primary { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #000; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.1); color: #e0e0e0;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .action-btn:hover { transform: scale(1.05); }
+
+  .theme-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px; max-height: 65vh; overflow-y: auto; padding: 5px;
+  }
+
+  .theme-grid::-webkit-scrollbar { width: 6px; }
+  .theme-grid::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  .theme-tile {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 14px 10px; text-align: center;
+    cursor: pointer; transition: all 0.3s; font-size: 0.85em;
+  }
+
+  .theme-tile:hover {
+    transform: translateY(-4px); border-color: #4facfe;
+    box-shadow: 0 8px 25px rgba(79,172,254,0.2);
+  }
+
+  .theme-tile .icon { font-size: 1.8em; margin-bottom: 6px; }
+  .theme-tile .name { color: #ccc; }
+
+  .theme-tile.completed { border-color: #4ade80; }
+  .theme-tile.completed .name { color: #4ade80; }
+  .theme-tile.completed::after { content: ' \u2713'; color: #4ade80; font-weight: bold; }
+
+  .progress-bar {
+    width: 100%; height: 8px; background: rgba(255,255,255,0.1);
+    border-radius: 4px; margin: 15px 0; overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%; border-radius: 4px; transition: width 0.5s ease;
+    background: linear-gradient(90deg, #4facfe, #4ade80);
+  }
+
+  .path-trail {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 18px; font-size: 0.85em; color: #888;
+  }
+
+  .path-node {
+    background: rgba(255,255,255,0.08); border-radius: 8px;
+    padding: 4px 10px; color: #bbb; font-size: 0.85em;
+  }
+
+  .path-node.current { color: #4facfe; border: 1px solid rgba(79,172,254,0.3); }
+  .path-arrow { color: #555; }
+
+  .depth-label {
+    font-size: 0.8em; color: #666; margin-bottom: 8px; text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 500px) {
+    h1 { font-size: 1.8em; }
+    .theme-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    .card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="container" id="app"></div>
+
+<script>
+// --- Particles ---
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let pts = [];
+function resizeCanvas() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCanvas(); addEventListener('resize', resizeCanvas);
+for (let i = 0; i < 60; i++) pts.push({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, r: Math.random()*2+0.5, dx: (Math.random()-0.5)*0.5, dy: (Math.random()-0.5)*0.5, o: Math.random()*0.4+0.1 });
+function drawPts() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pts.forEach(p => { p.x+=p.dx; p.y+=p.dy; if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0; if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(79,172,254,${p.o})`; ctx.fill(); });
+  requestAnimationFrame(drawPts);
+}
+drawPts();
+
+// --- Theme data ---
+const THEMES = [
+  { id:0,  name:"Space Station",     icon:"\u{1F680}", c1:"#4facfe", c2:"#6a11cb" },
+  { id:1,  name:"Haunted Mansion",   icon:"\u{1F47B}", c1:"#6b21a8", c2:"#1e1b4b" },
+  { id:2,  name:"Pirate Ship",       icon:"\u{1F3F4}\u200D\u2620\uFE0F", c1:"#d97706", c2:"#7c2d12" },
+  { id:3,  name:"Dragon's Lair",     icon:"\u{1F409}", c1:"#dc2626", c2:"#7f1d1d" },
+  { id:4,  name:"Underwater City",   icon:"\u{1F30A}", c1:"#0ea5e9", c2:"#164e63" },
+  { id:5,  name:"Wild West",         icon:"\u{1F920}", c1:"#ca8a04", c2:"#713f12" },
+  { id:6,  name:"Candy Kingdom",     icon:"\u{1F36D}", c1:"#ec4899", c2:"#a21caf" },
+  { id:7,  name:"Robot Factory",     icon:"\u{1F916}", c1:"#6b7280", c2:"#1f2937" },
+  { id:8,  name:"Volcano Island",    icon:"\u{1F30B}", c1:"#ef4444", c2:"#f97316" },
+  { id:9,  name:"Ice Kingdom",       icon:"\u2744\uFE0F", c1:"#7dd3fc", c2:"#e0f2fe" },
+  { id:10, name:"Jungle Temple",     icon:"\u{1F3DB}\uFE0F", c1:"#16a34a", c2:"#14532d" },
+  { id:11, name:"Ninja Academy",     icon:"\u{1F977}", c1:"#1e293b", c2:"#475569" },
+  { id:12, name:"Wizard Tower",      icon:"\u{1FA84}", c1:"#7c3aed", c2:"#2e1065" },
+  { id:13, name:"Lost in Time",      icon:"\u231B",    c1:"#a16207", c2:"#451a03" },
+  { id:14, name:"Alien Planet",      icon:"\u{1F47D}", c1:"#22c55e", c2:"#064e3b" },
+  { id:15, name:"Superhero City",    icon:"\u{1F9B8}", c1:"#2563eb", c2:"#dc2626" },
+  { id:16, name:"Fairy Forest",      icon:"\u{1F9DA}", c1:"#a3e635", c2:"#15803d" },
+  { id:17, name:"Steampunk Lab",     icon:"\u2699\uFE0F", c1:"#b45309", c2:"#78350f" },
+  { id:18, name:"Arctic Expedition", icon:"\u{1F427}", c1:"#bae6fd", c2:"#0284c7" },
+  { id:19, name:"Dinosaur Park",     icon:"\u{1F996}", c1:"#65a30d", c2:"#3f6212" },
+  { id:20, name:"Spy Mission",       icon:"\u{1F575}\uFE0F", c1:"#1e293b", c2:"#334155" },
+  { id:21, name:"Baking Contest",    icon:"\u{1F382}", c1:"#f472b6", c2:"#fbbf24" },
+  { id:22, name:"Race Track",        icon:"\u{1F3CE}\uFE0F", c1:"#ef4444", c2:"#fbbf24" },
+  { id:23, name:"Haunted Circus",    icon:"\u{1F3AA}", c1:"#7e22ce", c2:"#be123c" },
+  { id:24, name:"Moon Base",         icon:"\u{1F311}", c1:"#9ca3af", c2:"#1f2937" },
+  { id:25, name:"Samurai Dojo",      icon:"\u2694\uFE0F", c1:"#b91c1c", c2:"#1c1917" },
+  { id:26, name:"Enchanted Garden",  icon:"\u{1F33A}", c1:"#f43f5e", c2:"#4ade80" },
+  { id:27, name:"Cyber City",        icon:"\u{1F5FC}", c1:"#06b6d4", c2:"#a855f7" },
+  { id:28, name:"Treasure Cave",     icon:"\u{1F48E}", c1:"#eab308", c2:"#78350f" },
+  { id:29, name:"Ghost Ship",        icon:"\u26F5",    c1:"#4b5563", c2:"#111827" },
+  { id:30, name:"Witch's Hut",       icon:"\u{1F9F9}", c1:"#581c87", c2:"#166534" },
+  { id:31, name:"Sky Castle",        icon:"\u{1F3F0}", c1:"#38bdf8", c2:"#e2e8f0" },
+  { id:32, name:"Desert Oasis",      icon:"\u{1F3DC}\uFE0F", c1:"#fbbf24", c2:"#92400e" },
+  { id:33, name:"Pharaoh's Tomb",    icon:"\u{1F3FA}", c1:"#d97706", c2:"#1c1917" },
+  { id:34, name:"Mad Scientist",     icon:"\u{1F9EA}", c1:"#84cc16", c2:"#6d28d9" },
+  { id:35, name:"Viking Voyage",     icon:"\u{1F6F6}", c1:"#64748b", c2:"#1e40af" },
+  { id:36, name:"Enchanted Library", icon:"\u{1F4DA}", c1:"#92400e", c2:"#7c3aed" },
+  { id:37, name:"Monster Island",    icon:"\u{1F479}", c1:"#16a34a", c2:"#b91c1c" },
+  { id:38, name:"Royal Palace",      icon:"\u{1F451}", c1:"#eab308", c2:"#7c2d12" },
+  { id:39, name:"Zombie Outbreak",   icon:"\u{1F9DF}", c1:"#4d7c0f", c2:"#1c1917" },
+  { id:40, name:"Dream World",       icon:"\u{1F4AD}", c1:"#c084fc", c2:"#f9a8d4" },
+  { id:41, name:"Atlantis",          icon:"\u{1F52E}", c1:"#0891b2", c2:"#1e3a5f" },
+  { id:42, name:"Train Heist",       icon:"\u{1F682}", c1:"#78716c", c2:"#b91c1c" },
+  { id:43, name:"Magic School",      icon:"\u{1F393}", c1:"#7c3aed", c2:"#1e40af" },
+  { id:44, name:"Rainforest",        icon:"\u{1F33F}", c1:"#15803d", c2:"#064e3b" },
+  { id:45, name:"Space Pirates",     icon:"\u{1F6F8}", c1:"#7c3aed", c2:"#ea580c" },
+  { id:46, name:"Labyrinth",         icon:"\u{1F9E9}", c1:"#64748b", c2:"#334155" },
+  { id:47, name:"Carnival",          icon:"\u{1F3A0}", c1:"#f59e0b", c2:"#ec4899" },
+  { id:48, name:"Crystal Caves",     icon:"\u{1FAA8}", c1:"#a78bfa", c2:"#06b6d4" },
+  { id:49, name:"Astral Plane",      icon:"\u{1F31F}", c1:"#fbbf24", c2:"#c084fc" },
+];
+
+/*
+  STORY FORMAT — branching tree:
+  Each story has nodes: { id: { t: text, c: [[choiceText, nextId], ...] } }
+  Special nextId values: "win" and "lose"
+  Structure per theme:
+    s (start) → 3 choices → nodes a, b, c
+    a (right path) → 3 choices → nodes d, lose, lose
+    b (wrong path) → 3 choices → all lose
+    c (wrong path) → 3 choices → all lose
+    d (right path) → 3 choices → win, lose, lose
+
+  Every choice leads to a new scene or an ending.
+  Wrong paths still give you another scene before ending.
+  Only s → a → d → win is the correct path.
+*/
+
+const S = [
+// 0 Space Station
+{ n:{
+  s:{t:"Alarms blare on the space station. Oxygen levels are dropping fast. Three areas might hold the answer.",c:[["Check the oxygen recycler in Module B","a"],["Seal all airlocks and wait for help","b"],["Head to the escape pods","c"]]},
+  a:{t:"You find a cracked seal in the recycler. There are several ways to handle this.",c:[["Apply emergency sealant gel from the repair kit","d"],["Weld it shut with a plasma torch","lose"],["Reroute oxygen from the crew quarters","lose"]]},
+  b:{t:"The airlocks are sealed, but oxygen keeps dropping. You're trapped in the command module with dwindling air.",c:[["Try to manually override the ventilation","lose"],["Ration the remaining oxygen and wait","lose"],["Send a distress signal and hope","lose"]]},
+  c:{t:"You reach the escape pods, but they're all offline. Emergency power is failing across the station.",c:[["Try to hotwire a pod manually","lose"],["Reroute power from the science lab","lose"],["Go back and find the real problem","lose"]]},
+  d:{t:"The seal holds! But CO2 is still rising dangerously. One more step to save everyone.",c:[["Activate the backup carbon scrubbers","win"],["Open the exterior vents to space","lose"],["Tell everyone to breathe slowly","lose"]]},
+},w:"The station stabilizes. You saved the entire crew!",l:"The station's life support fails completely. Mission over."},
+
+// 1 Haunted Mansion
+{ n:{
+  s:{t:"You step into the haunted mansion. Three doors stretch before you, each glowing a different eerie color.",c:[["Enter the door with faint warm candlelight","a"],["Enter the door oozing cold black smoke","b"],["Enter the door wrapped in rusted chains","c"]]},
+  a:{t:"A dusty library. A ghost materializes and asks: 'What has keys but no locks?'",c:[["A piano","d"],["A treasure chest","lose"],["A jail cell","lose"]]},
+  b:{t:"You enter a freezing dark room. The door slams behind you. Shadows move along the walls and whisper your name.",c:[["Light a match to see better","lose"],["Follow the whispers deeper","lose"],["Try to force the door back open","lose"]]},
+  c:{t:"The chains rattle as you enter a dungeon. Skeletons line the walls. Something is moving in the far corner.",c:[["Approach the movement cautiously","lose"],["Hide behind a pillar","lose"],["Shout 'Who's there?'","lose"]]},
+  d:{t:"The ghost nods and reveals a hidden passage. Three paths lead deeper into the mansion.",c:[["Follow the trail of rose petals","win"],["Descend the crumbling staircase","lose"],["Crawl through the narrow tunnel","lose"]]},
+},w:"You escape the mansion with the ghost's ancient treasure!",l:"You're trapped in the mansion forever..."},
+
+// 2 Pirate Ship
+{ n:{
+  s:{t:"You're captain of a pirate ship. A storm approaches and you spot land ahead. What's your move?",c:[["Sail to the sheltered cove","a"],["Ride straight through the storm","b"],["Drop anchor in open water and wait","c"]]},
+  a:{t:"Safe in the cove, your crew spots a cave. The treasure map marks this very spot!",c:[["Send a scouting party to check for traps","d"],["Rush in with the full crew","lose"],["Ignore it and sail on","lose"]]},
+  b:{t:"The storm hammers your ship. Waves crash over the deck and the mast is cracking under the wind.",c:[["Try to repair the mast mid-storm","lose"],["Abandon ship into the lifeboats","lose"],["Tie everything down and pray","lose"]]},
+  c:{t:"Anchored in open water, the storm hits full force. Your ship is tossing wildly on massive waves.",c:[["Cut the anchor and try to sail away","lose"],["Have the crew hold the ship steady","lose"],["Dive overboard and swim for land","lose"]]},
+  d:{t:"The scouts report booby traps inside the cave. You need a way past them.",c:[["Use the map's hidden clues to navigate safely","win"],["Trigger the traps from a distance with cannonballs","lose"],["Dig through the cave ceiling from above","lose"]]},
+},w:"You claim the legendary pirate treasure! Arr!",l:"Your ship sinks and the treasure is lost to the sea."},
+
+// 3 Dragon's Lair
+{ n:{
+  s:{t:"A dragon terrorizes the village. You approach its mountain lair. How do you prepare?",c:[["Bring a shield coated in fireproof resin","a"],["Charge in with a wooden sword","b"],["Sneak in wearing meat as camouflage","c"]]},
+  a:{t:"The dragon spots you and roars! It rears back to breathe fire.",c:[["Raise your fireproof shield and advance","d"],["Dodge to the side and hide","lose"],["Challenge it to a staring contest","lose"]]},
+  b:{t:"The dragon immediately blasts fire at you. Your wooden sword ignites like a torch.",c:[["Try to throw the burning sword at it","lose"],["Run behind a rock","lose"],["Wave the flaming sword to scare it","lose"]]},
+  c:{t:"The dragon smells the meat immediately and lunges at you hungrily.",c:[["Drop the meat and run","lose"],["Throw the meat as a distraction","lose"],["Stand very still and hope","lose"]]},
+  d:{t:"You're close enough to see a glowing thorn stuck in the dragon's paw. It's in pain!",c:[["Carefully remove the thorn to befriend it","win"],["Stab the dragon while it's distracted","lose"],["Offer it some breath mints","lose"]]},
+},w:"The grateful dragon becomes your ally! The village is safe forever.",l:"The dragon turns you into a crispy snack."},
+
+// 4 Underwater City
+{ n:{
+  s:{t:"Your submarine discovers a glowing city beneath the ocean. An airlock shimmers on the dome wall.",c:[["Dock carefully and equalize pressure","a"],["Ram through the dome wall","b"],["Fire torpedoes to announce your arrival","c"]]},
+  a:{t:"Inside, fish-people greet you cautiously. They communicate through patterns of bubbles.",c:[["Use your universal translator device","d"],["Yell louder in English","lose"],["Do an interpretive dance","lose"]]},
+  b:{t:"You crash through the dome. Water begins flooding the city. The fish-people panic and scatter.",c:[["Try to patch the hole","lose"],["Swim deeper into the city","lose"],["Retreat to your submarine","lose"]]},
+  c:{t:"The torpedoes crack the dome. The entire city shudders and alarms sound everywhere.",c:[["Try to help repair the damage","lose"],["Pretend it wasn't you","lose"],["Fire more torpedoes","lose"]]},
+  d:{t:"They warn of a giant sea serpent heading toward the city. They desperately need your help!",c:[["Use your submarine's sonar to redirect the serpent","win"],["Challenge the serpent to arm wrestling","lose"],["Abandon the city immediately","lose"]]},
+},w:"You save the underwater city and become an honorary citizen!",l:"The city is destroyed. You barely escape with your life."},
+
+// 5 Wild West
+{ n:{
+  s:{t:"You ride into a dusty frontier town. Bandits have taken over the saloon and are holding hostages.",c:[["Talk to the sheriff about a plan","a"],["Walk straight into the saloon alone","b"],["Challenge the bandits to a duel from outside","c"]]},
+  a:{t:"The sheriff says there's a secret cellar entrance. But you need a distraction first.",c:[["Have the townspeople stage a commotion outside","d"],["Set the saloon on fire","lose"],["Release a herd of cattle through main street","lose"]]},
+  b:{t:"You push through the saloon doors. Ten bandits point their guns at you simultaneously.",c:[["Try to talk your way out","lose"],["Flip a table for cover","lose"],["Slowly back out the way you came","lose"]]},
+  c:{t:"The bandit leader steps outside. He's twice your size and has two guns drawn.",c:[["Draw your gun faster","lose"],["Try to reason with him","lose"],["Throw sand in his eyes","lose"]]},
+  d:{t:"You sneak in through the cellar. The bandit leader is alone, counting stolen gold. He reaches for his gun!",c:[["Kick the table to disarm him","win"],["Offer him a drink to relax","lose"],["Challenge him to a poker game","lose"]]},
+},w:"The bandits are captured! The town celebrates you as a hero.",l:"The bandits tighten their grip on the town."},
+
+// 6 Candy Kingdom
+{ n:{
+  s:{t:"The Candy Kingdom's Sugar Crystal is stolen! Without it, everything will melt. Where do you start?",c:[["Follow the trail of candy wrappers","a"],["Eat everything to search for clues","b"],["Blame the gummy bears immediately","c"]]},
+  a:{t:"The wrappers lead to the Sour Patch Mountains. A licorice bridge spans a chocolate river.",c:[["Cross carefully, testing each step","d"],["Eat through the bridge as you cross","lose"],["Jump across the chocolate river","lose"]]},
+  b:{t:"You eat so much candy you get a terrible stomach ache. Everything is blurry and spinning.",c:[["Lie down and rest","lose"],["Eat more candy to feel better","lose"],["Try to walk it off","lose"]]},
+  c:{t:"The gummy bears are offended! They band together and chase you through the lollipop forest.",c:[["Hide in a gumdrop bush","lose"],["Try to eat them before they catch you","lose"],["Apologize and ask for help","lose"]]},
+  d:{t:"Across the bridge, you find the thief: a rogue jawbreaker! It demands a trade for the crystal.",c:[["Offer the rare golden chocolate coin from your pocket","win"],["Try to crack the jawbreaker open","lose"],["Threaten to lick it into oblivion","lose"]]},
+},w:"The Sugar Crystal is restored! The kingdom is saved!",l:"The Candy Kingdom melts into a sticky puddle."},
+
+// 7 Robot Factory
+{ n:{
+  s:{t:"The robot factory's main AI has gone rogue. Robots march out of control. Alarms blare everywhere.",c:[["Access the maintenance terminal","a"],["Unplug random cables from the wall","b"],["Try to reason with the robots","c"]]},
+  a:{t:"The terminal needs a password. A hint reads: 'The name of the first robot built here.'",c:[["Check the factory's founding plaque on the wall","d"],["Type 'password123'","lose"],["Smash the keyboard until something works","lose"]]},
+  b:{t:"You yank out cables. Sparks fly everywhere and the lights go out. The robots' eyes glow red in the dark.",c:[["Feel around for the right cable","lose"],["Run for the exit","lose"],["Plug the cables back in","lose"]]},
+  c:{t:"You approach a robot and try to explain the situation. It stares blankly, then grabs your arm.",c:[["Pull free and run","lose"],["Negotiate with the robot","lose"],["Pretend to be a robot too","lose"]]},
+  d:{t:"You're in the system! Three processes are running. One is the virus corrupting the AI.",c:[["Isolate the process with the abnormal memory spike","win"],["Delete all processes at once","lose"],["Add more processes to balance it out","lose"]]},
+},w:"The AI is fixed and robots return to normal production!",l:"The robots take over the factory permanently."},
+
+// 8 Volcano Island
+{ n:{
+  s:{t:"The volcano is rumbling! Lava creeps toward the village. The islanders need to evacuate NOW.",c:[["Guide everyone to the boats on the north shore","a"],["Dig a moat around the village","b"],["Build a giant umbrella for the lava","c"]]},
+  a:{t:"The main path to the boats is blocked by a fresh lava flow! You need another route.",c:[["Take the mountain trail around the ridge","d"],["Try to jump over the lava flow","lose"],["Wait for the lava to cool down","lose"]]},
+  b:{t:"You start digging but the lava is moving too fast. It fills the moat and keeps coming.",c:[["Dig faster","lose"],["Run for the boats now","lose"],["Climb a tree","lose"]]},
+  c:{t:"Your umbrella idea doesn't work at all. The lava melts everything it touches. Precious time is lost.",c:[["Finally head for the boats","lose"],["Try to redirect the lava flow","lose"],["Climb to higher ground","lose"]]},
+  d:{t:"You reach the shore with the villagers, but the boats are chained down with heavy locks!",c:[["Use the blacksmith's bolt cutters from the supply shed","win"],["Try to drag the boats into the water chains and all","lose"],["Swim for it and leave the boats","lose"]]},
+},w:"Everyone escapes safely as the volcano erupts behind you!",l:"The lava catches up. The island is lost."},
+
+// 9 Ice Kingdom
+{ n:{
+  s:{t:"The Ice Kingdom's eternal winter is spreading beyond its borders, freezing neighboring lands. The Ice Crown is cracking.",c:[["Visit the frost sage for guidance","a"],["Smash the Ice Crown to end winter entirely","b"],["Build a really enormous campfire","c"]]},
+  a:{t:"The sage says you need a Phoenix Feather from the Fire Peaks to repair the crown.",c:[["Travel to Fire Peaks with thermal gear","d"],["Use a regular chicken feather instead","lose"],["Paint a feather red and hope for the best","lose"]]},
+  b:{t:"You shatter the crown! But instead of stopping, the winter explodes outward in a massive blizzard.",c:[["Try to reassemble the pieces","lose"],["Seek shelter from the mega-blizzard","lose"],["Use fire magic to counter it","lose"]]},
+  c:{t:"The campfire melts a small circle, but the cold creeps back in seconds. This isn't working at all.",c:[["Make an even bigger fire","lose"],["Give up on the fire idea","lose"],["Use the fire to warm your hands at least","lose"]]},
+  d:{t:"You find the Phoenix on Fire Peak! But it won't give a feather willingly.",c:[["Sing the ancient lullaby the sage taught you","win"],["Pluck a feather while it sleeps","lose"],["Trade your sandwich for a feather","lose"]]},
+},w:"The crown is repaired! The kingdom's borders are restored.",l:"Eternal winter spreads across the entire world."},
+
+// 10 Jungle Temple
+{ n:{
+  s:{t:"You discover an ancient jungle temple covered in vines. The entrance has three carved symbols.",c:[["Press the symbols in the order shown on your artifact","a"],["Press all three symbols at once","b"],["Climb over the entrance wall instead","c"]]},
+  a:{t:"The door opens. Inside, the floor is a grid of stone tiles. Some look unstable and cracked.",c:[["Step only on tiles with the sun symbol","d"],["Sprint across as fast as possible","lose"],["Crawl along the narrow wall ledge","lose"]]},
+  b:{t:"A poison dart shoots from the wall! More darts follow as the entrance turns into a death trap.",c:[["Duck and try to dodge","lose"],["Shield yourself with your backpack","lose"],["Retreat back outside","lose"]]},
+  c:{t:"You climb over the wall and drop into a pit of snakes on the other side.",c:[["Stay very still","lose"],["Try to climb back out","lose"],["Befriend the snakes","lose"]]},
+  d:{t:"You reach the treasure room! A golden idol sits on a pressure-sensitive pedestal.",c:[["Replace the idol with a bag of sand of equal weight","win"],["Grab the idol and run for it","lose"],["Just take a photo and leave it","lose"]]},
+},w:"You claim the golden idol without triggering any traps!",l:"The temple collapses around you!"},
+
+// 11 Ninja Academy
+{ n:{
+  s:{t:"Your final ninja exam: infiltrate the fortress and retrieve the sacred scroll. How do you enter?",c:[["Scale the wall during the guard rotation gap","a"],["Walk through the front gate in disguise","b"],["Dig a tunnel underneath the fortress","c"]]},
+  a:{t:"You're inside! A hallway of laser tripwires blocks the path to the scroll room.",c:[["Use your acrobatic training to flip between them","d"],["Just walk through them carefully","lose"],["Turn off the lights so you can't see them","lose"]]},
+  b:{t:"The guards see through your disguise immediately. Your fake mustache falls off at the worst moment.",c:[["Fight all the guards at once","lose"],["Run away and try another entrance","lose"],["Pretend to be a food delivery","lose"]]},
+  c:{t:"You dig for hours but hit solid rock. When you surface, you're inside the kitchen storage room.",c:[["Try to sneak out of the kitchen","lose"],["Hide inside a barrel","lose"],["Start eating the stored food","lose"]]},
+  d:{t:"The scroll is guarded by the master ninja herself. She takes a fighting stance and challenges you.",c:[["Bow respectfully and use the shadow clone technique","win"],["Throw a smoke bomb and grab the scroll","lose"],["Ask her very nicely to just hand it over","lose"]]},
+},w:"You pass the exam and become a full ninja master!",l:"You fail the exam. Back to ninja school for another year."},
+
+// 12 Wizard Tower
+{ n:{
+  s:{t:"The wizard's tower hums with unstable magic. Spells misfire everywhere \u2014 books fly, stairs shift, walls shimmer.",c:[["Locate the magical core on the top floor","a"],["Cast a random counter-spell from your book","b"],["Close your eyes and hope the magic stops","c"]]},
+  a:{t:"The staircase keeps shifting and rearranging. You need to navigate the enchanted stairs.",c:[["Follow the glowing runes that pulse in sequence","d"],["Run up as fast as you can before they shift","lose"],["Try an untested levitation spell to fly up","lose"]]},
+  b:{t:"Your random counter-spell backfires spectacularly. You're now three inches tall and falling off a shelf.",c:[["Try to cast a growth spell at tiny size","lose"],["Ride a flying book to the ground","lose"],["Yell for help in a tiny voice","lose"]]},
+  c:{t:"A misfiring spell hits you and turns your feet into stone. You can't move at all.",c:[["Try to chip the stone off","lose"],["Cast a reversal spell from memory","lose"],["Wait for someone to find you","lose"]]},
+  d:{t:"At the top, three crystals spin wildly around the magical core. One crystal is clearly corrupted.",c:[["Remove the crystal that flickers between colors","win"],["Smash all three crystals at once","lose"],["Add more crystals to the system","lose"]]},
+},w:"The tower stabilizes! Magic flows correctly once more.",l:"The tower implodes in a burst of wild magic!"},
+
+// 13 Lost in Time
+{ n:{
+  s:{t:"Your time machine malfunctions mid-jump. You're stuck somewhere in the past. The dial is sparking.",c:[["Calibrate the flux capacitor using the manual","a"],["Hit the machine really hard","b"],["Travel even further back to get a running start","c"]]},
+  a:{t:"The manual says you need a rare mineral that only exists in this specific era.",c:[["Trade peacefully with the local civilization","d"],["Steal it from their sacred temple","lose"],["Use a substitute material you found outside","lose"]]},
+  b:{t:"Hitting it makes things worse. The machine starts jumping randomly through time. Dinosaurs, then Romans, then...",c:[["Try to grab the controls mid-jump","lose"],["Hit it again harder","lose"],["Jump out of the machine","lose"]]},
+  c:{t:"Going further back lands you in a primordial ocean. Your machine starts sinking rapidly.",c:[["Try to reverse the jump underwater","lose"],["Swim to the surface","lose"],["Wait for the machine to float","lose"]]},
+  d:{t:"The machine is repaired but needs precise coordinates to return to your time period.",c:[["Use the stars to calculate your temporal position","win"],["Press random buttons and hope","lose"],["Ask a local for directions to the future","lose"]]},
+},w:"You return to your own time safely! What an adventure.",l:"You're stuck in the past forever. Time to start farming."},
+
+// 14 Alien Planet
+{ n:{
+  s:{t:"You crash-land on a strange alien planet. Your ship is damaged and the atmosphere is dangerously thin.",c:[["Seal the ship and activate emergency oxygen","a"],["Step outside without a helmet to test the air","b"],["Send a distress signal and take a nap","c"]]},
+  a:{t:"Strange plant-like aliens approach your ship. They seem curious, not hostile.",c:[["Offer them water as a peace gesture","d"],["Fire a warning shot to scare them off","lose"],["Pretend to be a plant too","lose"]]},
+  b:{t:"The air burns your lungs. You gasp and stumble back inside, but you've already inhaled toxic spores.",c:[["Search for a medical kit","lose"],["Try to cough the spores out","lose"],["Seal the ship now","lose"]]},
+  c:{t:"You fall asleep. When you wake, the ship is half-buried in strange growing vines. You can barely move.",c:[["Try to cut through the vines","lose"],["Burn the vines off","lose"],["Wait for the vines to release you","lose"]]},
+  d:{t:"The plant aliens are friendly! They can fix your ship but need something in return.",c:[["Share your star charts showing unexplored worlds","win"],["Refuse to share anything","lose"],["Offer them your half-eaten sandwich","lose"]]},
+},w:"Your ship is repaired! You've made first contact with a new species.",l:"Stranded on the alien planet with no way home."},
+
+// 15 Superhero City
+{ n:{
+  s:{t:"A supervillain holds the city hostage with a freeze ray aimed at downtown! Millions are at risk.",c:[["Analyze the freeze ray's power source from a distance","a"],["Fly directly at the freeze ray at full speed","b"],["Evacuate to another city entirely","c"]]},
+  a:{t:"The power source is on the villain's rooftop lair. Security drones patrol the skies above.",c:[["Use underground tunnels to reach the building","d"],["Fight through all the drones head-on","lose"],["Disguise yourself as a pizza delivery person","lose"]]},
+  b:{t:"The freeze ray fires and hits you mid-flight! You're frozen solid in a block of ice, falling from the sky.",c:[["Try to flex and break the ice","lose"],["Use heat vision... if you have it","lose"],["Hope someone catches you","lose"]]},
+  c:{t:"You leave the city. The villain freezes downtown. Millions suffer. The other heroes are disappointed in you.",c:[["Go back and try to help","lose"],["Feel really bad about it","lose"],["Claim you had a dentist appointment","lose"]]},
+  d:{t:"You reach the freeze ray controls! But the villain has a dead man's switch \u2014 if he lets go, it fires.",c:[["Freeze the switch mechanism with the ray's own coolant","win"],["Just hit the off button and hope","lose"],["Give a long speech about justice","lose"]]},
+},w:"The city is saved and the villain is captured!",l:"Downtown is frozen solid. The villain wins this time."},
+
+// 16 Fairy Forest
+{ n:{
+  s:{t:"The fairy forest is dying. The Great Willow tree wilts, and magic fades from every creature.",c:[["Speak with the eldest fairy at the moonlit glade","a"],["Pour energy drinks on the tree roots","b"],["Chop down the willow to end its suffering","c"]]},
+  a:{t:"The eldest fairy says a dark vine is choking the tree's roots deep underground.",c:[["Follow the roots underground with fairy lantern light","d"],["Set fire to the ground above the roots","lose"],["Ask the moles to handle it","lose"]]},
+  b:{t:"The energy drinks poison the already-weak soil. Nearby flowers wilt and mushrooms fizz ominously.",c:[["Try to wash the chemicals away","lose"],["Add more drinks to dilute it","lose"],["Apologize to the flowers","lose"]]},
+  c:{t:"As your axe touches the bark, the entire forest cries out. Every fairy turns hostile toward you.",c:[["Drop the axe and apologize","lose"],["Keep chopping defiantly","lose"],["Run away from the angry fairies","lose"]]},
+  d:{t:"You find the dark vine underground. It pulses with corrupted, sickly magic.",c:[["Play the ancient melody on the fairy flute to purify it","win"],["Yank it out with your bare hands","lose"],["Yell at it really loudly","lose"]]},
+},w:"The forest blooms again with vibrant, beautiful magic!",l:"The fairy forest withers completely and the magic dies."},
+
+// 17 Steampunk Lab
+{ n:{
+  s:{t:"The professor's steam-powered machine is about to overload! Pressure gauges are deep in the red zone.",c:[["Open the emergency pressure release valves","a"],["Add more coal to the furnace","b"],["Tighten everything down even harder","c"]]},
+  a:{t:"The pressure drops, but a critical brass gear has shattered. The machine grinds horribly.",c:[["Forge a replacement gear on the workshop lathe","d"],["Jam a wooden gear in its place","lose"],["Remove the gear and hope it works without it","lose"]]},
+  b:{t:"More coal means more pressure! The boiler swells and rivets start popping off like bullets.",c:[["Try to remove the extra coal","lose"],["Duck behind cover","lose"],["Open every valve at once","lose"]]},
+  c:{t:"Everything is sealed too tight. The machine vibrates violently. Pipes burst and steam scalds the ceiling.",c:[["Try to loosen things now","lose"],["Run for the exit","lose"],["Throw water on the hot pipes","lose"]]},
+  d:{t:"The new gear fits! But the main boiler needs careful recalibration to run safely.",c:[["Adjust it using the professor's calibration notes","win"],["Set everything to maximum power","lose"],["Kick it until the needles look right","lose"]]},
+},w:"The machine roars to life perfectly! The professor is amazed.",l:"The machine explodes in a shower of gears and steam."},
+
+// 18 Arctic Expedition
+{ n:{
+  s:{t:"Your expedition team is stranded in a brutal blizzard. Visibility is near zero and temperatures plummet.",c:[["Set up an emergency snow shelter and wait","a"],["Keep walking forward into the blizzard","b"],["Take off heavy gear to move faster","c"]]},
+  a:{t:"The blizzard finally clears. You spot the research station! But a deep crevasse blocks the way.",c:[["Use ropes and ice anchors to cross safely","d"],["Jump across the gap","lose"],["Walk along the edge looking for a narrow spot","lose"]]},
+  b:{t:"You walk for hours but the blizzard worsens. Your team is exhausted, freezing, and completely lost.",c:[["Set up shelter now","lose"],["Keep going, the station must be close","lose"],["Retrace your footsteps (already covered by snow)","lose"]]},
+  c:{t:"Without heavy gear, the cold hits immediately. Frostbite sets in within minutes.",c:[["Put the gear back on quickly","lose"],["Run to generate body heat","lose"],["Huddle together for warmth","lose"]]},
+  d:{t:"You cross the crevasse. At the station, the radio is broken. You need to call for rescue.",c:[["Repair the radio using spare parts from your kit","win"],["Shout really loudly toward civilization","lose"],["Write HELP in the snow and wait","lose"]]},
+},w:"Rescue arrives! Your entire team is saved.",l:"Lost in the endless arctic ice. Nobody comes."},
+
+// 19 Dinosaur Park
+{ n:{
+  s:{t:"The dinosaur park's electric fences have failed! Dinosaurs escape their enclosures in every direction.",c:[["Head to the main control room to restore power","a"],["Try to herd the dinosaurs back manually","b"],["Open all gates so they don't break them","c"]]},
+  a:{t:"A massive T-Rex stands between you and the control room, sniffing the air.",c:[["Stay perfectly still \u2014 its vision is motion-based","d"],["Run screaming in the opposite direction","lose"],["Offer it a granola bar from your pocket","lose"]]},
+  b:{t:"You wave your arms at a triceratops. It lowers its horns and charges straight at you.",c:[["Dive behind a concrete barrier","lose"],["Stand your ground to show dominance","lose"],["Try to ride it","lose"]]},
+  c:{t:"Opening all gates causes pure chaos. Predators and prey mix and the park becomes a war zone.",c:[["Try to close the gates again","lose"],["Hide in the gift shop","lose"],["Call for help on the radio","lose"]]},
+  d:{t:"The T-Rex loses interest and lumbers away. You reach the control room! The backup generator needs activating.",c:[["Follow the emergency restart sequence on the wall poster","win"],["Flip every switch at once","lose"],["Call IT support on the desk phone","lose"]]},
+},w:"Fences reactivated! All dinosaurs safely back in their enclosures.",l:"The park descends into prehistoric chaos."},
+
+// 20 Spy Mission
+{ n:{
+  s:{t:"Mission: retrieve classified documents from a foreign embassy. The clock is ticking. How do you infiltrate?",c:[["Pose as a guest at tonight's diplomatic gala","a"],["Parachute onto the roof in broad daylight","b"],["Ring the doorbell and ask to come in","c"]]},
+  a:{t:"Inside the gala, you need to reach the restricted wing. A guard patrols the hallway entrance.",c:[["Wait for his break and use the service corridor","d"],["Create a distraction with the champagne fountain","lose"],["Put on a guard uniform over your tuxedo","lose"]]},
+  b:{t:"You land on the roof but trip an alarm. Spotlights blind you and guards surround you instantly.",c:[["Fight your way through","lose"],["Surrender and claim you're a window washer","lose"],["Try to parachute off the other side","lose"]]},
+  c:{t:"A guard opens the door, stares at you, and slowly reaches for his radio to call backup.",c:[["Pretend you're at the wrong address","lose"],["Push past him and run inside","lose"],["Offer him a bribe","lose"]]},
+  d:{t:"You find the safe! It has a biometric lock and a keypad. The clock is running out.",c:[["Use the fingerprint gel copy from the ambassador's wine glass","win"],["Try to guess the combination","lose"],["Use a small explosive charge","lose"]]},
+},w:"Documents secured. Mission accomplished, agent.",l:"You're caught and your cover is permanently blown."},
+
+// 21 Baking Contest
+{ n:{
+  s:{t:"The grand baking contest begins! You need to choose your signature dish to wow the judges.",c:[["A classic layered cake with a creative twist","a"],["Microwave nachos with extra cheese","b"],["Present a block of raw dough as 'art'","c"]]},
+  a:{t:"Disaster! You're completely out of vanilla extract. The pantry has possible substitutes.",c:[["Use almond extract with a touch of honey","d"],["Substitute with ketchup","lose"],["Skip all flavoring entirely","lose"]]},
+  b:{t:"The judges stare at your soggy nachos. One judge puts down their fork and sighs deeply.",c:[["Add more cheese to fix it","lose"],["Explain it's 'deconstructed cuisine'","lose"],["Eat them yourself defiantly","lose"]]},
+  c:{t:"The judges think it's a joke. The audience laughs. One judge marks a zero on their scorecard.",c:[["Shape the dough into something quickly","lose"],["Insist it's a bold artistic statement","lose"],["Eat the raw dough","lose"]]},
+  d:{t:"The cake is almost done! But the oven temperature is fluctuating dangerously.",c:[["Rotate the cake and adjust the temp down slightly","win"],["Crank the oven to maximum to finish faster","lose"],["Take it out half-baked and frost heavily to hide it","lose"]]},
+},w:"The judges are amazed! You win first place!",l:"Your dish is a disaster. Better luck next season."},
+
+// 22 Race Track
+{ n:{
+  s:{t:"Race day at the Grand Prix! Your car needs a final setup adjustment before the green flag.",c:[["Fine-tune the suspension for today's track conditions","a"],["Add the biggest spoiler available for style points","b"],["Remove the brakes to save weight","c"]]},
+  a:{t:"Lap 5 of 20: rain starts falling. The track is getting dangerously slippery.",c:[["Pit stop for rain tires","d"],["Speed up to finish before it gets worse","lose"],["Open an umbrella while driving","lose"]]},
+  b:{t:"The giant spoiler creates so much drag you're dead last by turn 2. Everyone passes you easily.",c:[["Try to rip the spoiler off mid-race","lose"],["Drive faster to compensate","lose"],["Accept last place gracefully","lose"]]},
+  c:{t:"You approach the first corner at full speed with no brakes. The wall gets very big very fast.",c:[["Downshift to slow down with engine braking","lose"],["Turn the wheel hard and pray","lose"],["Close your eyes","lose"]]},
+  d:{t:"Rain tires on! Final lap: you're in 2nd place. The leader slides wide on the last corner!",c:[["Take the inside line smoothly and overtake","win"],["Ram into the leader's car","lose"],["Slow down to be a good sport","lose"]]},
+},w:"You cross the finish line FIRST! Grand Prix Champion!",l:"You spin out and finish last. Terrible day at the track."},
+
+// 23 Haunted Circus
+{ n:{
+  s:{t:"An abandoned circus comes alive at midnight. Ghostly calliope music echoes from the big top tent.",c:[["Enter the big top cautiously with a flashlight","a"],["Start juggling to blend in with the ghosts","b"],["Buy a ticket from the ghostly ticket booth","c"]]},
+  a:{t:"A phantom ringmaster appears in a puff of smoke and traps you inside a funhouse of infinite mirrors!",c:[["Close your eyes and feel for the real exit with your hands","d"],["Smash every mirror you see","lose"],["Stay and admire your infinite reflections","lose"]]},
+  b:{t:"You juggle badly. The ghost clowns laugh at you, then drag you into their ghost car. It drives into the void.",c:[["Jump out of the car","lose"],["Try to steer the ghost car","lose"],["Juggle harder to earn their respect","lose"]]},
+  c:{t:"The ticket costs... your soul. The ghostly ticket taker reaches for your chest with translucent hands.",c:[["Refuse the ticket","lose"],["Try to pay with money instead","lose"],["Run from the booth","lose"]]},
+  d:{t:"You find the exit and discover the source of the haunting: a cursed vintage circus poster glowing with dark energy.",c:[["Tear the poster in half to break the curse","win"],["Frame the poster and take it home","lose"],["Take a photo for social media","lose"]]},
+},w:"The curse is broken! The circus ghosts find peace at last.",l:"You become part of the ghostly circus forever."},
+
+// 24 Moon Base
+{ n:{
+  s:{t:"Your moon base detects a massive meteor shower on a direct collision course with the colony!",c:[["Activate the base's deflector shield array","a"],["Go outside and try to catch them","b"],["Hide under a desk and wait","c"]]},
+  a:{t:"The shields deflect most meteors, but one breaks through and punctures the greenhouse dome!",c:[["Deploy emergency sealant drones to patch the dome","d"],["Open all other domes to equalize pressure","lose"],["Plant more seeds to compensate for losses","lose"]]},
+  b:{t:"You step outside in your spacesuit. A meteor the size of a bus screams past your head.",c:[["Run back inside immediately","lose"],["Try to dodge more meteors","lose"],["Accept your fate","lose"]]},
+  c:{t:"A meteor hits the power generator above your desk. The desk does not help at all.",c:[["Try to fix the generator","lose"],["Evacuate to another module","lose"],["Find a sturdier desk","lose"]]},
+  d:{t:"The dome is patched! But your food supply is badly damaged. The colony needs a backup plan fast.",c:[["Activate the hydroponic backup growing systems","win"],["Order pizza delivery from Earth","lose"],["Put everyone on mandatory fasting","lose"]]},
+},w:"The colony survives! Food production resumes within days.",l:"The moon base is abandoned. Everyone returns to Earth."},
+
+// 25 Samurai Dojo
+{ n:{
+  s:{t:"A rival dojo challenges yours to a tournament of honor. Your master's legacy is at stake.",c:[["Train intensely and study the rival's techniques","a"],["Challenge their master to fight immediately","b"],["Decline and close your dojo's doors","c"]]},
+  a:{t:"Tournament day. Your first opponent uses a fighting style you've never seen before.",c:[["Observe patiently and counter when they overextend","d"],["Attack wildly and hope for the best","lose"],["Copy their exact moves like a mirror","lose"]]},
+  b:{t:"Their master is a legendary fighter. He defeats you in three moves without breaking a sweat.",c:[["Demand a rematch","lose"],["Accuse him of cheating","lose"],["Accept defeat humbly","lose"]]},
+  c:{t:"Your students are devastated. The dojo's reputation crumbles. Other students leave to join the rival.",c:[["Reopen and try to recruit new students","lose"],["Challenge them now that you have nothing to lose","lose"],["Become a farmer instead","lose"]]},
+  d:{t:"You win the first match! The final bout is against their master, who draws a forbidden technique.",c:[["Use calm focus to find the one opening in his form","win"],["Use the same forbidden technique back","lose"],["Forfeit to preserve your honor","lose"]]},
+},w:"Victory! Your dojo's honor is restored for generations!",l:"Defeat. Your dojo must close its doors."},
+
+// 26 Enchanted Garden
+{ n:{
+  s:{t:"The enchanted garden's flowers are turning to cold stone. A dark curse creeps across every bed.",c:[["Examine the oldest flower for the source","a"],["Water the stone flowers more","b"],["Replace them with plastic flowers","c"]]},
+  a:{t:"The oldest rose has a dark crystal embedded deep in its roots, pulsing with cursed energy.",c:[["Use golden pollen from the sunflowers to neutralize it","d"],["Pour acid directly on the crystal","lose"],["Pull the crystal out with your bare hands","lose"]]},
+  b:{t:"Water pools around the stone flowers. Nothing happens except you waste all the garden's water supply.",c:[["Try fertilizer instead","lose"],["Water even more aggressively","lose"],["Give up on watering","lose"]]},
+  c:{t:"The garden rejects the plastic flowers. Vines wrap around them and crush them into pieces.",c:[["Run from the angry vines","lose"],["Try silk flowers instead","lose"],["Apologize to the garden","lose"]]},
+  d:{t:"The pollen cracks the crystal! But a thorny vine guardian awakens from the soil to protect the curse.",c:[["Sing the garden's ancient growth song to calm it","win"],["Cut through the vines with a machete","lose"],["Run away screaming","lose"]]},
+},w:"The curse lifts! The garden blooms more beautifully than ever.",l:"The entire garden turns to lifeless, cold stone."},
+
+// 27 Cyber City
+{ n:{
+  s:{t:"A rogue hacker is systematically shutting down the city's power grid, block by block. Panic spreads.",c:[["Trace the hack through the network logs","a"],["Turn off the entire internet for the city","b"],["Post about it on social media for help","c"]]},
+  a:{t:"You trace the signal to an abandoned data center on the outskirts. Defense bots patrol every corridor.",c:[["Hack the bots' control frequency to disable them","d"],["Fight them with a baseball bat","lose"],["Ask the bots politely to let you pass","lose"]]},
+  b:{t:"Turning off the internet crashes hospitals, traffic systems, and emergency services. You made everything worse.",c:[["Try to turn it back on quickly","lose"],["Blame the hacker for everything","lose"],["Pretend you didn't do it","lose"]]},
+  c:{t:"Nobody believes your post. It gets 2 likes. Meanwhile three more city blocks go dark.",c:[["Try a different hashtag","lose"],["Start a petition","lose"],["Actually try to fix it yourself","lose"]]},
+  d:{t:"Bots disabled! You reach the hacker's terminal. Their virus is 90% uploaded to the main grid.",c:[["Deploy your counter-virus and isolate infected nodes","win"],["Unplug the monitor","lose"],["Type 'UNDO' as fast as possible","lose"]]},
+},w:"Virus neutralized! The city's power grid is fully restored.",l:"The city goes completely dark. The hacker wins."},
+
+// 28 Treasure Cave
+{ n:{
+  s:{t:"Your treasure map leads to a cliff face with three dark tunnel entrances. X marks THIS spot.",c:[["Enter the tunnel with a faint cool breeze","a"],["Enter the tunnel with bones scattered outside","b"],["Enter the tunnel filled with thick cobwebs","c"]]},
+  a:{t:"The breeze means another opening! The tunnel opens into a chamber with a rushing underground river.",c:[["Build a raft from driftwood and cross carefully","d"],["Swim across in all your heavy gear","lose"],["Drink the entire river to cross dry","lose"]]},
+  b:{t:"Those bones were a warning. Deep growling echoes from the darkness ahead. Red eyes appear in pairs.",c:[["Back away slowly from the eyes","lose"],["Throw a bone deeper in to distract them","lose"],["Growl back to assert dominance","lose"]]},
+  c:{t:"The cobwebs stick to everything. You realize they belong to a spider the size of a car. It descends slowly.",c:[["Try to cut through the webs and escape","lose"],["Play dead and hope it's not hungry","lose"],["Try to befriend the giant spider","lose"]]},
+  d:{t:"On the far bank, the treasure chest sits on a weighted stone platform. This is clearly a trap.",c:[["Slide the chest off slowly while adding rocks to match the weight","win"],["Grab the chest and sprint for the exit","lose"],["Open the chest where it sits and fill your pockets","lose"]]},
+},w:"You escape the cave with the treasure! You're rich!",l:"The cave collapses, trapping the treasure within forever."},
+
+// 29 Ghost Ship
+{ n:{
+  s:{t:"Your fishing boat encounters a ghostly galleon in thick fog. An invisible force pulls you aboard.",c:[["Search the captain's quarters for clues","a"],["Jump overboard immediately","b"],["Start redecorating the dusty ship","c"]]},
+  a:{t:"The captain's log reveals the crew is cursed. They need a compass returned to the altar below deck.",c:[["Find the compass in the cargo hold","d"],["Tell the ghosts to just use a phone's GPS","lose"],["Throw the captain's log overboard","lose"]]},
+  b:{t:"You jump, but the fog is so thick you can't find your boat. Ghostly hands reach up from the dark water.",c:[["Swim faster away from the hands","lose"],["Climb back aboard the ghost ship","lose"],["Float on your back and relax","lose"]]},
+  c:{t:"You start tidying up. The ghosts are deeply offended by you moving their things. They surround you angrily.",c:[["Put everything back where it was","lose"],["Keep cleaning defiantly","lose"],["Offer interior design advice","lose"]]},
+  d:{t:"You have the compass! But the ghost captain himself blocks the altar, sword drawn and eyes blazing.",c:[["Show the captain his own log and remind him of his mission","win"],["Try to fight the ghost with your fists","lose"],["Put the compass on an auction site","lose"]]},
+},w:"The curse lifts! The crew finds peace and you're returned safely.",l:"You join the ghostly crew for all eternity."},
+
+// 30 Witch's Hut
+{ n:{
+  s:{t:"Deep in the swamp, you find a witch's crooked hut. She cackles and offers you three glowing potions.",c:[["Ask the witch what each potion does first","a"],["Drink all three potions at once","b"],["Throw the potions at her face","c"]]},
+  a:{t:"She explains: one heals, one grants wisdom, one is deadly poison. She'll trade wisdom for a favor.",c:[["Agree to gather moonlit mushrooms for her","d"],["Try to steal all the potions while she talks","lose"],["Trick her into drinking the poison one","lose"]]},
+  b:{t:"Mixing all three potions creates a violent reaction in your stomach. You turn bright green and float.",c:[["Try to vomit the potions out","lose"],["Enjoy the floating sensation","lose"],["Ask the witch for an antidote","lose"]]},
+  c:{t:"The witch deflects the potions with a wave of her hand. She's furious and her eyes glow red.",c:[["Apologize profusely","lose"],["Run out of the hut","lose"],["Throw more things at her","lose"]]},
+  d:{t:"You return with moonlit mushrooms. The witch smiles and holds out both fists. 'Which hand holds wisdom?'",c:[["Choose the hand she holds closest to her heart","win"],["Pick the left hand always","lose"],["Slap both hands to knock out all potions","lose"]]},
+},w:"You gain the potion of wisdom! Your mind expands infinitely.",l:"You drink the wrong potion. Ribbit. You're a frog now."},
+
+// 31 Sky Castle
+{ n:{
+  s:{t:"A magnificent castle floats in the clouds above your village. A giant beanstalk vine reaches up to it.",c:[["Climb the vine carefully, testing each grip","a"],["Chop the vine down to bring the castle to you","b"],["Build a catapult to launch yourself up","c"]]},
+  a:{t:"At the top, a golden bridge leads to the castle gate. A riddle is carved in glowing letters into the stone.",c:[["Solve the riddle: 'I fly without wings, I cry without eyes'","d"],["Ignore the riddle and cross anyway","lose"],["Answer 'a bird' confidently","lose"]]},
+  b:{t:"You chop the vine. The castle stays floating but now there's no way to reach it. Ever. Great plan.",c:[["Try to regrow the vine","lose"],["Build a really tall ladder","lose"],["Give up and go home","lose"]]},
+  c:{t:"The catapult launches you sideways into a tree. You have a headache and some bruises.",c:[["Try again with better aim","lose"],["Give up on the catapult approach","lose"],["Launch your friend instead","lose"]]},
+  d:{t:"The answer is 'a cloud'! The gate opens. Inside, a sleeping giant guards a magical golden harp.",c:[["Tiptoe past the giant and take only the harp","win"],["Wake the giant and try to fight him","lose"],["Grab everything that isn't nailed down","lose"]]},
+},w:"You return with the magical harp! Your village prospers forever.",l:"The giant awakens and the sky castle crumbles."},
+
+// 32 Desert Oasis
+{ n:{
+  s:{t:"Lost in a vast desert, water running low. You see a shimmer on the distant horizon.",c:[["Navigate toward it carefully using your compass","a"],["Run toward it as fast as you can","b"],["Ignore it \u2014 probably just a mirage anyway","c"]]},
+  a:{t:"It's a real oasis with palm trees and fresh water! But a sandstorm is building fast on the horizon.",c:[["Take shelter behind the oasis rock formation","d"],["Try to outrun the incoming sandstorm","lose"],["Stand your ground and face the storm heroically","lose"]]},
+  b:{t:"You sprint in the heat and collapse from exhaustion halfway there. Your water is empty now.",c:[["Crawl the rest of the way","lose"],["Wait for nightfall to cool down","lose"],["Dig for water in the sand","lose"]]},
+  c:{t:"You wander away from the shimmer. Hours pass. The desert stretches endlessly in every direction.",c:[["Go back toward the shimmer","lose"],["Pick a random new direction","lose"],["Sit down and hope for rescue","lose"]]},
+  d:{t:"The sandstorm passes. It uncovers ancient ruins half-buried in the sand near the oasis!",c:[["Explore carefully and document your discovery","win"],["Dig wildly with your bare hands","lose"],["Ignore the ruins and keep traveling","lose"]]},
+},w:"You discover a lost civilization's ruins! History is rewritten!",l:"Swallowed by the endless desert sands."},
+
+// 33 Pharaoh's Tomb
+{ n:{
+  s:{t:"You enter the pharaoh's tomb. Hieroglyphics cover every wall with warnings of deadly traps.",c:[["Translate the hieroglyphics to learn the safe path","a"],["Walk boldly forward ignoring the warnings","b"],["Spray paint over the warnings so they can't scare you","c"]]},
+  a:{t:"The safe path requires walking in the pattern of the Eye of Horus, step by step.",c:[["Trace the pattern exactly as depicted on the wall","d"],["Walk in a straight line down the center","lose"],["Dance your way across freestyle","lose"]]},
+  b:{t:"You step on a pressure plate. Arrows shoot from both walls simultaneously. The ceiling starts lowering.",c:[["Drop to the floor to dodge","lose"],["Run forward faster","lose"],["Try to catch the arrows","lose"]]},
+  c:{t:"The spray paint fumes activate a gas trap hidden in the walls. Sleeping gas fills the corridor.",c:[["Hold your breath and run","lose"],["Cover your mouth with your shirt","lose"],["Breathe deeply to test if it's really gas","lose"]]},
+  d:{t:"You reach the burial chamber! A golden amulet glows inside the sarcophagus, but the ceiling looks rigged.",c:[["Use the stone pillars to brace the ceiling first","win"],["Grab the amulet and sprint for the exit","lose"],["Put the amulet on immediately for power","lose"]]},
+},w:"You recover the ancient amulet and escape the tomb safely!",l:"Trapped in the tomb with the pharaoh's mummy. Forever."},
+
+// 34 Mad Scientist
+{ n:{
+  s:{t:"A mad scientist's experiment has created a growing blob in the lab! It's absorbing everything it touches.",c:[["Check the experiment notes for a weakness","a"],["Poke the blob with a stick to test it","b"],["Feed it more chemicals to see what happens","c"]]},
+  a:{t:"The notes say the blob is vulnerable to extreme cold temperatures!",c:[["Lure it into the cryo-chamber and activate the freeze","d"],["Throw ice cubes at it from across the room","lose"],["Open a window and hope it's winter outside","lose"]]},
+  b:{t:"The blob absorbs the stick instantly. Then it absorbs your glove. It reaches for your arm hungrily.",c:[["Pull your arm back and run","lose"],["Poke it with a longer stick","lose"],["Let it absorb you to fight from inside","lose"]]},
+  c:{t:"The chemicals make the blob DOUBLE in size! It fills half the lab now and is still growing rapidly.",c:[["Run for the exit before it blocks it","lose"],["Feed it more to see what happens next","lose"],["Reason with the blob","lose"]]},
+  d:{t:"The blob is frozen solid! But it's already slowly thawing from the inside. You need a permanent fix.",c:[["Apply the chemical solvent listed in the scientist's notes","win"],["Leave it frozen and hope for the best","lose"],["Chip off pieces as cool souvenirs","lose"]]},
+},w:"The blob is dissolved completely! The lab is saved.",l:"The blob consumes the entire building and keeps growing."},
+
+// 35 Viking Voyage
+{ n:{
+  s:{t:"Your Viking longship sails into unknown waters. The sea forks around a massive rock formation.",c:[["Follow the seabirds \u2014 they always lead to land","a"],["Sail toward the swirling whirlpool","b"],["Turn back toward home waters","c"]]},
+  a:{t:"Land ho! But the coastline is treacherous with sharp rocks and hidden reefs everywhere.",c:[["Send a small rowboat to scout for a safe harbor","d"],["Sail full speed straight at the rocks","lose"],["Throw crew overboard to lighten the ship","lose"]]},
+  b:{t:"The whirlpool grabs your ship and spins it. The crew screams as everything not tied down flies overboard.",c:[["Try to row against the current","lose"],["Steer into the center","lose"],["Abandon ship","lose"]]},
+  c:{t:"Your crew mutinies! Vikings don't turn back. They throw you overboard and sail on without you.",c:[["Swim after the ship","lose"],["Float on driftwood","lose"],["Yell 'I was just kidding!'","lose"]]},
+  d:{t:"The scouts find a safe harbor! On shore, a rival clan challenges you for the right to this land.",c:[["Propose a fair contest of strength to share the land","win"],["Attack them immediately with full force","lose"],["Cry and sail away in defeat","lose"]]},
+},w:"You win the contest! Both clans share the bountiful new land.",l:"Your longship sinks on the rocky coast."},
+
+// 36 Enchanted Library
+{ n:{
+  s:{t:"Every book in the enchanted library has come alive! Characters run amok through the shelves.",c:[["Find the librarian's master catalog to restore order","a"],["Start reading books aloud to put characters back","b"],["Join the chaos and have fun with the characters","c"]]},
+  a:{t:"The catalog is locked with a literary riddle: 'Name the story where a whale swallows a man.'",c:[["The Bible \u2014 Jonah and the Whale","d"],["Finding Nemo","lose"],["The Very Hungry Caterpillar","lose"]]},
+  b:{t:"Reading aloud summons MORE characters! Now there are pirates fighting knights while wizards cast spells on robots.",c:[["Stop reading immediately","lose"],["Read faster to overload the system","lose"],["Pick a side in the character war","lose"]]},
+  c:{t:"A dragon character from a fantasy novel mistakes you for a villain in its story and chases you with fire.",c:[["Hide behind the non-fiction section","lose"],["Try to explain you're not in its book","lose"],["Challenge the dragon to a book report contest","lose"]]},
+  d:{t:"The catalog opens! You can send characters back by stamping their books with the return seal.",c:[["Stamp the books in reverse catalog order as instructed","win"],["Stamp everything randomly and hope it works","lose"],["Burn the catalog to reset everything","lose"]]},
+},w:"All characters return to their books! The library is peaceful again.",l:"The characters rewrite reality itself. Chaos reigns forever."},
+
+// 37 Monster Island
+{ n:{
+  s:{t:"You wash up on Monster Island after a shipwreck. Roars echo from the dense jungle interior.",c:[["Set up camp on the beach and build a signal fire","a"],["Walk into the dark jungle at night","b"],["Yell 'COME AND GET ME' at the jungle","c"]]},
+  a:{t:"A small, shy monster peeks out from the tree line. It looks curious and holds out a piece of fruit.",c:[["Accept the fruit and offer something in return","d"],["Scream and throw rocks at it","lose"],["Try to ride it like a horse","lose"]]},
+  b:{t:"In the pitch-dark jungle, you walk straight into a nest of giant spider-monsters. Eyes glow all around you.",c:[["Stay absolutely still","lose"],["Run in any direction","lose"],["Try to make friends in the dark","lose"]]},
+  c:{t:"Something enormous responds. The ground shakes. Trees topple as a monster the size of a building approaches.",c:[["Hide behind a rock","lose"],["Yell even louder to show dominance","lose"],["Run into the ocean","lose"]]},
+  d:{t:"Your new monster friend guides you through the jungle. It leads you to the island's only boat \u2014 guarded by a giant!",c:[["Have your friend distract the giant while you prep the boat","win"],["Challenge the giant monster directly","lose"],["Forget the boat and just swim for it","lose"]]},
+},w:"You escape Monster Island with your new monster friend!",l:"Stranded on Monster Island. You're the newest resident."},
+
+// 38 Royal Palace
+{ n:{
+  s:{t:"The royal crown has been stolen in the night! The coronation is tomorrow morning. Panic fills the palace.",c:[["Question the night guards about anything unusual","a"],["Blame the court jester immediately","b"],["Cancel the entire coronation","c"]]},
+  a:{t:"A guard saw a shadow heading toward the secret passages. The passages split three ways.",c:[["Follow the passage with fresh torch marks on the walls","d"],["Choose the darkest, scariest passage","lose"],["Yell 'THIEF!' down all three and wait","lose"]]},
+  b:{t:"The jester is innocent and deeply offended. He rallies the court entertainers to go on strike.",c:[["Apologize to the jester","lose"],["Arrest the jester anyway","lose"],["Try to be the jester yourself","lose"]]},
+  c:{t:"The kingdom panics. Without a coronation, rival nobles declare themselves king. Civil war breaks out.",c:[["Try to find the crown now during the chaos","lose"],["Negotiate between the rival nobles","lose"],["Leave the kingdom entirely","lose"]]},
+  d:{t:"You corner the thief in a dead end! It's the jealous duke. He holds the crown over a deep well.",c:[["Negotiate calmly and promise a fair, public trial","win"],["Tackle him immediately","lose"],["Offer him an even fancier crown","lose"]]},
+},w:"The crown is recovered! The coronation proceeds beautifully.",l:"The crown is lost forever. No coronation today."},
+
+// 39 Zombie Outbreak
+{ n:{
+  s:{t:"Zombies swarm the neighborhood! Moaning figures shuffle past your window. You need a safe place NOW.",c:[["Barricade inside the hardware store across the street","a"],["Run toward the cemetery (they probably came from there)","b"],["Invite the zombies in for tea and conversation","c"]]},
+  a:{t:"You're safe in the hardware store with tools and supplies. But food is running low after two days.",c:[["Create a distraction and sneak to the grocery store","d"],["Run straight through the zombie horde","lose"],["Eat the paint and lumber in the store","lose"]]},
+  b:{t:"The cemetery is the worst possible destination. Zombies are literally climbing out of every grave around you.",c:[["Run back the way you came","lose"],["Hide behind a tombstone","lose"],["Start digging to go underground","lose"]]},
+  c:{t:"You open the door. The zombies don't want tea. They want brains. YOUR brains. They shuffle inside.",c:[["Push them back out the door","lose"],["Offer cookies instead of tea","lose"],["Run to the back of the house","lose"]]},
+  d:{t:"You reach the grocery store with supplies! A rescue helicopter circles overhead, looking for survivors.",c:[["Build a signal flare from hardware store chemicals","win"],["Wave your hands and hope they see you","lose"],["Attract zombies to make a visible crowd from the air","lose"]]},
+},w:"The helicopter spots your flare and rescues your entire group!",l:"The zombies are everywhere. Game over, man. Game over!"},
+
+// 40 Dream World
+{ n:{
+  s:{t:"You're trapped in a dream! Nothing makes sense. Doors float sideways, stairs go in circles, colors taste like sounds.",c:[["Look for the golden thread \u2014 it always leads to waking","a"],["Pinch yourself over and over as hard as you can","b"],["Go deeper to sleep within the dream","c"]]},
+  a:{t:"The golden thread leads through a dreamscape to three impossible doors: one laughs, one cries, one is silent.",c:[["Enter the silent door \u2014 silence is the path to waking","d"],["Enter the laughing door for something fun","lose"],["Enter the crying door to see what's sad","lose"]]},
+  b:{t:"Pinching in a dream just creates copies of yourself. Now there are twelve of you, all confused.",c:[["Try to figure out which one is real","lose"],["Have all copies pinch each other","lose"],["Organize the copies into a support group","lose"]]},
+  c:{t:"Going deeper leads to a dream within a dream within a dream. You forget which layer is real.",c:[["Try to wake up through all layers at once","lose"],["Accept this as your new reality","lose"],["Count your fingers to reality-check","lose"]]},
+  d:{t:"Behind the silent door is a mirror showing your sleeping body. Something dark blocks the connection between you.",c:[["Speak your own true name into the mirror","win"],["Smash the mirror with your fist","lose"],["Walk away from the mirror","lose"]]},
+},w:"You wake up gasping! The dream world releases you. Reality never felt so good.",l:"Lost in dreams forever, never to wake again..."},
+
+// 41 Atlantis
+{ n:{
+  s:{t:"Your deep-sea probe discovers the legendary city of Atlantis! But its protective shield is failing fast.",c:[["Offer to help the Atlanteans repair their shield","a"],["Try to steal their advanced technology","b"],["Report back to the surface and return with a military force","c"]]},
+  a:{t:"The shield generator needs a rare crystal. The crystal mine is infested with massive electric eels.",c:[["Use sonic pulses from your equipment to drive the eels away","d"],["Wrestle the eels out of the mine","lose"],["Use yourself as bait to lure them out","lose"]]},
+  b:{t:"Atlantean security detects your theft attempt. Energy barriers trap you in a holding cell deep underwater.",c:[["Try to break through the energy barrier","lose"],["Negotiate your release","lose"],["Pretend it was a misunderstanding","lose"]]},
+  c:{t:"By the time you return, the shield has failed completely. Atlantis is buried under a thousand feet of sediment.",c:[["Try to dig it out","lose"],["Search for survivors","lose"],["Write a research paper about it","lose"]]},
+  d:{t:"Eels scattered! You retrieve the crystal, but it needs to be cut with extreme precision to fit.",c:[["Let the Atlantean crystal smith cut it with their water laser","win"],["Karate chop it into the right shape","lose"],["Shove it in roughly and hope it fits","lose"]]},
+},w:"Atlantis is saved! You're named an honorary citizen of the deep.",l:"Atlantis sinks even deeper into the ocean abyss."},
+
+// 42 Train Heist
+{ n:{
+  s:{t:"A villain has hijacked a speeding train carrying critical medical supplies. Thousands need that medicine!",c:[["Board the train at the next water stop","a"],["Stand on the tracks to stop the train","b"],["Send a strongly-worded letter to the villain","c"]]},
+  a:{t:"On board! The villain's armed henchmen patrol every passenger car. You need to reach the engine.",c:[["Move across the rooftops of the train cars","d"],["Fight through every car one by one","lose"],["Hide in the bathroom until it's all over","lose"]]},
+  b:{t:"The train doesn't stop. You dive out of the way at the last second, eating a mouthful of gravel.",c:[["Chase after the train on foot","lose"],["Try to find a car to chase it","lose"],["Lie there and reconsider your life choices","lose"]]},
+  c:{t:"The letter arrives three days later. The villain uses it as kindling. The medical supplies are long gone.",c:[["Write a follow-up letter","lose"],["Start a petition","lose"],["Accept that letters don't stop trains","lose"]]},
+  d:{t:"You reach the engine car! The villain has sabotaged the brakes and the bridge ahead is out!",c:[["Decouple the engine and manually brake the supply cars","win"],["Speed up to try to jump the gap","lose"],["Close your eyes and accept fate","lose"]]},
+},w:"The supply cars stop safely! The villain is arrested and medicine is delivered!",l:"The train goes over the broken bridge. Supplies lost."},
+
+// 43 Magic School
+{ n:{
+  s:{t:"First day at magic school! A mysterious shimmering door appears in the hallway, visible only to new students.",c:[["Speak the welcome phrase from your acceptance letter","a"],["Kick the door open with your foot","b"],["Pretend you don't see it and walk past","c"]]},
+  a:{t:"The Sorting Room! Three magical items glow on pedestals: a wand, a book, and a crystal orb.",c:[["Let your hand be drawn naturally to whichever feels warm","d"],["Grab all three items at once","lose"],["Pick the most expensive-looking one","lose"]]},
+  b:{t:"The door vanishes the moment your foot touches it. A professor appears and gives you a week of detention.",c:[["Argue with the professor","lose"],["Accept detention quietly","lose"],["Try to find the door again","lose"]]},
+  c:{t:"The door fades away permanently. You've missed the one chance every student gets. Other students whisper about you.",c:[["Ask a teacher for help","lose"],["Cry in the hallway","lose"],["Pretend you chose not to enter","lose"]]},
+  d:{t:"The crystal orb chose you! Your first test: make a feather float. Three incantation versions are on the board.",c:[["Use the basic form with clear pronunciation and calm focus","win"],["Shout the most powerful advanced version","lose"],["Make up your own words and wing it","lose"]]},
+},w:"The feather floats perfectly! You're a natural-born wizard!",l:"The feather explodes. Maybe try cooking school instead?"},
+
+// 44 Rainforest
+{ n:{
+  s:{t:"You're a wildlife researcher in the deep rainforest. A flash flood destroys your base camp overnight.",c:[["Move to higher ground and build a temporary shelter","a"],["Stay and bail out water with your cooking pot","b"],["Build a swimming pool since it's already flooded anyway","c"]]},
+  a:{t:"From higher ground, you spot the ultra-rare golden frog you've searched months for! It sits on a mossy branch.",c:[["Set up your camera quietly and document from a distance","d"],["Grab it with both hands before it escapes","lose"],["Chase it through the canopy","lose"]]},
+  b:{t:"The water rises faster than you can bail. Your equipment shorts out and your research data is destroyed.",c:[["Try to save the hard drives","lose"],["Swim to safety with nothing","lose"],["Keep bailing hopelessly","lose"]]},
+  c:{t:"This isn't a joke \u2014 the water has venomous snakes in it and it's still rising dangerously fast.",c:[["Climb a tree immediately","lose"],["Swim to higher ground","lose"],["Try to befriend the snakes","lose"]]},
+  d:{t:"While photographing, you notice illegal loggers cutting trees near the frog's only known habitat.",c:[["Document the logging and report via satellite phone to rangers","win"],["Confront the armed loggers alone","lose"],["Ignore it \u2014 not your problem","lose"]]},
+},w:"Your report and research save the golden frog's entire habitat!",l:"The habitat is destroyed. The golden frog vanishes forever."},
+
+// 45 Space Pirates
+{ n:{
+  s:{t:"Space pirates board your cargo vessel! They want your shipment of valuable star crystals.",c:[["Activate the ship's emergency lockdown protocols","a"],["Surrender and hand over everything immediately","b"],["Challenge the pirate captain to a dance battle","c"]]},
+  a:{t:"Lockdown buys precious time, but the pirates are cutting through the cargo bay doors with plasma torches.",c:[["Reroute the cargo to the hidden smuggler's hold","d"],["Jettison all cargo into open space","lose"],["Paint the crystals to look like regular rocks","lose"]]},
+  b:{t:"The pirates take everything, including your personal belongings. They also take your ship. You float in an escape pod.",c:[["Send a distress signal from the tiny pod","lose"],["Try to follow the pirates in the pod","lose"],["Accept your new life as a space drifter","lose"]]},
+  c:{t:"The pirate captain is genuinely confused, then annoyed. He orders his crew to take everything while you dance.",c:[["Stop dancing and fight back","lose"],["Dance harder to intimidate them","lose"],["Challenge to karaoke instead","lose"]]},
+  d:{t:"Pirates breach the empty cargo bay and find nothing. The captain calls you on comms, absolutely furious.",c:[["Bluff that military reinforcements are 2 minutes away","win"],["Confess where you hid the crystals","lose"],["Laugh at them over the intercom","lose"]]},
+},w:"The pirates flee in panic! Your cargo and crew are completely safe.",l:"Pirates take everything. Stranded in deep space with nothing."},
+
+// 46 Labyrinth
+{ n:{
+  s:{t:"You enter a vast stone labyrinth. The walls grind and shift behind you, sealing off your path back.",c:[["Mark your path by scratching arrows on the walls","a"],["Run as fast as you can in one direction","b"],["Stand perfectly still and wait for rescue","c"]]},
+  a:{t:"Your marks lead you to a grand chamber. A stone sphinx stares at you with ancient, knowing eyes.",c:[["Answer its riddle: 'What walks on four legs, then two, then three?'","d"],["Try to climb over the sphinx","lose"],["Ask the sphinx for directions instead","lose"]]},
+  b:{t:"Running leads you in circles. You pass the same skull three times. You're hopelessly lost and exhausted.",c:[["Try running in the opposite direction","lose"],["Yell for help in the echoing corridors","lose"],["Sit down and give up","lose"]]},
+  c:{t:"Hours pass. The labyrinth walls slowly close in around you. Standing still was not the right plan.",c:[["Start moving now","lose"],["Push against the walls","lose"],["Accept your fate","lose"]]},
+  d:{t:"'A human,' you answer. The sphinx nods. An exit appears but it's a maze within the maze \u2014 three paths diverge.",c:[["Follow the path with natural daylight at the end","win"],["Follow the path with the loudest echo","lose"],["Try to dig through the stone wall","lose"]]},
+},w:"You burst into glorious sunlight! Freedom from the labyrinth!",l:"Lost in the labyrinth forever, wandering endless corridors."},
+
+// 47 Carnival
+{ n:{
+  s:{t:"The magical midnight carnival appears! The sign reads: 'Win three games to earn one wish!' First game: ring toss.",c:[["Study the trick carefully before throwing","a"],["Throw rings wildly at everything in sight","b"],["Demand the wish without playing any games","c"]]},
+  a:{t:"Ring toss won with a perfect throw! Game two: the strength test. The hammer looks strangely enchanted.",c:[["Hit the pad at the precise center for maximum effect","d"],["Swing as hard as possible off-center","lose"],["Use your head instead of the hammer","lose"]]},
+  b:{t:"You miss every single ring. The carnival barker laughs and your rings clatter uselessly on the ground.",c:[["Try again more carefully","lose"],["Accuse the game of being rigged","lose"],["Throw rings at the barker instead","lose"]]},
+  c:{t:"The carnival itself responds. The tent flaps close, the lights dim, and the exit disappears behind you.",c:[["Play the games now that you have no choice","lose"],["Try to find a hidden exit","lose"],["Yell at the carnival to let you out","lose"]]},
+  d:{t:"Strength test won! DING! Final game: guess which cup hides the ball. The operator shuffles them rapidly.",c:[["Watch the operator's eyes \u2014 they always glance at the right cup","win"],["Always pick the middle cup","lose"],["Flip all three cups at once (that's cheating!)","lose"]]},
+},w:"Three wins! You earned a genuine wish! What will you choose?",l:"No prize tonight. The carnival vanishes at dawn."},
+
+// 48 Crystal Caves
+{ n:{
+  s:{t:"Geologists discover caves of singing crystals that hum with harmonic resonance. The entrance is dangerously unstable.",c:[["Shore up the entrance with support beams first","a"],["Sprint through the entrance before it collapses","b"],["Blast it wider open with dynamite","c"]]},
+  a:{t:"Inside, the crystals respond to every sound. Speaking too loudly could trigger a catastrophic cave-in.",c:[["Communicate with hand signals and move silently","d"],["Yodel to test the legendary acoustics","lose"],["Play a trumpet to see what happens","lose"]]},
+  b:{t:"Rocks crash down behind you, sealing the entrance. You're trapped inside with no way out and no supplies.",c:[["Search for another exit in the dark","lose"],["Try to dig through the rubble","lose"],["Yell for help through the sealed entrance","lose"]]},
+  c:{t:"The dynamite shatters the crystals near the entrance. The harmonics go haywire and the cave begins collapsing.",c:[["Run deeper into the cave","lose"],["Run out of the cave","lose"],["Shield yourself with equipment","lose"]]},
+  d:{t:"Silently, you discover a massive crystal formation worth millions. But taking it could destabilize everything.",c:[["Take only a small sample and document the rest for science","win"],["Mine the entire formation for profit","lose"],["Lick the crystals to see if they taste like candy","lose"]]},
+},w:"Your careful research makes scientific history! The caves are preserved.",l:"The caves collapse entirely. A treasure destroyed by greed."},
+
+// 49 Astral Plane
+{ n:{
+  s:{t:"During deep meditation, your spirit separates from your body and drifts into the Astral Plane. Stars surround you.",c:[["Follow the silver cord connecting you to your body","a"],["Fly as far from your body as possible","b"],["Try to grab a nearby star","c"]]},
+  a:{t:"Along the cord, a cosmic guardian of pure light blocks your path. It radiates ancient, patient wisdom.",c:[["Answer truthfully when it asks your deepest intention","d"],["Lie to try to impress the cosmic being","lose"],["Try to fight the guardian","lose"]]},
+  b:{t:"Without the silver cord, you drift endlessly. Your body grows cold and distant. You can't find your way back.",c:[["Search for any cord or connection","lose"],["Keep flying and hope to find an exit","lose"],["Meditate within the meditation","lose"]]},
+  c:{t:"The star burns your astral hand. Pain ripples through both your spirit and your distant sleeping body.",c:[["Let go of the star immediately","lose"],["Hold on tighter","lose"],["Blow on your hand to cool it","lose"]]},
+  d:{t:"The guardian accepts your honesty and reveals a fundamental cosmic truth. It offers a choice: knowledge or power.",c:[["Choose knowledge \u2014 understanding outlasts all power","win"],["Choose power \u2014 dominate everything in your path","lose"],["Try to grab both greedily","lose"]]},
+},w:"You return enlightened, forever changed by cosmic wisdom.",l:"Your spirit wanders the astral plane, lost among infinite stars."},
+];
+
+// --- Game State ---
+let completed = JSON.parse(localStorage.getItem('cg2_done') || '[]');
+let currentTheme = null;
+let currentNode = null;
+let pathHistory = []; // [{nodeId, choiceText}]
+
+const app = document.getElementById('app');
+
+function setC(c1, c2) {
+  document.documentElement.style.setProperty('--theme-color1', c1);
+  document.documentElement.style.setProperty('--theme-color2', c2);
+}
+
+function save() { localStorage.setItem('cg2_done', JSON.stringify(completed)); }
+
+// --- Render ---
+function renderMenu() {
+  setC('#4facfe', '#f093fb');
+  const pct = Math.round((completed.length / 50) * 100);
+  app.innerHTML = `
+    <h1>50 Worlds</h1>
+    <p class="subtitle">Every choice leads somewhere new. Only one path wins.</p>
+    <div style="margin-bottom:10px"><a href="index.html" style="color:#888;text-decoration:none;font-size:0.85em;">\u2190 Back to Ollie's Universe</a></div>
+    <div class="stats-bar">
+      <div class="stat">Worlds Conquered: <span>${completed.length}/50</span></div>
+      <div class="stat">Progress: <span>${pct}%</span></div>
+      ${completed.length === 50 ? '<div class="stat" style="color:#4ade80;font-weight:bold">ALL 50 WORLDS COMPLETE!</div>' : ''}
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="card">
+      <div class="story-text" style="text-align:center;margin-bottom:15px;">
+        Choose a world. Every choice branches into new scenarios.<br>Find the one true path to win!
+      </div>
+      <div class="theme-grid" id="tg"></div>
+    </div>
+    ${completed.length > 0 ? '<div class="btn-row" style="margin-top:15px"><button class="action-btn btn-secondary" onclick="resetAll()">Reset All Progress</button></div>' : ''}
+  `;
+  const g = document.getElementById('tg');
+  THEMES.forEach(t => {
+    const done = completed.includes(t.id);
+    const d = document.createElement('div');
+    d.className = 'theme-tile' + (done ? ' completed' : '');
+    d.innerHTML = `<div class="icon">${t.icon}</div><div class="name">${t.name}</div>`;
+    d.onclick = () => startTheme(t);
+    g.appendChild(d);
+  });
+}
+
+function startTheme(theme) {
+  currentTheme = theme;
+  pathHistory = [];
+  goToNode('s');
+}
+
+function goToNode(nodeId) {
+  currentNode = nodeId;
+  const theme = currentTheme;
+  const story = S[theme.id];
+  const node = story.n[nodeId];
+  setC(theme.c1, theme.c2);
+
+  // Shuffle choices but track their data
+  const shuffled = node.c.map((c, i) => ({ text: c[0], next: c[1], orig: i }));
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const depth = pathHistory.length;
+  const depthLabels = ['First Choice', 'Second Choice', 'Final Choice'];
+
+  app.innerHTML = `
+    <div class="stats-bar">
+      <span class="theme-badge">${theme.icon} ${theme.name}</span>
+      <div class="stat">Depth: <span>${depth + 1} / 3</span></div>
+    </div>
+    ${pathHistory.length > 0 ? `
+    <div class="path-trail">
+      ${pathHistory.map((p, i) => `<span class="path-node">${p.short}</span><span class="path-arrow">\u2192</span>`).join('')}
+      <span class="path-node current">?</span>
+    </div>` : ''}
+    <div class="card">
+      <div class="depth-label">${depthLabels[depth] || 'Choose wisely'}</div>
+      <div class="story-text">${node.t}</div>
+      <div class="choices" id="choices">
+        ${shuffled.map(c =>
+          `<button class="choice-btn" data-next="${c.next}" data-text="${c.text.replace(/"/g, '&quot;')}" onclick="choose(this)">${c.text}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="action-btn btn-secondary" onclick="renderMenu()">Back to Worlds</button>
+      <button class="action-btn btn-secondary" onclick="startTheme(THEMES[${theme.id}])">Restart</button>
+    </div>
+  `;
+}
+
+function choose(btn) {
+  const next = btn.dataset.next;
+  const text = btn.dataset.text;
+  const story = S[currentTheme.id];
+
+  // Highlight the chosen button
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.onclick = null;
+    b.style.cursor = 'default';
+    if (b === btn) {
+      if (next === 'win') b.classList.add('glow-green');
+      else if (next === 'lose') b.classList.add('glow-red');
+      else b.classList.add('glow-green'); // going to next node (could be right or wrong path)
+    } else {
+      b.classList.add('dim');
+    }
+  });
+
+  // Short label for path trail
+  const short = text.length > 25 ? text.substring(0, 22) + '...' : text;
+  pathHistory.push({ short, nodeId: currentNode });
+
+  setTimeout(() => {
+    if (next === 'win') {
+      renderResult(true);
+    } else if (next === 'lose') {
+      renderResult(false);
+    } else {
+      goToNode(next);
+    }
+  }, 800);
+}
+
+function renderResult(won) {
+  const theme = currentTheme;
+  const story = S[theme.id];
+
+  if (won && !completed.includes(theme.id)) {
+    completed.push(theme.id);
+    save();
+  }
+
+  app.innerHTML = `
+    <div class="stats-bar">
+      <span class="theme-badge">${theme.icon} ${theme.name}</span>
+    </div>
+    <div class="path-trail">
+      ${pathHistory.map(p => `<span class="path-node">${p.short}</span><span class="path-arrow">\u2192</span>`).join('')}
+      <span class="path-node ${won ? 'current' : ''}" style="color:${won ? '#4ade80' : '#f87171'}">${won ? 'Victory!' : 'Dead End'}</span>
+    </div>
+    <div class="card result-card ${won ? 'win' : 'lose'}">
+      <div class="result-icon">${won ? '\u{1F3C6}' : '\u{1F4A5}'}</div>
+      <div class="result-title">${won ? 'You Win!' : 'Wrong Path!'}</div>
+      <div class="result-msg">${won ? story.w : story.l}</div>
+      ${!won ? '<div class="result-msg" style="color:#888;font-size:0.9em;">Every choice leads somewhere different. Try another path!</div>' : ''}
+      ${completed.length === 50 && won ? '<div class="result-msg" style="color:#fbbf24;font-weight:bold;">You conquered ALL 50 worlds! True champion!</div>' : ''}
+      <div class="btn-row">
+        <button class="action-btn btn-primary" onclick="startTheme(THEMES[${theme.id}])">Try Again</button>
+        <button class="action-btn btn-secondary" onclick="renderMenu()">All Worlds</button>
+        ${won ? getNextBtn() : ''}
+      </div>
+    </div>
+  `;
+}
+
+function getNextBtn() {
+  const n = THEMES.find(t => !completed.includes(t.id));
+  return n ? `<button class="action-btn btn-primary" onclick="startTheme(THEMES[${n.id}])">Next World ${n.icon}</button>` : '';
+}
+
+function resetAll() {
+  if (confirm('Reset all progress? This cannot be undone.')) {
+    completed = [];
+    save();
+    renderMenu();
+  }
+}
+
+renderMenu();
+</script>
+</body>
+</html>

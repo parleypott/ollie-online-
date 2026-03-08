@@ -153,6 +153,21 @@
       color: rgba(77,172,255,0.3);
     }
 
+    .game-btn.has-label::after {
+      content: none;
+    }
+
+    .game-btn .btn-label {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 1.8vw, 11px);
+      color: #4dacff;
+      line-height: 1.6;
+      text-shadow: 0 0 8px rgba(77,172,255,0.4);
+    }
+
     @keyframes pulse-glow {
       0%, 100% {
         box-shadow:
@@ -183,7 +198,7 @@
     </div>
 
     <div class="buttons">
-      <button class="game-btn"></button>
+      <button class="game-btn has-label" onclick="location.href='pick-the-plot.html'"><span class="btn-label">Pick the<br>Plot</span></button>
       <button class="game-btn"></button>
       <button class="game-btn"></button>
       <button class="game-btn"></button>
