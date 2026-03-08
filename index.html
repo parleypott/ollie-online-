@@ -46,12 +46,47 @@
     }
 
     /* planet */
+    .caption {
+      font-size: clamp(8px, 2vw, 14px);
+      color: #ff4466;
+      text-shadow: 0 0 10px rgba(255,68,102,0.6), 0 0 30px rgba(255,68,102,0.2);
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+      animation: caption-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes caption-pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; text-shadow: 0 0 15px rgba(255,68,102,0.8), 0 0 40px rgba(255,68,102,0.3); }
+    }
+
+    .planet-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(12px, 3vw, 30px);
+      margin: 8px 0 36px;
+    }
+
     .planet-wrap {
       position: relative;
       width: clamp(80px, 15vw, 140px);
       height: clamp(80px, 15vw, 140px);
-      margin: 8px 0 36px;
       animation: float 4s ease-in-out infinite;
+    }
+
+    .dog-wrap {
+      position: relative;
+      width: clamp(70px, 13vw, 120px);
+      height: clamp(70px, 13vw, 120px);
+      animation: float 4s ease-in-out infinite;
+      animation-delay: 0.5s;
+    }
+
+    .dog-wrap canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
     }
 
     .planet {
@@ -192,9 +227,16 @@
   <div class="page">
     <h1>Ollie's Universe</h1>
 
-    <div class="planet-wrap">
-      <div class="planet"></div>
-      <div class="ring"></div>
+    <div class="caption">"The perfect smile doesn't exist"</div>
+
+    <div class="planet-row">
+      <div class="planet-wrap">
+        <div class="planet"></div>
+        <div class="ring"></div>
+      </div>
+      <div class="dog-wrap">
+        <canvas id="dogCanvas" width="64" height="64"></canvas>
+      </div>
     </div>
 
     <div class="buttons">
@@ -207,6 +249,89 @@
   </div>
 
   <script>
+    // Draw evil dog pixel art
+    (function(){
+      const dc = document.getElementById('dogCanvas');
+      const dx = dc.getContext('2d');
+      const P = 2; // pixel size
+      // Color palette
+      const _ = null; // transparent
+      const K = '#111'; // black
+      const D = '#3a2a1a'; // dark brown
+      const B = '#6b4e2a'; // brown
+      const L = '#a07840'; // light brown
+      const T = '#c4a060'; // tan
+      const W = '#e8d8c0'; // white/cream
+      const R = '#ff2222'; // red eyes
+      const G = '#cc0000'; // dark red glow
+      const P2 = '#ffaaaa'; // tongue/mouth
+      const F = '#ffffff'; // fangs/teeth
+
+      // 32x32 evil dog face
+      const dog = [
+        // Row 0-3: ears sticking up
+        [_,_,_,_,_,_,K,K,K,_,_,_,_,_,_,_,_,_,_,_,_,_,_,K,K,K,_,_,_,_,_,_],
+        [_,_,_,_,_,K,D,D,D,K,_,_,_,_,_,_,_,_,_,_,_,K,D,D,D,K,_,_,_,_,_,_],
+        [_,_,_,_,K,D,B,B,B,D,K,_,_,_,_,_,_,_,_,_,K,D,B,B,B,D,K,_,_,_,_,_],
+        [_,_,_,K,D,B,B,L,B,B,D,K,_,_,_,_,_,_,_,K,D,B,B,L,B,B,D,K,_,_,_,_],
+        // Row 4-5: ear meets head
+        [_,_,_,K,D,B,L,L,L,B,D,K,K,K,K,K,K,K,K,K,D,B,L,L,L,B,D,K,_,_,_,_],
+        [_,_,_,K,D,B,L,L,B,B,D,D,D,D,D,D,D,D,D,D,D,B,B,L,L,B,D,K,_,_,_,_],
+        // Row 6-9: top of head
+        [_,_,_,_,K,D,B,B,B,D,D,B,B,B,B,B,B,B,B,B,B,D,D,B,B,B,D,K,_,_,_,_],
+        [_,_,_,_,_,K,D,D,D,B,B,B,L,L,L,L,L,L,L,L,B,B,B,D,D,D,K,_,_,_,_,_],
+        [_,_,_,_,_,_,K,K,B,B,L,L,L,L,L,L,L,L,L,L,L,L,B,B,K,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,_,K,B,L,L,L,L,L,L,L,L,L,L,L,L,L,L,B,K,_,_,_,_,_,_,_],
+        // Row 10-11: brow ridge
+        [_,_,_,_,_,_,K,B,L,L,L,K,K,K,L,L,L,L,K,K,K,L,L,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,L,K,K,K,K,K,L,L,K,K,K,K,K,L,L,B,K,_,_,_,_,_,_],
+        // Row 12-14: eyes (red/evil)
+        [_,_,_,_,_,_,K,B,L,K,K,R,R,R,K,L,L,K,R,R,R,K,K,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,K,G,R,R,G,K,L,L,K,G,R,R,G,K,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,K,K,R,R,K,K,L,L,K,K,R,R,K,K,L,B,K,_,_,_,_,_,_],
+        // Row 15-16: under eyes / nose bridge
+        [_,_,_,_,_,_,K,B,L,L,K,K,K,K,L,L,L,L,K,K,K,K,L,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,L,L,L,L,L,L,T,T,L,L,L,L,L,L,L,B,K,_,_,_,_,_,_],
+        // Row 17-18: nose
+        [_,_,_,_,_,_,K,B,L,L,L,L,L,L,K,K,K,K,L,L,L,L,L,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,L,L,L,L,K,K,K,K,K,K,L,L,L,L,L,B,K,_,_,_,_,_,_],
+        // Row 19-20: snout / start of evil grin
+        [_,_,_,_,_,_,K,B,L,L,L,L,L,L,K,K,K,K,L,L,L,L,L,L,B,K,_,_,_,_,_,_],
+        [_,_,_,_,_,K,B,L,L,L,K,K,K,K,K,K,K,K,K,K,K,K,L,L,L,B,K,_,_,_,_,_],
+        // Row 21-23: the evil grin with fangs
+        [_,_,_,_,K,B,L,L,K,K,F,F,K,P2,P2,P2,P2,P2,K,F,F,K,K,L,L,B,K,_,_,_,_,_],
+        [_,_,_,_,K,B,L,K,K,F,F,K,P2,P2,P2,P2,P2,P2,K,F,F,K,K,L,B,K,_,_,_,_,_],
+        [_,_,_,_,K,B,L,L,K,K,K,P2,P2,P2,P2,P2,P2,P2,P2,K,K,K,L,L,B,K,_,_,_,_,_],
+        // Row 24-25: chin
+        [_,_,_,_,_,K,B,L,L,K,K,K,K,P2,P2,P2,P2,K,K,K,K,L,L,B,K,_,_,_,_,_,_,_],
+        [_,_,_,_,_,_,K,B,L,L,L,K,K,K,K,K,K,K,K,L,L,L,B,K,_,_,_,_,_,_,_,_],
+        // Row 26-28: lower jaw/neck
+        [_,_,_,_,_,_,_,K,B,L,L,L,L,L,L,L,L,L,L,L,L,B,K,_,_,_,_,_,_,_,_,_],
+        [_,_,_,_,_,_,_,_,K,B,B,L,L,L,L,L,L,L,L,B,B,K,_,_,_,_,_,_,_,_,_,_],
+        [_,_,_,_,_,_,_,_,_,K,K,B,B,B,B,B,B,B,B,K,K,_,_,_,_,_,_,_,_,_,_,_],
+        // Row 29-31: bottom
+        [_,_,_,_,_,_,_,_,_,_,K,K,K,K,K,K,K,K,K,K,_,_,_,_,_,_,_,_,_,_,_,_],
+        [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+        [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+      ];
+
+      dog.forEach((row, y) => {
+        row.forEach((c, x) => {
+          if(c) {
+            dx.fillStyle = c;
+            dx.fillRect(x*P, y*P, P, P);
+          }
+        });
+      });
+
+      // Add red eye glow effect
+      dx.globalCompositeOperation = 'lighter';
+      dx.fillStyle = 'rgba(255,0,0,0.15)';
+      dx.beginPath(); dx.arc(12*P, 13*P, 4*P, 0, Math.PI*2); dx.fill();
+      dx.beginPath(); dx.arc(20*P, 13*P, 4*P, 0, Math.PI*2); dx.fill();
+      dx.globalCompositeOperation = 'source-over';
+    })();
+
     // generate random stars
     const container = document.getElementById('stars');
     for (let i = 0; i < 80; i++) {
