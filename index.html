@@ -88,6 +88,30 @@
       height: 100%;
     }
 
+    .sideeye-wrap {
+      position: relative;
+      width: clamp(90px, 16vw, 160px);
+      height: clamp(90px, 16vw, 160px);
+      animation: float 4s ease-in-out infinite;
+      animation-delay: 1s;
+    }
+
+    .sideeye-wrap canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .sideeye-caption {
+      font-size: clamp(5px, 1.2vw, 9px);
+      color: #ff44ff;
+      text-shadow: 0 0 10px rgba(255,68,255,0.6), 0 0 30px rgba(255,68,255,0.3);
+      text-align: center;
+      letter-spacing: 0.05em;
+      animation: caption-pulse 2s ease-in-out infinite;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
     .planet {
       width: 100%;
       height: 100%;
@@ -235,6 +259,12 @@
       </div>
       <div class="dog-wrap">
         <canvas id="dogCanvas" width="300" height="300"></canvas>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="sideeye-caption">BOMBASTIC SIDEEYE</div>
+        <div class="sideeye-wrap">
+          <canvas id="sideEyeCanvas" width="300" height="300"></canvas>
+        </div>
       </div>
     </div>
 
@@ -595,6 +625,238 @@
       rimG.addColorStop(1,'rgba(0,0,0,0)');
       c.fillStyle=rimG;
       c.fillRect(0,0,W,H);
+    })();
+
+    // Draw animated side-eye face
+    (function(){
+      const sc = document.getElementById('sideEyeCanvas');
+      const c = sc.getContext('2d');
+      const W = 300, H = 300;
+      const cx = W/2, cy = 155;
+
+      function softEll(x,y,rx,ry,color,rot){
+        c.fillStyle=color;
+        c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);c.fill();
+      }
+
+      function drawFace(eyeOffX, eyeOffY) {
+        c.clearRect(0,0,W,H);
+
+        // Neck
+        const neckG = c.createLinearGradient(cx,cy+60,cx,cy+100);
+        neckG.addColorStop(0,'#c89060');
+        neckG.addColorStop(1,'#a07040');
+        softEll(cx,cy+82,60,28,neckG);
+
+        // Head shape
+        const headG = c.createRadialGradient(cx,cy-10,15,cx,cy+5,90);
+        headG.addColorStop(0,'#f0c080');
+        headG.addColorStop(0.4,'#e0a868');
+        headG.addColorStop(0.8,'#c89050');
+        headG.addColorStop(1,'#a07030');
+        c.fillStyle=headG;
+        c.beginPath();
+        c.ellipse(cx,cy,85,80,0,0,Math.PI*2);
+        c.fill();
+
+        // Ears (round, cat-like)
+        for(let side=-1;side<=1;side+=2){
+          const ex = cx+side*52;
+          const earG = c.createRadialGradient(ex,cy-60,5,ex,cy-55,35);
+          earG.addColorStop(0,'#e8a860');
+          earG.addColorStop(1,'#b07830');
+          c.fillStyle=earG;
+          c.beginPath();
+          c.moveTo(ex-side*15, cy-50);
+          c.bezierCurveTo(ex-side*20, cy-100, ex+side*25, cy-105, ex+side*20, cy-55);
+          c.closePath();
+          c.fill();
+
+          // Inner ear
+          const earInG = c.createRadialGradient(ex+side*2,cy-70,2,ex+side*2,cy-65,18);
+          earInG.addColorStop(0,'#f0b8a0');
+          earInG.addColorStop(1,'#e09878');
+          c.fillStyle=earInG;
+          c.beginPath();
+          c.moveTo(ex-side*8, cy-55);
+          c.bezierCurveTo(ex-side*12, cy-92, ex+side*18, cy-95, ex+side*14, cy-58);
+          c.closePath();
+          c.fill();
+        }
+
+        // Muzzle area (lighter)
+        const muzzG = c.createRadialGradient(cx,cy+20,5,cx,cy+20,40);
+        muzzG.addColorStop(0,'#fff4e8');
+        muzzG.addColorStop(0.6,'#f8e8d4');
+        muzzG.addColorStop(1,'#e8d0b8');
+        softEll(cx,cy+22,38,30,muzzG);
+
+        // === EYES (animated) ===
+        const eyeY = cy-12;
+        const eyeSpread = 34;
+
+        for(let side=-1;side<=1;side+=2){
+          const ex = cx+eyeSpread*side;
+
+          // Eye white - big expressive eyes
+          const ewG = c.createRadialGradient(ex,eyeY,2,ex,eyeY,18);
+          ewG.addColorStop(0,'#ffffff');
+          ewG.addColorStop(0.8,'#f4f0ea');
+          ewG.addColorStop(1,'#e0d8cc');
+          c.fillStyle=ewG;
+          c.beginPath();
+          c.ellipse(ex, eyeY, 18, 16, 0, 0, Math.PI*2);
+          c.fill();
+
+          // Eye outline
+          c.strokeStyle='#4a2a10';
+          c.lineWidth=2;
+          c.beginPath();
+          c.ellipse(ex, eyeY, 18, 16, 0, 0, Math.PI*2);
+          c.stroke();
+
+          // Iris (shifted by eyeOffX, eyeOffY for side-eye)
+          const irisX = ex + eyeOffX;
+          const irisY = eyeY + eyeOffY;
+          const iG = c.createRadialGradient(irisX,irisY,1,irisX,irisY,10);
+          iG.addColorStop(0,'#5a3818');
+          iG.addColorStop(0.5,'#3a2008');
+          iG.addColorStop(1,'#2a1505');
+          c.fillStyle=iG;
+          c.beginPath();c.arc(irisX,irisY,10,0,Math.PI*2);c.fill();
+
+          // Pupil
+          c.fillStyle='#0a0502';
+          c.beginPath();c.arc(irisX,irisY+0.5,5.5,0,Math.PI*2);c.fill();
+
+          // Eye shine
+          c.fillStyle='rgba(255,255,255,0.92)';
+          c.beginPath();c.arc(irisX+3,irisY-3,3,0,Math.PI*2);c.fill();
+          c.fillStyle='rgba(255,255,255,0.45)';
+          c.beginPath();c.arc(irisX-2,irisY+2.5,1.5,0,Math.PI*2);c.fill();
+
+          // Eyelid (half-closed for the side-eye look)
+          c.fillStyle=headG;
+          c.beginPath();
+          c.ellipse(ex, eyeY-10, 20, 10, 0, 0, Math.PI*2);
+          c.fill();
+          // Redraw upper eye boundary
+          c.strokeStyle='#4a2a10';
+          c.lineWidth=2.5;
+          c.beginPath();
+          c.ellipse(ex, eyeY, 18, 16, 0, Math.PI+0.3, Math.PI*2-0.3);
+          c.stroke();
+
+          // Eyelashes
+          c.strokeStyle='#3a1a08';
+          c.lineWidth=1.5;
+          c.beginPath();c.moveTo(ex+side*16,eyeY-6);c.lineTo(ex+side*21,eyeY-12);c.stroke();
+          c.beginPath();c.moveTo(ex+side*13,eyeY-10);c.lineTo(ex+side*17,eyeY-16);c.stroke();
+        }
+
+        // Eyebrow on one side raised for sass
+        c.strokeStyle='#5a3018';
+        c.lineWidth=3;
+        c.lineCap='round';
+        // Left eyebrow (raised)
+        c.beginPath();
+        c.moveTo(cx-55, cy-38);
+        c.bezierCurveTo(cx-45, cy-48, cx-25, cy-48, cx-15, cy-38);
+        c.stroke();
+        // Right eyebrow (flat/slightly raised)
+        c.beginPath();
+        c.moveTo(cx+15, cy-34);
+        c.bezierCurveTo(cx+25, cy-40, cx+45, cy-40, cx+55, cy-34);
+        c.stroke();
+
+        // Nose
+        const noseG = c.createRadialGradient(cx-1,cy+10,2,cx,cy+14,10);
+        noseG.addColorStop(0,'#333');
+        noseG.addColorStop(1,'#111');
+        c.fillStyle=noseG;
+        c.beginPath();
+        c.moveTo(cx, cy+6);
+        c.bezierCurveTo(cx-10, cy+5, cx-12, cy+14, cx-6, cy+18);
+        c.bezierCurveTo(cx-2, cy+20, cx+2, cy+20, cx+6, cy+18);
+        c.bezierCurveTo(cx+12, cy+14, cx+10, cy+5, cx, cy+6);
+        c.fill();
+
+        // Nose shine
+        c.fillStyle='rgba(255,255,255,0.15)';
+        c.beginPath();c.ellipse(cx-2,cy+10,3,2,0.3,0,Math.PI*2);c.fill();
+
+        // Smirk (one-sided smile for sass)
+        c.strokeStyle='#5a3018';
+        c.lineWidth=2.5;
+        c.lineCap='round';
+        c.beginPath();
+        c.moveTo(cx-30, cy+32);
+        c.bezierCurveTo(cx-15, cy+36, cx+5, cy+36, cx+15, cy+32);
+        c.bezierCurveTo(cx+25, cy+28, cx+32, cy+24, cx+35, cy+20);
+        c.stroke();
+
+        // Cheek blush
+        softEll(cx-40, cy+18, 12, 8, 'rgba(255,120,120,0.12)');
+        softEll(cx+42, cy+18, 12, 8, 'rgba(255,120,120,0.12)');
+
+        // Fur texture
+        const seed = 77;
+        function prand(i){ return ((Math.sin(i*127.1+seed)*43758.5453)%1+1)%1; }
+        c.lineWidth=0.7;
+        for(let i=0;i<80;i++){
+          const angle = prand(i)*Math.PI*2;
+          const dist = 35+prand(i+500)*50;
+          const fx = cx+Math.cos(angle)*dist;
+          const fy = cy+Math.sin(angle)*dist*0.85;
+          if(Math.abs(fx-cx)<30 && fy>cy) continue;
+          const fl = 3+prand(i+200)*6;
+          const fa = angle+Math.PI+(-0.3+prand(i+300)*0.6);
+          const bright = 160+Math.floor(prand(i+400)*50);
+          c.strokeStyle=`rgba(${bright},${Math.floor(bright*0.65)},${Math.floor(bright*0.35)},0.07)`;
+          c.beginPath();
+          c.moveTo(fx,fy);
+          c.lineTo(fx+Math.cos(fa)*fl, fy+Math.sin(fa)*fl);
+          c.stroke();
+        }
+
+        // Top light
+        const topLight = c.createRadialGradient(cx-20,cy-60,10,cx,cy,100);
+        topLight.addColorStop(0,'rgba(255,240,200,0.08)');
+        topLight.addColorStop(1,'rgba(0,0,0,0)');
+        c.fillStyle=topLight;
+        c.fillRect(0,0,W,H);
+      }
+
+      // Animate eyes looking to the side
+      let t = 0;
+      function animate(){
+        t += 0.025;
+        // Eyes drift to the right and slightly up, then hold, then drift back
+        const cycle = t % (Math.PI*2);
+        let offX, offY;
+        if(cycle < 1.5) {
+          // Moving to side-eye position
+          const p = cycle / 1.5;
+          offX = 7 * p;
+          offY = -2 * p;
+        } else if(cycle < 4.5) {
+          // Holding side-eye
+          offX = 7;
+          offY = -2;
+        } else if(cycle < 5.5) {
+          // Quick glance back to center
+          const p = (cycle - 4.5) / 1.0;
+          offX = 7 * (1 - p);
+          offY = -2 * (1 - p);
+        } else {
+          // Brief center hold
+          offX = 0;
+          offY = 0;
+        }
+        drawFace(offX, offY);
+        requestAnimationFrame(animate);
+      }
+      animate();
     })();
 
     // generate random stars
