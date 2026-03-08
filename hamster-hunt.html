@@ -25,23 +25,29 @@ body{background:#0a0800;color:#e8e0d0;font-family:'Press Start 2P',monospace;dis
 .sprint-bar{width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;border:1px solid rgba(77,172,255,0.3)}
 .sprint-fill{height:100%;border-radius:3px;background:#4dacff;transition:width 0.2s}
 
-.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,0.88);text-align:center;cursor:default;overflow-y:auto;padding:20px}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:flex-start;z-index:20;background:rgba(0,0,0,0.92);text-align:center;cursor:default;overflow-y:auto;padding:20px}
 .overlay.show{display:flex}
-.overlay h1{font-size:clamp(18px,5vw,38px);margin-bottom:10px}
-.overlay .sub{font-size:10px;color:#aaa;margin-bottom:16px;line-height:1.8}
-.overlay .info{font-size:8px;color:#666;margin-bottom:16px;line-height:2}
+.overlay h1{font-size:clamp(18px,5vw,38px);margin:16px 0 10px}
+.overlay .sub{font-size:10px;color:#aaa;margin-bottom:12px;line-height:1.8}
+.overlay .info{font-size:8px;color:#666;margin-bottom:12px;line-height:2}
 
 .btn{font-family:'Press Start 2P',monospace;font-size:11px;padding:12px 28px;border:2px solid #ff9933;border-radius:8px;background:rgba(255,153,51,0.1);color:#ff9933;cursor:pointer;transition:all 0.3s;margin:5px}
 .btn:hover{background:rgba(255,153,51,0.25);box-shadow:0 0 20px rgba(255,153,51,0.3);transform:scale(1.05)}
 .btn.g{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.08)}
 .btn.g:hover{background:rgba(68,255,68,0.2)}
 
-.lvl-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;max-width:480px;margin:12px auto;max-height:50vh;overflow-y:auto;padding:4px}
-.lt{width:40px;height:40px;border:2px solid rgba(255,153,51,0.2);border-radius:5px;background:rgba(255,153,51,0.04);display:flex;align-items:center;justify-content:center;font-size:7px;color:#777;cursor:pointer;transition:all 0.2s}
-.lt:hover{border-color:#ff9933;transform:scale(1.1);background:rgba(255,153,51,0.12)}
-.lt.beat{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.06)}
+.theme-section{width:100%;max-width:520px;margin:0 auto 16px}
+.theme-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.08)}
+.theme-icon{font-size:16px;width:28px;text-align:center}
+.theme-name{font-size:8px;letter-spacing:1px;text-transform:uppercase}
+.theme-desc{font-size:6px;color:#888;margin-top:2px}
+
+.lvl-row{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-bottom:4px}
+.lt{width:38px;height:38px;border:2px solid rgba(255,153,51,0.2);border-radius:5px;background:rgba(255,153,51,0.04);display:flex;align-items:center;justify-content:center;font-size:7px;color:#777;cursor:pointer;transition:all 0.2s}
+.lt:hover{transform:scale(1.1);background:rgba(255,153,51,0.12)}
+.lt.beat{color:#44ff44;background:rgba(68,255,68,0.06)}
 .lt.locked{opacity:0.25;cursor:default;pointer-events:none}
-.lt.cur{border-color:#ffd700;color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,0.3)}
+.lt.cur{color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,0.3)}
 
 .stats{font-size:10px;color:#aaa;margin-bottom:16px;line-height:2.2}
 .stats span{color:#ff9933}
@@ -55,7 +61,7 @@ body{background:#0a0800;color:#e8e0d0;font-family:'Press Start 2P',monospace;dis
 
 <div id="hud">
   <div class="hud-l">
-    <div><span class="hl">Level</span></div>
+    <div><span class="hl" id="hudTheme">Garden</span></div>
     <div><span class="hv" id="hudLvl">1</span></div>
     <div><span class="hl">Hamster</span></div>
     <div><span class="hs" id="hudStatus" style="color:#44ff44">Patrolling</span></div>
@@ -63,7 +69,7 @@ body{background:#0a0800;color:#e8e0d0;font-family:'Press Start 2P',monospace;dis
   <div class="hud-r">
     <div><span class="hl">Survive</span></div>
     <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:0%"></div></div>
-    <div><span class="hs" id="hudTime">5:00</span></div>
+    <div><span class="hs" id="hudTime">1:00</span></div>
     <div><span class="hl">Sprint</span></div>
     <div class="sprint-bar"><div class="sprint-fill" id="sprintFill" style="width:100%"></div></div>
   </div>
@@ -71,10 +77,10 @@ body{background:#0a0800;color:#e8e0d0;font-family:'Press Start 2P',monospace;dis
 
 <div id="menuScreen" class="overlay show">
   <h1 style="color:#ff9933;text-shadow:0 0 15px rgba(255,153,51,0.7),3px 3px 0 #5a2a00">HAMSTER HUNT</h1>
-  <div class="sub">Survive 5 minutes in a dark maze.<br>The hamster is hunting you. Don't get caught!</div>
+  <div class="sub">Survive 1 minute in a dark maze.<br>The hamsters are hunting you. Don't get caught!</div>
   <div class="info">WASD / ARROWS = Move &bull; SHIFT = Sprint<br>Hide behind walls to break line of sight!</div>
-  <div id="lvlGrid" class="lvl-grid"></div>
-  <a href="index.html" class="back-link" style="position:static">&larr; Back to Ollie's Universe</a>
+  <div id="lvlContainer"></div>
+  <div style="margin-top:8px"><a href="index.html" class="back-link" style="position:static">&larr; Back to Ollie's Universe</a></div>
 </div>
 
 <div id="caughtScreen" class="overlay">
@@ -110,6 +116,32 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
+// ============ THEMES ============
+const THEMES = [
+  { name:'Garden',    icon:'\u{1F331}', desc:'Sunny hedges & flower beds',
+    wall1:'#2d6e1e', wall2:'#3a8a28', floor1:'#5a3a1a', floor2:'#6b4422', fog:'rgba(0,30,0,0.8)', accent:'#44cc44' },
+  { name:'Dungeon',   icon:'\u{1F5FF}', desc:'Cold stone corridors',
+    wall1:'#3a3a44', wall2:'#4a4a55', floor1:'#222228', floor2:'#2a2a30', fog:'rgba(0,0,10,0.85)', accent:'#8888aa' },
+  { name:'Ice Cave',  icon:'\u{2744}\u{FE0F}',  desc:'Slippery frozen tunnels',
+    wall1:'#4488aa', wall2:'#55aacc', floor1:'#1a2a3a', floor2:'#223344', fog:'rgba(0,10,30,0.8)', accent:'#66ccff' },
+  { name:'Volcano',   icon:'\u{1F30B}', desc:'Rivers of lava below',
+    wall1:'#5a2211', wall2:'#6e2a14', floor1:'#1a0800', floor2:'#220c00', fog:'rgba(20,0,0,0.82)', accent:'#ff4422' },
+  { name:'Ocean',     icon:'\u{1F30A}', desc:'Sunken coral labyrinth',
+    wall1:'#1a5566', wall2:'#1f6a7a', floor1:'#0c2a33', floor2:'#103040', fog:'rgba(0,10,20,0.8)', accent:'#22bbcc' },
+  { name:'Desert',    icon:'\u{1F3DC}\u{FE0F}',  desc:'Ancient sandstone ruins',
+    wall1:'#aa8844', wall2:'#bb9955', floor1:'#3a2a10', floor2:'#443318', fog:'rgba(15,10,0,0.78)', accent:'#ddaa44' },
+  { name:'Haunted',   icon:'\u{1F47B}', desc:'The walls whisper...',
+    wall1:'#3a2244', wall2:'#4a2a55', floor1:'#1a0f22', floor2:'#221428', fog:'rgba(10,0,15,0.88)', accent:'#aa44ff' },
+  { name:'Space',     icon:'\u{1F680}', desc:'Zero-gravity alien maze',
+    wall1:'#1a1a3a', wall2:'#22224a', floor1:'#08081a', floor2:'#0c0c22', fog:'rgba(0,0,8,0.85)', accent:'#44ffaa' },
+  { name:'Crystal',   icon:'\u{1F48E}', desc:'Gleaming gem corridors',
+    wall1:'#553366', wall2:'#664488', floor1:'#1a1022', floor2:'#221428', fog:'rgba(8,0,12,0.82)', accent:'#ff66cc' },
+  { name:'Shadow',    icon:'\u{1F311}', desc:'Almost total darkness',
+    wall1:'#181818', wall2:'#222222', floor1:'#0a0a0a', floor2:'#0e0e0e', fog:'rgba(0,0,0,0.92)', accent:'#ff2222' },
+];
+
+function getTheme(lvl) { return THEMES[Math.floor((lvl-1)/10)]; }
+
 // ============ SAVE ============
 let sd = JSON.parse(localStorage.getItem('hh2') || '{"b":[]}');
 function save() { localStorage.setItem('hh2', JSON.stringify(sd)); }
@@ -138,8 +170,8 @@ function genMaze(w, h) {
       stk.push([nx,ny]);
     } else stk.pop();
   }
-  // Extra passages
-  for (let i = 0; i < w*h*0.04; i++) {
+  // Extra passages for more open areas
+  for (let i = 0; i < w*h*0.05; i++) {
     const rx=1+Math.floor(Math.random()*(w-2)), ry=1+Math.floor(Math.random()*(h-2));
     maze[ry][rx]=1;
   }
@@ -182,22 +214,22 @@ function hasLOS(x1,y1,x2,y2) {
 
 // ============ LEVEL CONFIG ============
 let curLvl = 1;
-const SURVIVE = 300;
+const SURVIVE = 60; // 1 minute
 
 function cfg(lvl) {
   const t=(lvl-1)/99;
   return {
     mazeSize: (Math.floor(11+t*18))|1, // 11 to 29, odd
-    hSpeed: 1.8+t*3.2,
-    hChase: 2.8+t*5.2,
-    hDetect: 5+t*12,
-    hLoseTime: Math.max(1.5, 6-t*4.5),
-    hPatrol: 1.2+t*2.3,
+    hSpeed: 2.4+t*3.6,
+    hChase: 3.6+t*5.4,
+    hDetect: 6+t*14,
+    hLoseTime: Math.max(1, 5-t*4),
+    hPatrol: 1.6+t*2.8,
     pSpeed: 3.2,
     sprint: 5.5,
-    sprintMax: 3-t*1.2,
-    sprintRecharge: 4,
-    numH: Math.min(5, 1+Math.floor(t*4.5)),
+    sprintMax: 2.5-t*1,
+    sprintRecharge: 4.5+t*2,
+    numH: Math.min(6, 1+Math.floor(t*5.5)),
   };
 }
 
@@ -234,7 +266,7 @@ function spawnHamsters(lvl) {
       chaseTimer:0, searchTimer:0,
       lastSeenX:0, lastSeenY:0,
       animPhase: Math.random()*Math.PI*2,
-      dir: 0,
+      dir: 0, legPhase:0,
     });
   }
 }
@@ -244,18 +276,38 @@ function showMenu() {
   hideAll();
   document.getElementById('menuScreen').classList.add('show');
   state = 'menu';
-  const g = document.getElementById('lvlGrid');
-  g.innerHTML = '';
+  const container = document.getElementById('lvlContainer');
+  container.innerHTML = '';
   const mu = maxUnlocked();
-  for (let i=1;i<=100;i++) {
-    const t=document.createElement('div');
-    t.className='lt';
-    if(sd.b.includes(i)) t.classList.add('beat');
-    else if(i>mu) t.classList.add('locked');
-    if(i===mu&&!sd.b.includes(i)) t.classList.add('cur');
-    t.textContent=i;
-    if(i<=mu) t.onclick=()=>launch(i);
-    g.appendChild(t);
+
+  for (let ti=0; ti<10; ti++) {
+    const theme = THEMES[ti];
+    const section = document.createElement('div');
+    section.className = 'theme-section';
+
+    const header = document.createElement('div');
+    header.className = 'theme-header';
+    header.style.borderColor = theme.accent + '33';
+    header.style.background = theme.accent + '0a';
+    header.innerHTML = `<div class="theme-icon">${theme.icon}</div><div><div class="theme-name" style="color:${theme.accent}">${theme.name}</div><div class="theme-desc">${theme.desc}</div></div>`;
+    section.appendChild(header);
+
+    const row = document.createElement('div');
+    row.className = 'lvl-row';
+    for (let li=0; li<10; li++) {
+      const lvl = ti*10+li+1;
+      const t = document.createElement('div');
+      t.className = 'lt';
+      t.style.borderColor = theme.accent + '33';
+      if(sd.b.includes(lvl)) { t.classList.add('beat'); t.style.borderColor = '#44ff44'; }
+      else if(lvl>mu) t.classList.add('locked');
+      if(lvl===mu&&!sd.b.includes(lvl)) { t.classList.add('cur'); t.style.borderColor = theme.accent; }
+      t.textContent = lvl;
+      if(lvl<=mu) t.onclick = () => launch(lvl);
+      row.appendChild(t);
+    }
+    section.appendChild(row);
+    container.appendChild(section);
   }
 }
 
@@ -267,15 +319,16 @@ function hideAll() {
 function launch(lvl) {
   curLvl=lvl;
   const c=cfg(lvl);
-  let ms=c.mazeSize;
-  genMaze(ms,ms);
+  genMaze(c.mazeSize, c.mazeSize);
   // Place player
-  for(let y=1;y<ms;y++) for(let x=1;x<ms;x++) if(maze[y][x]===1){px=x+0.5;py=y+0.5;break;}
+  for(let y=1;y<c.mazeSize;y++) for(let x=1;x<c.mazeSize;x++) if(maze[y][x]===1){px=x+0.5;py=y+0.5;break;}
   spawnHamsters(lvl);
   gTime=0; sprintAmt=0; sprintCD=0; dangerFlash=0;
   hideAll();
   document.getElementById('hud').style.display='flex';
   document.getElementById('hudLvl').textContent=lvl;
+  const theme = getTheme(lvl);
+  document.getElementById('hudTheme').textContent = theme.icon + ' ' + theme.name;
   state='playing';
   lastTime=performance.now();
 }
@@ -311,12 +364,10 @@ function winLvl() {
 function tryMove(ox,oy,dx,dy) {
   const r=0.2;
   let nx=ox+dx, ny=oy+dy;
-  // X
   if(dx!==0) {
     const testX=dx>0?nx+r:nx-r;
     if(isWall(Math.floor(testX),Math.floor(oy-r))||isWall(Math.floor(testX),Math.floor(oy+r-0.01))) nx=ox;
   }
-  // Y
   if(dy!==0) {
     const testY=dy>0?ny+r:ny-r;
     if(isWall(Math.floor(nx-r),Math.floor(testY))||isWall(Math.floor(nx+r-0.01),Math.floor(testY))) ny=oy;
@@ -392,6 +443,7 @@ function update() {
     }
 
     h.animPhase+=dt*(h.state==='chase'?14:6);
+    h.legPhase+=dt*(h.state==='chase'?18:8);
   });
 
   // Danger flash
@@ -423,6 +475,227 @@ function moveH(h,spd,dt){
   else{h.x+=dx/d*mv;h.y+=dy/d*mv;}
 }
 
+// ============ DRAW HAMSTER ============
+function drawHamster(h, camX, camY) {
+  const hsx=(h.x-camX)*TILE, hsy=(h.y-camY)*TILE;
+  const bob=Math.abs(Math.sin(h.animPhase))*2;
+  const sz=TILE*0.8;
+  const isChase = h.state==='chase';
+  const isSearch = h.state==='search';
+  const theme = getTheme(curLvl);
+  const t = (curLvl-1)/99;
+
+  ctx.save();
+  ctx.translate(hsx, hsy-bob);
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, bob+sz*0.32, sz*0.38, sz*0.12, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Facing direction
+  const facingX = Math.cos(h.dir);
+  const facingY = Math.sin(h.dir);
+  const perpX = -Math.sin(h.dir);
+  const perpY = Math.cos(h.dir);
+
+  // Back legs (behind body)
+  const legSwing = Math.sin(h.legPhase)*sz*0.08;
+  ctx.fillStyle = '#cc9966';
+  // Left back leg
+  ctx.beginPath();
+  ctx.ellipse(-facingX*sz*0.22+perpX*sz*0.28, -facingY*sz*0.22+perpY*sz*0.28+sz*0.15+legSwing, sz*0.09, sz*0.06, h.dir, 0, Math.PI*2);
+  ctx.fill();
+  // Right back leg
+  ctx.beginPath();
+  ctx.ellipse(-facingX*sz*0.22-perpX*sz*0.28, -facingY*sz*0.22-perpY*sz*0.28+sz*0.15-legSwing, sz*0.09, sz*0.06, h.dir, 0, Math.PI*2);
+  ctx.fill();
+
+  // Tail (small round puff)
+  ctx.fillStyle = '#e8c8a8';
+  ctx.beginPath();
+  ctx.arc(-facingX*sz*0.42, -facingY*sz*0.42, sz*0.07, 0, Math.PI*2);
+  ctx.fill();
+
+  // Body (chubby oval)
+  const bodyColor = isChase ? '#cc5533' : isSearch ? '#cc8844' : '#d4a060';
+  ctx.fillStyle = bodyColor;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, sz*0.38, sz*0.28, h.dir, 0, Math.PI*2);
+  ctx.fill();
+
+  // Belly (lighter patch)
+  ctx.fillStyle = isChase ? '#dd8866' : '#f0d8b8';
+  ctx.beginPath();
+  ctx.ellipse(-facingX*sz*0.02, -facingY*sz*0.02+sz*0.04, sz*0.24, sz*0.16, h.dir, 0, Math.PI*2);
+  ctx.fill();
+
+  // Fur texture stripes
+  ctx.strokeStyle = isChase ? 'rgba(80,20,0,0.15)' : 'rgba(120,80,40,0.12)';
+  ctx.lineWidth = 0.5;
+  for(let i=-2;i<=2;i++){
+    ctx.beginPath();
+    ctx.moveTo(perpX*i*sz*0.1-facingX*sz*0.2, perpY*i*sz*0.1-facingY*sz*0.2);
+    ctx.lineTo(perpX*i*sz*0.1+facingX*sz*0.15, perpY*i*sz*0.1+facingY*sz*0.15);
+    ctx.stroke();
+  }
+
+  // Front legs
+  ctx.fillStyle = '#cc9966';
+  // Left front leg
+  ctx.beginPath();
+  ctx.ellipse(facingX*sz*0.2+perpX*sz*0.24, facingY*sz*0.2+perpY*sz*0.24+sz*0.14-legSwing, sz*0.07, sz*0.05, h.dir, 0, Math.PI*2);
+  ctx.fill();
+  // Right front leg
+  ctx.beginPath();
+  ctx.ellipse(facingX*sz*0.2-perpX*sz*0.24, facingY*sz*0.2-perpY*sz*0.24+sz*0.14+legSwing, sz*0.07, sz*0.05, h.dir, 0, Math.PI*2);
+  ctx.fill();
+
+  // Tiny paw details
+  ctx.fillStyle = '#ffccaa';
+  ctx.beginPath();
+  ctx.arc(facingX*sz*0.28+perpX*sz*0.24, facingY*sz*0.28+perpY*sz*0.24+sz*0.14-legSwing, sz*0.035, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(facingX*sz*0.28-perpX*sz*0.24, facingY*sz*0.28-perpY*sz*0.24+sz*0.14+legSwing, sz*0.035, 0, Math.PI*2);
+  ctx.fill();
+
+  // Head
+  const headDist = sz*0.32;
+  const headX = facingX*headDist;
+  const headY = facingY*headDist;
+  ctx.fillStyle = isChase ? '#cc5533' : '#d4a060';
+  ctx.beginPath();
+  ctx.arc(headX, headY, sz*0.22, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cheek pouches
+  ctx.fillStyle = isChase ? '#dd7755' : '#e8c0a0';
+  ctx.beginPath();
+  ctx.ellipse(headX+perpX*sz*0.18, headY+perpY*sz*0.18, sz*0.1, sz*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(headX-perpX*sz*0.18, headY-perpY*sz*0.18, sz*0.1, sz*0.08, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Cheek blush
+  ctx.fillStyle = isChase ? 'rgba(255,100,50,0.3)' : 'rgba(255,150,150,0.25)';
+  ctx.beginPath();
+  ctx.arc(headX+perpX*sz*0.16+facingX*sz*0.06, headY+perpY*sz*0.16+facingY*sz*0.06, sz*0.06, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(headX-perpX*sz*0.16+facingX*sz*0.06, headY-perpY*sz*0.16+facingY*sz*0.06, sz*0.06, 0, Math.PI*2);
+  ctx.fill();
+
+  // Ears
+  const earSize = sz*0.12;
+  // Left ear (outer)
+  ctx.fillStyle = isChase ? '#bb4422' : '#c89060';
+  ctx.beginPath();
+  ctx.arc(headX+perpX*sz*0.18-facingY*sz*0.06, headY+perpY*sz*0.18-sz*0.16, earSize, 0, Math.PI*2);
+  ctx.fill();
+  // Left ear (inner pink)
+  ctx.fillStyle = isChase ? '#ff6644' : '#ffaaaa';
+  ctx.beginPath();
+  ctx.arc(headX+perpX*sz*0.18-facingY*sz*0.06, headY+perpY*sz*0.18-sz*0.16, earSize*0.6, 0, Math.PI*2);
+  ctx.fill();
+  // Right ear (outer)
+  ctx.fillStyle = isChase ? '#bb4422' : '#c89060';
+  ctx.beginPath();
+  ctx.arc(headX-perpX*sz*0.18-facingY*sz*0.06, headY-perpY*sz*0.18-sz*0.16, earSize, 0, Math.PI*2);
+  ctx.fill();
+  // Right ear (inner pink)
+  ctx.fillStyle = isChase ? '#ff6644' : '#ffaaaa';
+  ctx.beginPath();
+  ctx.arc(headX-perpX*sz*0.18-facingY*sz*0.06, headY-perpY*sz*0.18-sz*0.16, earSize*0.6, 0, Math.PI*2);
+  ctx.fill();
+
+  // Eyes
+  const eyeOff = sz*0.1;
+  const eyeFwd = sz*0.12;
+  const eyeX1 = headX+facingX*eyeFwd+perpX*eyeOff;
+  const eyeY1 = headY+facingY*eyeFwd+perpY*eyeOff;
+  const eyeX2 = headX+facingX*eyeFwd-perpX*eyeOff;
+  const eyeY2 = headY+facingY*eyeFwd-perpY*eyeOff;
+
+  // Eye whites
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(eyeX1, eyeY1, sz*0.065, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(eyeX2, eyeY2, sz*0.065, 0, Math.PI*2);
+  ctx.fill();
+
+  // Pupils (red when chasing)
+  ctx.fillStyle = isChase ? '#ff0000' : '#111';
+  const pupilSize = isChase ? sz*0.055 : sz*0.04;
+  ctx.beginPath();
+  ctx.arc(eyeX1+facingX*sz*0.015, eyeY1+facingY*sz*0.015, pupilSize, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(eyeX2+facingX*sz*0.015, eyeY2+facingY*sz*0.015, pupilSize, 0, Math.PI*2);
+  ctx.fill();
+
+  // Eye shine
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.beginPath();
+  ctx.arc(eyeX1+sz*0.02, eyeY1-sz*0.02, sz*0.02, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(eyeX2+sz*0.02, eyeY2-sz*0.02, sz*0.02, 0, Math.PI*2);
+  ctx.fill();
+
+  // Eye glow when chasing
+  if(isChase){
+    ctx.fillStyle='rgba(255,0,0,0.25)';
+    ctx.beginPath();
+    ctx.arc(eyeX1, eyeY1, sz*0.14, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(eyeX2, eyeY2, sz*0.14, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Nose
+  ctx.fillStyle = isChase ? '#ff4444' : '#ff8888';
+  ctx.beginPath();
+  ctx.arc(headX+facingX*sz*0.2, headY+facingY*sz*0.2, sz*0.04, 0, Math.PI*2);
+  ctx.fill();
+
+  // Whiskers
+  ctx.strokeStyle = isChase ? 'rgba(255,100,50,0.5)' : 'rgba(160,120,80,0.4)';
+  ctx.lineWidth = 0.8;
+  const noseX = headX+facingX*sz*0.2;
+  const noseY = headY+facingY*sz*0.2;
+  for(let side=-1;side<=1;side+=2){
+    for(let w=0;w<3;w++){
+      const angle = h.dir + side*0.6 + (w-1)*side*0.25;
+      ctx.beginPath();
+      ctx.moveTo(noseX+perpX*side*sz*0.04, noseY+perpY*side*sz*0.04);
+      ctx.lineTo(noseX+Math.cos(angle)*sz*0.22+perpX*side*sz*0.04, noseY+Math.sin(angle)*sz*0.22+perpY*side*sz*0.04);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // Status indicators above hamster
+  if(isChase){
+    ctx.fillStyle='#ff0000';
+    ctx.font='bold 14px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('!',hsx,hsy-TILE*0.9-bob);
+  }
+  if(isSearch){
+    ctx.fillStyle='#ff8800';
+    ctx.font='bold 10px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('?',hsx,hsy-TILE*0.8-bob);
+  }
+}
+
 // ============ DRAW ============
 function draw() {
   ctx.clearRect(0,0,C.width,C.height);
@@ -430,46 +703,45 @@ function draw() {
 
   const camX=px-viewTilesX/2;
   const camY=py-viewTilesY/2;
+  const theme=getTheme(curLvl);
+  const t=(curLvl-1)/99;
 
   // Draw tiles
   const startTX=Math.floor(camX), startTY=Math.floor(camY);
   const endTX=startTX+viewTilesX+2, endTY=startTY+viewTilesY+2;
-
-  const t=(curLvl-1)/99;
 
   for(let ty=startTY;ty<endTY;ty++){
     for(let tx=startTX;tx<endTX;tx++){
       const sx=(tx-camX)*TILE, sy=(ty-camY)*TILE;
       if(tx<0||tx>=mW||ty<0||ty>=mH||maze[ty][tx]===0){
         // Wall
-        const shade=Math.floor(25+t*15);
-        ctx.fillStyle=`rgb(${shade+10},${shade},${shade-5})`;
+        ctx.fillStyle=theme.wall1;
         ctx.fillRect(sx,sy,TILE+1,TILE+1);
-        // Wall detail
-        ctx.fillStyle=`rgb(${shade+18},${shade+8},${shade})`;
+        // Wall highlight
+        ctx.fillStyle=theme.wall2;
         ctx.fillRect(sx+1,sy+1,TILE-2,1);
         ctx.fillRect(sx+1,sy+1,1,TILE-2);
+        // Wall shadow
+        ctx.fillStyle='rgba(0,0,0,0.2)';
+        ctx.fillRect(sx+TILE-1,sy+1,1,TILE-1);
+        ctx.fillRect(sx+1,sy+TILE-1,TILE-1,1);
       } else {
         // Floor
-        ctx.fillStyle=`rgb(${15+Math.floor(t*8)},${12+Math.floor(t*4)},${8})`;
+        ctx.fillStyle=((tx+ty)%2===0)?theme.floor1:theme.floor2;
         ctx.fillRect(sx,sy,TILE+1,TILE+1);
-        // Floor texture
-        if((tx+ty)%2===0){
-          ctx.fillStyle='rgba(255,255,255,0.02)';
-          ctx.fillRect(sx,sy,TILE,TILE);
-        }
       }
     }
   }
 
-  // Lighting effect - darken distant tiles, glow around player
-  const gradient=ctx.createRadialGradient(C.width/2,C.height/2,TILE*2,C.width/2,C.height/2,TILE*(4+t*3));
+  // Lighting - radial darkness
+  const lightRadius = TILE*(4.5-t*1.5);
+  const gradient=ctx.createRadialGradient(C.width/2,C.height/2,TILE*2,C.width/2,C.height/2,lightRadius);
   gradient.addColorStop(0,'rgba(0,0,0,0)');
-  gradient.addColorStop(1,'rgba(0,0,0,0.85)');
+  gradient.addColorStop(1,theme.fog);
   ctx.fillStyle=gradient;
   ctx.fillRect(0,0,C.width,C.height);
 
-  // Hamster detection range visualization (faint circle)
+  // Hamster detection range visualization
   const c2=cfg(curLvl);
   hamsters.forEach(h=>{
     if(h.state==='chase'||h.state==='search'){
@@ -484,92 +756,7 @@ function draw() {
   });
 
   // Draw hamsters
-  hamsters.forEach(h=>{
-    const hsx=(h.x-camX)*TILE, hsy=(h.y-camY)*TILE;
-    const bob=Math.abs(Math.sin(h.animPhase))*3;
-    const sz=TILE*0.7;
-
-    // Body
-    const bodyColor=h.state==='chase'?`rgb(255,${50+Math.floor(Math.sin(h.animPhase*2)*30)},0)`:
-      h.state==='search'?'rgb(255,140,50)':
-      `rgb(${200+Math.floor(t*55)},${130-Math.floor(t*80)},${60-Math.floor(t*40)})`;
-
-    ctx.save();
-    ctx.translate(hsx, hsy-bob);
-
-    // Shadow
-    ctx.fillStyle='rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(0,bob+sz*0.3,sz*0.4,sz*0.15,0,0,Math.PI*2);
-    ctx.fill();
-
-    // Body
-    ctx.fillStyle=bodyColor;
-    ctx.beginPath();
-    ctx.ellipse(0,0,sz*0.45,sz*0.35,0,0,Math.PI*2);
-    ctx.fill();
-
-    // Head
-    const headX=Math.cos(h.dir)*sz*0.3;
-    const headY=Math.sin(h.dir)*sz*0.3;
-    ctx.fillStyle=bodyColor;
-    ctx.beginPath();
-    ctx.arc(headX,headY,sz*0.25,0,Math.PI*2);
-    ctx.fill();
-
-    // Eyes (glow when chasing)
-    const eyeGlow=h.state==='chase'?'#ff0000':'#220000';
-    const eyeOff=sz*0.12;
-    const perpX=-Math.sin(h.dir)*eyeOff;
-    const perpY=Math.cos(h.dir)*eyeOff;
-    const eyeForward=sz*0.15;
-    ctx.fillStyle=eyeGlow;
-    ctx.beginPath();
-    ctx.arc(headX+Math.cos(h.dir)*eyeForward+perpX, headY+Math.sin(h.dir)*eyeForward+perpY, sz*0.06+t*0.03,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(headX+Math.cos(h.dir)*eyeForward-perpX, headY+Math.sin(h.dir)*eyeForward-perpY, sz*0.06+t*0.03,0,Math.PI*2);
-    ctx.fill();
-
-    // Eye glow effect when chasing
-    if(h.state==='chase'){
-      ctx.fillStyle='rgba(255,0,0,0.3)';
-      ctx.beginPath();
-      ctx.arc(headX+Math.cos(h.dir)*eyeForward, headY+Math.sin(h.dir)*eyeForward, sz*0.2,0,Math.PI*2);
-      ctx.fill();
-    }
-
-    // Ears
-    ctx.fillStyle='#ffaa88';
-    ctx.beginPath();
-    ctx.arc(headX+perpX*2, headY+perpY*2-sz*0.15, sz*0.1,0,Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(headX-perpX*2, headY-perpY*2-sz*0.15, sz*0.1,0,Math.PI*2);
-    ctx.fill();
-
-    // Tail
-    ctx.fillStyle=bodyColor;
-    ctx.beginPath();
-    ctx.arc(-Math.cos(h.dir)*sz*0.4, -Math.sin(h.dir)*sz*0.4, sz*0.08,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.restore();
-
-    // Exclamation mark when chasing
-    if(h.state==='chase'){
-      ctx.fillStyle='#ff0000';
-      ctx.font='bold 14px "Press Start 2P"';
-      ctx.textAlign='center';
-      ctx.fillText('!',hsx,hsy-TILE*0.8-bob);
-    }
-    if(h.state==='search'){
-      ctx.fillStyle='#ff8800';
-      ctx.font='bold 10px "Press Start 2P"';
-      ctx.textAlign='center';
-      ctx.fillText('?',hsx,hsy-TILE*0.7-bob);
-    }
-  });
+  hamsters.forEach(h=>drawHamster(h, camX, camY));
 
   // Draw player
   const psx=C.width/2, psy=C.height/2;
@@ -586,7 +773,7 @@ function draw() {
   ctx.beginPath();
   ctx.arc(psx,psy,TILE*0.3,0,Math.PI*2);
   ctx.fill();
-  // Inner
+  // Inner highlight
   ctx.fillStyle='#88ccff';
   ctx.beginPath();
   ctx.arc(psx-2,psy-2,TILE*0.15,0,Math.PI*2);
@@ -604,7 +791,6 @@ function draw() {
   if(dangerFlash>0){
     ctx.fillStyle=`rgba(255,0,0,${dangerFlash*0.12})`;
     ctx.fillRect(0,0,C.width,C.height);
-    // Red vignette
     const vg=ctx.createRadialGradient(C.width/2,C.height/2,C.width*0.3,C.width/2,C.height/2,C.width*0.7);
     vg.addColorStop(0,'rgba(0,0,0,0)');
     vg.addColorStop(1,`rgba(255,0,0,${dangerFlash*0.2})`);
@@ -627,7 +813,7 @@ function draw() {
 
 requestAnimationFrame(draw);
 
-// Game loop (separate from draw for consistent timing)
+// Game loop
 function tick(){
   update();
   requestAnimationFrame(tick);
