@@ -6,219 +6,44 @@
   <title>Ollie Online</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0e0e12;
-      --card: rgba(255,255,255,0.04);
-      --border: rgba(255,255,255,0.08);
-      --text: #e8e6f0;
-      --dim: rgba(232,230,240,0.5);
-      --green: #22c55e;
-      --blue: #3b82f6;
-      --purple: #a855f7;
-      --orange: #f97316;
-      --pink: #ec4899;
-      --font: 'Space Grotesk', sans-serif;
-      --mono: 'Space Mono', monospace;
-    }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
+      background: #0e0e12;
+      color: #e8e6f0;
+      font-family: 'Space Grotesk', sans-serif;
       -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
+      height: 100%;
+      overflow: hidden;
     }
 
     .page {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: clamp(48px, 10vw, 100px) clamp(20px, 5vw, 40px);
-    }
-
-    /* ── Header ── */
-    .header {
-      margin-bottom: clamp(48px, 8vw, 80px);
-    }
-
-    .header-tag {
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--dim);
-      margin-bottom: 16px;
-    }
-
-    .header h1 {
-      font-size: clamp(40px, 8vw, 72px);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1;
-      margin-bottom: 16px;
-    }
-
-    .header h1 span {
-      background: linear-gradient(135deg, var(--green), var(--blue), var(--purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .header-sub {
-      font-size: clamp(14px, 2vw, 17px);
-      color: var(--dim);
-      line-height: 1.6;
-      max-width: 480px;
-    }
-
-    /* ── Games grid ── */
-    .games {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .game-link {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px 24px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--card);
-      text-decoration: none;
-      color: var(--text);
-      transition: border-color 0.3s, background 0.3s, transform 0.2s;
-    }
-
-    .game-link:hover {
-      border-color: rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      transform: translateY(-2px);
-    }
-
-    .game-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .game-info { flex: 1; }
-
-    .game-name {
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-bottom: 2px;
-    }
-
-    .game-desc {
-      font-size: 13px;
-      color: var(--dim);
-    }
-
-    .game-arrow {
-      font-family: var(--mono);
-      font-size: 14px;
-      color: rgba(255,255,255,0.2);
-      transition: color 0.3s, transform 0.3s;
-    }
-
-    .game-link:hover .game-arrow {
-      color: rgba(255,255,255,0.5);
-      transform: translateX(4px);
-    }
-
-    /* ── Coming soon ── */
-    .coming-soon {
-      margin-top: 32px;
-      padding: 20px 24px;
-      border: 1px dashed var(--border);
-      border-radius: 12px;
+      height: 100vh;
       text-align: center;
+      padding: 24px;
     }
 
-    .coming-soon p {
-      font-family: var(--mono);
-      font-size: 12px;
+    h1 {
+      font-size: clamp(48px, 14vw, 180px);
       font-weight: 700;
-      letter-spacing: 0.15em;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.15);
-    }
-
-    /* ── Footer ── */
-    .footer {
-      margin-top: clamp(60px, 10vw, 100px);
-      padding-top: 24px;
-      border-top: 1px solid var(--border);
-      font-family: var(--mono);
-      font-size: 11px;
-      color: rgba(255,255,255,0.15);
-      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #22c55e, #3b82f6, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <header class="header">
-      <p class="header-tag">Player 1 Ready</p>
-      <h1><span>Ollie Online</span></h1>
-      <p class="header-sub">Games made by Ollie. Click one to play.</p>
-    </header>
-
-    <div class="games">
-      <a href="/game-1/" class="game-link">
-        <div class="game-icon" style="background:rgba(34,197,94,0.12)">
-          <span>&#127918;</span>
-        </div>
-        <div class="game-info">
-          <p class="game-name">Game 1</p>
-          <p class="game-desc">Coming soon</p>
-        </div>
-        <span class="game-arrow">&rarr;</span>
-      </a>
-
-      <a href="/game-2/" class="game-link">
-        <div class="game-icon" style="background:rgba(59,130,246,0.12)">
-          <span>&#127919;</span>
-        </div>
-        <div class="game-info">
-          <p class="game-name">Game 2</p>
-          <p class="game-desc">Coming soon</p>
-        </div>
-        <span class="game-arrow">&rarr;</span>
-      </a>
-
-      <a href="/game-3/" class="game-link">
-        <div class="game-icon" style="background:rgba(168,85,247,0.12)">
-          <span>&#128640;</span>
-        </div>
-        <div class="game-info">
-          <p class="game-name">Game 3</p>
-          <p class="game-desc">Coming soon</p>
-        </div>
-        <span class="game-arrow">&rarr;</span>
-      </a>
-    </div>
-
-    <div class="coming-soon">
-      <p>More games coming soon</p>
-    </div>
-
-    <footer class="footer">
-      ollie-online.com &middot; 2026
-    </footer>
+    <h1>I WILL<br>YEET YOU<br>TO CHINA</h1>
   </div>
 </body>
 </html>
