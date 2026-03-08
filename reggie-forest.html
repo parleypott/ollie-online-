@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Reggie in the Forest - Ollie's Universe</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -31,6 +31,10 @@
     width: 100vw;
     height: 100vh;
     cursor: pointer;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 </style>
 </head>
@@ -102,6 +106,132 @@ canvas.addEventListener('click', e => {
     state = 'levelselect';
   }
 });
+
+// ===== TOUCH CONTROLS =====
+const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+let touchLeft = false, touchRight = false, touchJump = false;
+let activeTouches = {}; // track which touch controls which button
+
+// Button layout (computed dynamically)
+function getTouchButtons() {
+  const bSize = Math.min(80, W * 0.09);
+  const pad = Math.min(30, W * 0.03);
+  const bottomY = H - bSize - pad - 20;
+  return {
+    left:  { x: pad, y: bottomY, r: bSize },
+    right: { x: pad + bSize * 2 + pad * 0.8, y: bottomY, r: bSize },
+    jump:  { x: W - pad - bSize, y: bottomY, r: bSize },
+    size: bSize
+  };
+}
+
+function touchInCircle(tx, ty, btn) {
+  const cx = btn.x + btn.r / 2;
+  const cy = btn.y + btn.r / 2;
+  const dx = tx - cx, dy = ty - cy;
+  return dx*dx + dy*dy < (btn.r * 0.8) * (btn.r * 0.8);
+}
+
+function getTouchPos(touch) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (touch.clientX - rect.left) * (W / rect.width),
+    y: (touch.clientY - rect.top) * (H / rect.height)
+  };
+}
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (state === 'levelselect') {
+    const t = e.changedTouches[0];
+    const pos = getTouchPos(t);
+    handleLevelSelectTouch(pos.x, pos.y);
+    return;
+  }
+  if (state === 'dead') { loadLevel(currentLevel); return; }
+  if (state === 'victory') {
+    if (currentLevel < 10) {
+      currentLevel++;
+      if (currentLevel > saveData.unlocked) { saveData.unlocked = currentLevel; save(); }
+    }
+    state = 'levelselect';
+    return;
+  }
+
+  const btns = getTouchButtons();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    const pos = getTouchPos(t);
+    if (touchInCircle(pos.x, pos.y, btns.left)) {
+      activeTouches[t.identifier] = 'left';
+      touchLeft = true;
+    } else if (touchInCircle(pos.x, pos.y, btns.right)) {
+      activeTouches[t.identifier] = 'right';
+      touchRight = true;
+    } else if (touchInCircle(pos.x, pos.y, btns.jump)) {
+      activeTouches[t.identifier] = 'jump';
+      touchJump = true;
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (state !== 'playing') return;
+  const btns = getTouchButtons();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    const pos = getTouchPos(t);
+    const prev = activeTouches[t.identifier];
+    // Allow sliding between left/right
+    if (prev === 'left' || prev === 'right') {
+      if (touchInCircle(pos.x, pos.y, btns.left)) {
+        if (prev !== 'left') { touchRight = false; touchLeft = true; activeTouches[t.identifier] = 'left'; }
+      } else if (touchInCircle(pos.x, pos.y, btns.right)) {
+        if (prev !== 'right') { touchLeft = false; touchRight = true; activeTouches[t.identifier] = 'right'; }
+      } else {
+        // Slid off both
+        if (prev === 'left') touchLeft = false;
+        if (prev === 'right') touchRight = false;
+        delete activeTouches[t.identifier];
+      }
+    }
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    const t = e.changedTouches[i];
+    const btn = activeTouches[t.identifier];
+    if (btn === 'left') touchLeft = false;
+    if (btn === 'right') touchRight = false;
+    if (btn === 'jump') touchJump = false;
+    delete activeTouches[t.identifier];
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', e => {
+  touchLeft = false; touchRight = false; touchJump = false;
+  activeTouches = {};
+}, { passive: false });
+
+function handleLevelSelectTouch(mx, my) {
+  const { btnW, btnH, gap, startX, startY } = getLevelSelectLayout();
+  for (let i = 0; i < 10; i++) {
+    const col = i % 5;
+    const row = Math.floor(i / 5);
+    const bx = startX + col * (btnW + gap);
+    const by = startY + row * (btnH + gap);
+    if (mx >= bx && mx <= bx + btnW && my >= by && my <= by + btnH) {
+      if (i + 1 <= saveData.unlocked) loadLevel(i + 1);
+      return;
+    }
+  }
+}
+
+// Prevent iOS rubber-banding
+document.addEventListener('touchmove', e => { e.preventDefault(); }, { passive: false });
 
 // ===== PLAYER =====
 const SCALE = 3;
@@ -280,10 +410,10 @@ function update() {
   if (state !== 'playing') return;
   frameCount++;
 
-  // Input
+  // Input (keyboard + touch)
   let moveX = 0;
-  if (keys['ArrowLeft'] || keys['KeyA']) moveX = -1;
-  if (keys['ArrowRight'] || keys['KeyD']) moveX = 1;
+  if (keys['ArrowLeft'] || keys['KeyA'] || touchLeft) moveX = -1;
+  if (keys['ArrowRight'] || keys['KeyD'] || touchRight) moveX = 1;
 
   if (moveX !== 0) player.facing = moveX;
   player.vx += moveX * MOVE_SPEED * 0.25;
@@ -293,7 +423,7 @@ function update() {
   if (player.vx < -MAX_VX) player.vx = -MAX_VX;
 
   // Jump - only on initial press
-  const jumpKey = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+  const jumpKey = keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || touchJump;
   if (jumpKey && !jumpHeld && player.grounded) {
     player.vy = JUMP_FORCE;
     player.grounded = false;
@@ -1268,11 +1398,70 @@ function drawHUD() {
   ctx.fillStyle = '#F5F0E8';
   ctx.fillRect(barX + barW * progress - 3, 43, 6, 4);
 
-  // Controls hint (faded)
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.font = '8px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  ctx.fillText('ARROWS/WASD move \u2022 SPACE jump \u2022 Jump on enemies!', W/2, H - 12);
+  // Controls hint (faded) - only on desktop
+  if (!isTouchDevice) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '8px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('ARROWS/WASD move \u2022 SPACE jump \u2022 Jump on enemies!', W/2, H - 12);
+  }
+}
+
+function drawTouchControls() {
+  if (!isTouchDevice || state !== 'playing') return;
+
+  const btns = getTouchButtons();
+  const s = btns.size;
+  ctx.globalAlpha = 0.35;
+
+  // Left button
+  ctx.fillStyle = touchLeft ? 'rgba(106,191,106,0.6)' : 'rgba(255,255,255,0.25)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(btns.left.x + s/2, btns.left.y + s/2, s/2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Left arrow
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(btns.left.x + s*0.6, btns.left.y + s*0.25);
+  ctx.lineTo(btns.left.x + s*0.25, btns.left.y + s*0.5);
+  ctx.lineTo(btns.left.x + s*0.6, btns.left.y + s*0.75);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right button
+  ctx.fillStyle = touchRight ? 'rgba(106,191,106,0.6)' : 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.arc(btns.right.x + s/2, btns.right.y + s/2, s/2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Right arrow
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(btns.right.x + s*0.4, btns.right.y + s*0.25);
+  ctx.lineTo(btns.right.x + s*0.75, btns.right.y + s*0.5);
+  ctx.lineTo(btns.right.x + s*0.4, btns.right.y + s*0.75);
+  ctx.closePath();
+  ctx.fill();
+
+  // Jump button
+  ctx.fillStyle = touchJump ? 'rgba(106,191,106,0.6)' : 'rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.arc(btns.jump.x + s/2, btns.jump.y + s/2, s/2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Up arrow
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.moveTo(btns.jump.x + s*0.25, btns.jump.y + s*0.6);
+  ctx.lineTo(btns.jump.x + s*0.5, btns.jump.y + s*0.25);
+  ctx.lineTo(btns.jump.x + s*0.75, btns.jump.y + s*0.6);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
 }
 
 function drawHeart(x, y, size) {
@@ -1509,6 +1698,7 @@ function gameLoop() {
     drawCanopy();
     drawParticlesAll();
     drawHUD();
+    drawTouchControls();
 
     if (state === 'victory') drawLevelComplete();
     if (state === 'dead') drawGameOver();
