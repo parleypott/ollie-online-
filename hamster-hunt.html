@@ -7,827 +7,633 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;font-family:'Press Start 2P',monospace;cursor:none}
-canvas{display:block}
+body{background:#0a0800;color:#e8e0d0;font-family:'Press Start 2P',monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;overflow:hidden}
 
-#hud{position:fixed;top:0;left:0;width:100%;padding:16px 24px;pointer-events:none;z-index:10;display:none;justify-content:space-between;align-items:flex-start}
-.hud-left,.hud-right{display:flex;flex-direction:column;gap:6px}
-.hud-right{align-items:flex-end}
-.hl{font-size:8px;color:#ff9933;text-transform:uppercase;letter-spacing:1px}
-.hv{font-size:18px;color:#fff;text-shadow:0 0 10px rgba(255,153,51,0.6)}
-.hs{font-size:10px;color:#aaa}
-
-.timer-bar{width:220px;height:12px;background:rgba(255,255,255,0.1);border-radius:6px;overflow:hidden;border:1px solid rgba(255,153,51,0.3)}
-.timer-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#ff4444,#ffaa00,#44ff44);transition:width 0.5s}
-
-.danger-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;border:0px solid transparent;transition:border 0.3s;border-radius:0}
-.danger-overlay.near{border:4px solid rgba(255,0,0,0.4)}
-.danger-overlay.close{border:8px solid rgba(255,0,0,0.7);animation:pulse-danger 0.5s infinite}
-@keyframes pulse-danger{0%,100%{border-color:rgba(255,0,0,0.7)}50%{border-color:rgba(255,0,0,0.3)}}
-
-.minimap{position:fixed;bottom:16px;right:16px;z-index:10;border:2px solid rgba(255,153,51,0.3);border-radius:8px;background:rgba(0,0,0,0.7)}
-
-.overlay-screen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,0.88);text-align:center;cursor:default;overflow-y:auto;padding:20px}
-.overlay-screen.show{display:flex}
-.overlay-screen h1{font-size:clamp(20px,5vw,42px);margin-bottom:12px}
-.overlay-screen .sub{font-size:11px;color:#aaa;margin-bottom:20px;line-height:1.8}
-.overlay-screen .info{font-size:8px;color:#666;margin-bottom:20px;line-height:2}
-
-.btn{font-family:'Press Start 2P',monospace;font-size:12px;padding:14px 32px;border:2px solid #ff9933;border-radius:8px;background:rgba(255,153,51,0.12);color:#ff9933;cursor:pointer;transition:all 0.3s;margin:6px}
-.btn:hover{background:rgba(255,153,51,0.3);box-shadow:0 0 30px rgba(255,153,51,0.3);transform:scale(1.05)}
-.btn.green{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.1)}
-.btn.green:hover{background:rgba(68,255,68,0.25)}
-
-.back-link{font-family:'Press Start 2P',monospace;color:#555;text-decoration:none;font-size:9px;transition:color 0.2s;margin-top:12px}
+.back-link{position:fixed;top:12px;left:12px;color:#665533;text-decoration:none;font-size:9px;z-index:100;font-family:'Press Start 2P',monospace}
 .back-link:hover{color:#ff9933}
 
-.lvl-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:520px;margin:16px auto;max-height:50vh;overflow-y:auto;padding:4px}
-.lt{width:44px;height:44px;border:2px solid rgba(255,153,51,0.2);border-radius:6px;background:rgba(255,153,51,0.05);display:flex;align-items:center;justify-content:center;font-size:8px;color:#888;cursor:pointer;transition:all 0.2s}
-.lt:hover{border-color:#ff9933;transform:scale(1.1);background:rgba(255,153,51,0.15)}
-.lt.beat{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.08)}
-.lt.locked{opacity:0.3;cursor:default;pointer-events:none}
-.lt.current{border-color:#ffd700;color:#ffd700;box-shadow:0 0 10px rgba(255,215,0,0.3)}
+#gameCanvas{border:2px solid rgba(255,153,51,0.3);border-radius:4px;display:block;image-rendering:pixelated;cursor:none}
 
-.stats{font-size:11px;color:#aaa;margin-bottom:20px;line-height:2.2}
+#hud{position:fixed;top:0;left:0;width:100%;padding:12px 20px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:10}
+.hud-l,.hud-r{display:flex;flex-direction:column;gap:4px}
+.hud-r{align-items:flex-end}
+.hl{font-size:7px;color:#ff9933;text-transform:uppercase;letter-spacing:1px}
+.hv{font-size:14px;color:#fff;text-shadow:0 0 8px rgba(255,153,51,0.5)}
+.hs{font-size:9px;color:#aaa}
+.timer-bar{width:180px;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;border:1px solid rgba(255,153,51,0.3)}
+.timer-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#ff4444,#ffaa00,#44ff44);transition:width 0.5s}
+.sprint-bar{width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;border:1px solid rgba(77,172,255,0.3)}
+.sprint-fill{height:100%;border-radius:3px;background:#4dacff;transition:width 0.2s}
+
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,0.88);text-align:center;cursor:default;overflow-y:auto;padding:20px}
+.overlay.show{display:flex}
+.overlay h1{font-size:clamp(18px,5vw,38px);margin-bottom:10px}
+.overlay .sub{font-size:10px;color:#aaa;margin-bottom:16px;line-height:1.8}
+.overlay .info{font-size:8px;color:#666;margin-bottom:16px;line-height:2}
+
+.btn{font-family:'Press Start 2P',monospace;font-size:11px;padding:12px 28px;border:2px solid #ff9933;border-radius:8px;background:rgba(255,153,51,0.1);color:#ff9933;cursor:pointer;transition:all 0.3s;margin:5px}
+.btn:hover{background:rgba(255,153,51,0.25);box-shadow:0 0 20px rgba(255,153,51,0.3);transform:scale(1.05)}
+.btn.g{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.08)}
+.btn.g:hover{background:rgba(68,255,68,0.2)}
+
+.lvl-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;max-width:480px;margin:12px auto;max-height:50vh;overflow-y:auto;padding:4px}
+.lt{width:40px;height:40px;border:2px solid rgba(255,153,51,0.2);border-radius:5px;background:rgba(255,153,51,0.04);display:flex;align-items:center;justify-content:center;font-size:7px;color:#777;cursor:pointer;transition:all 0.2s}
+.lt:hover{border-color:#ff9933;transform:scale(1.1);background:rgba(255,153,51,0.12)}
+.lt.beat{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.06)}
+.lt.locked{opacity:0.25;cursor:default;pointer-events:none}
+.lt.cur{border-color:#ffd700;color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,0.3)}
+
+.stats{font-size:10px;color:#aaa;margin-bottom:16px;line-height:2.2}
 .stats span{color:#ff9933}
-
-.crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;pointer-events:none;z-index:8;display:none}
-.crosshair::before,.crosshair::after{content:'';position:absolute;background:rgba(255,153,51,0.5)}
-.crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
-.crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
-
-.hamster-alert{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#ff4444;text-shadow:0 0 20px rgba(255,0,0,0.8);pointer-events:none;z-index:9;opacity:0;transition:opacity 0.3s;display:none}
-.hamster-alert.show{opacity:1;display:block}
 </style>
 </head>
 <body>
 
+<a href="index.html" class="back-link">&larr; Back</a>
+
+<canvas id="gameCanvas"></canvas>
+
 <div id="hud">
-  <div class="hud-left">
+  <div class="hud-l">
     <div><span class="hl">Level</span></div>
-    <div><span class="hv" id="lvlVal">1</span></div>
+    <div><span class="hv" id="hudLvl">1</span></div>
     <div><span class="hl">Hamster</span></div>
-    <div><span class="hs" id="hamsterStatus">Searching...</span></div>
+    <div><span class="hs" id="hudStatus" style="color:#44ff44">Patrolling</span></div>
   </div>
-  <div class="hud-right">
+  <div class="hud-r">
     <div><span class="hl">Survive</span></div>
-    <div class="timer-bar"><div class="timer-fill" id="timerBar" style="width:0%"></div></div>
-    <div><span class="hs" id="timeLeft">5:00</span></div>
-    <div><span class="hl">Distance</span></div>
-    <div><span class="hs" id="distVal">Safe</span></div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:0%"></div></div>
+    <div><span class="hs" id="hudTime">5:00</span></div>
+    <div><span class="hl">Sprint</span></div>
+    <div class="sprint-bar"><div class="sprint-fill" id="sprintFill" style="width:100%"></div></div>
   </div>
 </div>
 
-<div class="crosshair" id="crosshair"></div>
-<div class="danger-overlay" id="dangerOverlay"></div>
-<div class="hamster-alert" id="hamsterAlert">THE HAMSTER SEES YOU!</div>
-<canvas class="minimap" id="minimap" width="160" height="160"></canvas>
-
-<!-- MENU -->
-<div id="menuScreen" class="overlay-screen show">
-  <h1 style="color:#ff9933;text-shadow:0 0 20px rgba(255,153,51,0.8),4px 4px 0 #5a2a00">HAMSTER HUNT</h1>
-  <div class="sub">Hide in a giant maze. A hamster is hunting you.<br>Survive 5 minutes to clear each level!</div>
-  <div class="info">WASD = Move &bull; MOUSE = Look &bull; SHIFT = Sprint (limited!)<br>Stay out of the hamster's sight. Hide behind walls!</div>
-  <div id="levelGrid" class="lvl-grid"></div>
-  <a href="index.html" class="back-link">&larr; Back to Ollie's Universe</a>
+<div id="menuScreen" class="overlay show">
+  <h1 style="color:#ff9933;text-shadow:0 0 15px rgba(255,153,51,0.7),3px 3px 0 #5a2a00">HAMSTER HUNT</h1>
+  <div class="sub">Survive 5 minutes in a dark maze.<br>The hamster is hunting you. Don't get caught!</div>
+  <div class="info">WASD / ARROWS = Move &bull; SHIFT = Sprint<br>Hide behind walls to break line of sight!</div>
+  <div id="lvlGrid" class="lvl-grid"></div>
+  <a href="index.html" class="back-link" style="position:static">&larr; Back to Ollie's Universe</a>
 </div>
 
-<!-- CAUGHT -->
-<div id="caughtScreen" class="overlay-screen">
-  <h1 style="color:#ff4444;text-shadow:0 0 20px rgba(255,0,0,0.6)">CAUGHT!</h1>
-  <div class="stats">The hamster got you!<br>Level: <span id="caughtLvl">1</span><br>Survived: <span id="caughtTime">0s</span></div>
+<div id="caughtScreen" class="overlay">
+  <h1 style="color:#ff4444;text-shadow:0 0 15px rgba(255,0,0,0.5)">CAUGHT!</h1>
+  <div class="stats">The hamster got you!<br>Level <span id="caughtLvl">1</span><br>Survived: <span id="caughtTime">0:00</span></div>
   <button class="btn" id="retryBtn">RETRY</button>
-  <button class="btn" onclick="showMenu()">LEVEL SELECT</button>
-  <a href="index.html" class="back-link">&larr; Back</a>
+  <button class="btn" onclick="showMenu()">LEVELS</button>
 </div>
 
-<!-- WIN -->
-<div id="winScreen" class="overlay-screen">
-  <h1 style="color:#44ff44;text-shadow:0 0 20px rgba(68,255,68,0.6)">SURVIVED!</h1>
+<div id="winScreen" class="overlay">
+  <h1 style="color:#44ff44;text-shadow:0 0 15px rgba(68,255,68,0.5)">SURVIVED!</h1>
   <div class="stats">Level <span id="winLvl">1</span> complete!</div>
   <div id="winBtns"></div>
-  <a href="index.html" class="back-link">&larr; Back</a>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ===================== SETUP =====================
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x110800, 1, 50);
-const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 200);
-camera.position.y = 1.6;
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setClearColor(0x110800);
-renderer.shadowMap.enabled = true;
-document.body.appendChild(renderer.domElement);
-window.addEventListener('resize', () => { camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+// ============ CANVAS ============
+const C = document.getElementById('gameCanvas');
+const ctx = C.getContext('2d');
+const TILE = 24;
+let viewW, viewH, viewTilesX, viewTilesY;
 
-// Lighting
-const ambLight = new THREE.AmbientLight(0x332211, 0.4);
-scene.add(ambLight);
-const playerLight = new THREE.PointLight(0xff9933, 0.8, 15);
-playerLight.position.y = 1.6;
-scene.add(playerLight);
+function resize() {
+  viewW = Math.min(innerWidth - 20, 900);
+  viewH = Math.min(innerHeight - 20, 700);
+  viewW = Math.floor(viewW / TILE) * TILE;
+  viewH = Math.floor(viewH / TILE) * TILE;
+  C.width = viewW;
+  C.height = viewH;
+  viewTilesX = viewW / TILE;
+  viewTilesY = viewH / TILE;
+}
+resize();
+window.addEventListener('resize', resize);
 
-// ===================== SAVE =====================
-let saveData = JSON.parse(localStorage.getItem('hh_save') || '{"beaten":[]}');
-function save() { localStorage.setItem('hh_save', JSON.stringify(saveData)); }
-function highestUnlocked() { return saveData.beaten.length === 0 ? 1 : Math.min(100, Math.max(...saveData.beaten) + 1); }
+// ============ SAVE ============
+let sd = JSON.parse(localStorage.getItem('hh2') || '{"b":[]}');
+function save() { localStorage.setItem('hh2', JSON.stringify(sd)); }
+function maxUnlocked() { return sd.b.length === 0 ? 1 : Math.min(100, Math.max(...sd.b) + 1); }
 
-// ===================== MAZE GENERATION =====================
-let mazeW, mazeH, maze; // maze[y][x] = 0 (wall) or 1 (path)
-const CELL = 3; // world units per cell
+// ============ MAZE GEN ============
+let mW, mH, maze;
 
-function generateMaze(w, h) {
-  mazeW = w; mazeH = h;
+function genMaze(w, h) {
+  mW = w; mH = h;
   maze = Array.from({length: h}, () => Array(w).fill(0));
-
-  // Recursive backtracker
-  const visited = Array.from({length: h}, () => Array(w).fill(false));
-  const stack = [];
-  const startX = 1, startY = 1;
-  visited[startY][startX] = true;
-  maze[startY][startX] = 1;
-  stack.push([startX, startY]);
-
+  const vis = Array.from({length: h}, () => Array(w).fill(false));
+  const stk = [[1, 1]];
+  vis[1][1] = true; maze[1][1] = 1;
   const dirs = [[0,-2],[0,2],[-2,0],[2,0]];
-
-  while (stack.length > 0) {
-    const [cx, cy] = stack[stack.length - 1];
-    const neighbors = [];
-    for (const [dx, dy] of dirs) {
-      const nx = cx+dx, ny = cy+dy;
-      if (nx > 0 && nx < w-1 && ny > 0 && ny < h-1 && !visited[ny][nx]) {
-        neighbors.push([nx, ny, cx+dx/2, cy+dy/2]);
-      }
+  while (stk.length) {
+    const [cx, cy] = stk[stk.length-1];
+    const nb = [];
+    for (const [dx,dy] of dirs) {
+      const nx=cx+dx, ny=cy+dy;
+      if (nx>0&&nx<w-1&&ny>0&&ny<h-1&&!vis[ny][nx]) nb.push([nx,ny,cx+dx/2,cy+dy/2]);
     }
-    if (neighbors.length > 0) {
-      const [nx, ny, mx, my] = neighbors[Math.floor(Math.random()*neighbors.length)];
-      visited[ny][nx] = true;
-      maze[ny][nx] = 1;
-      maze[my][mx] = 1;
-      stack.push([nx, ny]);
-    } else {
-      stack.pop();
-    }
+    if (nb.length) {
+      const [nx,ny,mx,my] = nb[Math.floor(Math.random()*nb.length)];
+      vis[ny][nx]=true; maze[ny][nx]=1; maze[my][mx]=1;
+      stk.push([nx,ny]);
+    } else stk.pop();
   }
-
-  // Add some extra passages to make it less linear
-  const extraPassages = Math.floor(w * h * 0.03);
-  for (let i = 0; i < extraPassages; i++) {
-    const rx = 1 + Math.floor(Math.random() * (w-2));
-    const ry = 1 + Math.floor(Math.random() * (h-2));
-    maze[ry][rx] = 1;
+  // Extra passages
+  for (let i = 0; i < w*h*0.04; i++) {
+    const rx=1+Math.floor(Math.random()*(w-2)), ry=1+Math.floor(Math.random()*(h-2));
+    maze[ry][rx]=1;
   }
-
-  return maze;
 }
 
-function mazeToWorld(mx, my) {
-  return { x: mx * CELL - (mazeW * CELL / 2), z: my * CELL - (mazeH * CELL / 2) };
-}
+function isWall(x,y) { return x<0||x>=mW||y<0||y>=mH||maze[y][x]===0; }
 
-function worldToMaze(wx, wz) {
-  return { x: Math.round((wx + mazeW * CELL / 2) / CELL), y: Math.round((wz + mazeH * CELL / 2) / CELL) };
-}
-
-function isWall(mx, my) {
-  if (mx < 0 || mx >= mazeW || my < 0 || my >= mazeH) return true;
-  return maze[my][mx] === 0;
-}
-
-// ===================== LEVEL CONFIG =====================
-let currentLevel = 1;
-const SURVIVE_TIME = 300; // 5 minutes in seconds
-
-function getLvlCfg(lvl) {
-  const t = (lvl - 1) / 99;
-  return {
-    mazeSize: Math.floor(21 + t * 30), // 21 to 51 (odd numbers for maze gen)
-    hamsterSpeed: 3.5 + t * 6.5,         // 3.5 to 10
-    hamsterDetectRange: 10 + t * 20,    // 10 to 30
-    hamsterChaseSpeed: 5 + t * 10,      // 5 to 15
-    hamsterLoseInterest: Math.max(2, 8 - t * 6), // 8 to 2 seconds
-    hamsterPatrolSpeed: 2 + t * 3,      // 2 to 5
-    playerSpeed: 5,
-    sprintSpeed: 8,
-    sprintMax: 3 - t * 1.5,            // 3 to 1.5 seconds
-    sprintRecharge: 5,
-    numHamsters: Math.min(5, 1 + Math.floor(t * 4.5)), // 1 to 5 hamsters
-  };
-}
-
-// ===================== GAME STATE =====================
-let gameState = 'menu';
-let gameTime = 0;
-let playerPos = new THREE.Vector3();
-let playerYaw = 0, playerPitch = 0;
-let sprint = 0, sprintCooldown = 0;
-let pointerLocked = false;
-
-const keys = {};
-document.addEventListener('keydown', e => { keys[e.code] = true; if (e.code === 'Space') e.preventDefault(); });
-document.addEventListener('keyup', e => keys[e.code] = false);
-document.addEventListener('mousemove', e => {
-  if (pointerLocked) {
-    playerYaw -= e.movementX * 0.002;
-    playerPitch -= e.movementY * 0.002;
-    playerPitch = Math.max(-1.2, Math.min(1.2, playerPitch));
-  }
-});
-document.addEventListener('pointerlockchange', () => { pointerLocked = document.pointerLockElement === renderer.domElement; });
-
-// ===================== HAMSTER =====================
-let hamsters = [];
-
-function createHamsterMesh(lvl) {
-  const t = (lvl - 1) / 99;
-  const g = new THREE.Group();
-  const bodyColor = lerpC(0xdd8844, 0xff2200, t);
-  const eyeEmissive = lerpC(0x440000, 0xff0000, t);
-
-  // Body
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.4 + t*0.3, 8, 8),
-    new THREE.MeshPhongMaterial({ color: bodyColor, emissive: lerpC(0x221100, 0x440000, t), shininess: 20 }));
-  body.position.y = 0.4;
-  body.scale.set(1, 0.8, 1.2);
-  g.add(body);
-
-  // Head
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28 + t*0.15, 8, 8),
-    new THREE.MeshPhongMaterial({ color: bodyColor, emissive: lerpC(0x221100, 0x440000, t) }));
-  head.position.set(0, 0.55, -(0.35 + t*0.2));
-  g.add(head);
-
-  // Eyes (glow more at higher levels)
-  for (let side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06 + t*0.04, 6, 6),
-      new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: eyeEmissive }));
-    eye.position.set(side * 0.12, 0.6, -(0.55 + t*0.25));
-    g.add(eye);
-  }
-
-  // Ears
-  for (let side of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.1 + t*0.05, 6, 6),
-      new THREE.MeshPhongMaterial({ color: 0xffaa88, emissive: lerpC(0x110000, 0x330000, t) }));
-    ear.position.set(side * 0.2, 0.75 + t*0.1, -(0.3 + t*0.15));
-    g.add(ear);
-  }
-
-  // Tail
-  const tail = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6),
-    new THREE.MeshPhongMaterial({ color: 0xffccaa }));
-  tail.position.set(0, 0.35, 0.45);
-  g.add(tail);
-
-  // Hamster glow light (gets brighter at higher levels)
-  const hLight = new THREE.PointLight(lerpC(0xff6600, 0xff0000, t), 0.3 + t * 0.7, 6 + t * 10);
-  hLight.position.y = 0.5;
-  g.add(hLight);
-
-  // Legs
-  for (let fx of [-1, 1]) for (let fz of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.2, 6),
-      new THREE.MeshPhongMaterial({ color: bodyColor }));
-    leg.position.set(fx * 0.2, 0.1, fz * 0.25);
-    g.add(leg);
-  }
-
-  return g;
-}
-
-function lerpC(a, b, t) {
-  const ar=(a>>16)&0xff, ag=(a>>8)&0xff, ab=a&0xff;
-  const br=(b>>16)&0xff, bg=(b>>8)&0xff, bb=b&0xff;
-  return (Math.round(ar+(br-ar)*t)<<16)|(Math.round(ag+(bg-ag)*t)<<8)|Math.round(ab+(bb-ab)*t);
-}
-
-// BFS pathfinding
-function findPath(sx, sy, ex, ey) {
-  if (sx === ex && sy === ey) return [];
-  const visited = Array.from({length: mazeH}, () => Array(mazeW).fill(false));
-  const parent = Array.from({length: mazeH}, () => Array(mazeW).fill(null));
-  const queue = [[sx, sy]];
-  visited[sy][sx] = true;
-  const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
-
-  while (queue.length > 0) {
-    const [cx, cy] = queue.shift();
-    for (const [dx, dy] of dirs) {
-      const nx = cx+dx, ny = cy+dy;
-      if (nx >= 0 && nx < mazeW && ny >= 0 && ny < mazeH && !visited[ny][nx] && maze[ny][nx] === 1) {
-        visited[ny][nx] = true;
-        parent[ny][nx] = [cx, cy];
-        if (nx === ex && ny === ey) {
-          const path = [];
-          let cur = [ex, ey];
-          while (cur) { path.unshift(cur); cur = parent[cur[1]][cur[0]]; }
-          return path;
-        }
-        queue.push([nx, ny]);
+// ============ BFS PATHFINDING ============
+function bfs(sx,sy,ex,ey) {
+  if(sx===ex&&sy===ey) return [];
+  const vis = Array.from({length:mH},()=>Array(mW).fill(false));
+  const par = Array.from({length:mH},()=>Array(mW).fill(null));
+  const q = [[sx,sy]]; vis[sy][sx]=true;
+  while(q.length) {
+    const [cx,cy]=q.shift();
+    for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+      const nx=cx+dx,ny=cy+dy;
+      if(nx>=0&&nx<mW&&ny>=0&&ny<mH&&!vis[ny][nx]&&maze[ny][nx]===1) {
+        vis[ny][nx]=true; par[ny][nx]=[cx,cy];
+        if(nx===ex&&ny===ey) { const p=[]; let c=[ex,ey]; while(c){p.unshift(c);c=par[c[1]][c[0]];} return p; }
+        q.push([nx,ny]);
       }
     }
   }
   return [];
 }
 
-// Line of sight check
-function hasLineOfSight(x1, z1, x2, z2) {
-  const dx = x2 - x1, dz = z2 - z1;
-  const dist = Math.sqrt(dx*dx + dz*dz);
-  const steps = Math.ceil(dist / (CELL * 0.4));
-  for (let i = 1; i < steps; i++) {
-    const t = i / steps;
-    const wx = x1 + dx * t;
-    const wz = z1 + dz * t;
-    const mc = worldToMaze(wx, wz);
-    if (isWall(mc.x, mc.y)) return false;
+// ============ LINE OF SIGHT ============
+function hasLOS(x1,y1,x2,y2) {
+  const dx=x2-x1, dy=y2-y1;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const steps=Math.ceil(dist*2);
+  for(let i=1;i<steps;i++) {
+    const t=i/steps;
+    const cx=Math.floor(x1+dx*t), cy=Math.floor(y1+dy*t);
+    if(isWall(cx,cy)) return false;
   }
   return true;
 }
 
-// ===================== BUILD LEVEL =====================
-const sceneObjects = [];
+// ============ LEVEL CONFIG ============
+let curLvl = 1;
+const SURVIVE = 300;
 
-function buildLevel(lvl) {
-  // Clean
-  while(scene.children.length > 0) scene.remove(scene.children[0]);
-  scene.add(ambLight);
-  scene.add(playerLight);
-  sceneObjects.length = 0;
-  hamsters.length = 0;
+function cfg(lvl) {
+  const t=(lvl-1)/99;
+  return {
+    mazeSize: (Math.floor(11+t*18))|1, // 11 to 29, odd
+    hSpeed: 1.8+t*3.2,
+    hChase: 2.8+t*5.2,
+    hDetect: 5+t*12,
+    hLoseTime: Math.max(1.5, 6-t*4.5),
+    hPatrol: 1.2+t*2.3,
+    pSpeed: 3.2,
+    sprint: 5.5,
+    sprintMax: 3-t*1.2,
+    sprintRecharge: 4,
+    numH: Math.min(5, 1+Math.floor(t*4.5)),
+  };
+}
 
-  const cfg = getLvlCfg(lvl);
-  let mSize = cfg.mazeSize;
-  if (mSize % 2 === 0) mSize++;
+// ============ GAME STATE ============
+let state = 'menu';
+let gTime = 0;
+let px, py; // player pos in tile coords (float)
+let sprintAmt = 0, sprintCD = 0;
+let hamsters = [];
+let dangerFlash = 0;
 
-  generateMaze(mSize, mSize);
+const keys = {};
+document.addEventListener('keydown', e => { keys[e.code]=true; });
+document.addEventListener('keyup', e => { keys[e.code]=false; });
 
-  const wallColor = lerpC(0x554433, 0x331111, (lvl-1)/99);
-  const floorColor = lerpC(0x332211, 0x220808, (lvl-1)/99);
-  const matW = new THREE.MeshPhongMaterial({ color: wallColor, emissive: 0x0a0500 });
-  const matF = new THREE.MeshPhongMaterial({ color: floorColor, emissive: 0x050300 });
-
-  // Floor
-  const floorSize = mSize * CELL;
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(floorSize, floorSize), matF);
-  floor.rotation.x = -Math.PI / 2;
-  scene.add(floor);
-
-  // Ceiling
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(floorSize, floorSize),
-    new THREE.MeshPhongMaterial({ color: 0x111111, emissive: 0x050505 }));
-  ceil.rotation.x = Math.PI / 2;
-  ceil.position.y = 3;
-  scene.add(ceil);
-
-  // Walls - use merged geometry for performance
-  const wallGeo = new THREE.BoxGeometry(CELL, 3, CELL);
-  for (let y = 0; y < mSize; y++) {
-    for (let x = 0; x < mSize; x++) {
-      if (maze[y][x] === 0) {
-        const wp = mazeToWorld(x, y);
-        const wall = new THREE.Mesh(wallGeo, matW);
-        wall.position.set(wp.x, 1.5, wp.z);
-        scene.add(wall);
-        sceneObjects.push(wall);
+// ============ HAMSTER ============
+function spawnHamsters(lvl) {
+  hamsters = [];
+  const c = cfg(lvl);
+  for (let i = 0; i < c.numH; i++) {
+    let bx=mW-2, by=mH-2, bd=0;
+    for (let t=0;t<60;t++) {
+      const rx=1+Math.floor(Math.random()*(mW-2));
+      const ry=1+Math.floor(Math.random()*(mH-2));
+      if(maze[ry][rx]===1) {
+        const d=Math.sqrt((rx-px)**2+(ry-py)**2);
+        if(d>bd){bd=d;bx=rx;by=ry;}
       }
     }
-  }
-
-  // Torches (ambient lights in corridors)
-  let torchCount = 0;
-  const maxTorches = 30;
-  for (let y = 2; y < mSize-2; y += 4) {
-    for (let x = 2; x < mSize-2; x += 4) {
-      if (maze[y][x] === 1 && torchCount < maxTorches) {
-        const wp = mazeToWorld(x, y);
-        const torch = new THREE.PointLight(0xff6633, 0.3, 10);
-        torch.position.set(wp.x, 2.2, wp.z);
-        scene.add(torch);
-        // Torch visual
-        const tv = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4),
-          new THREE.MeshPhongMaterial({ color: 0xff6633, emissive: 0xff4400 }));
-        tv.position.copy(torch.position);
-        scene.add(tv);
-        torchCount++;
-      }
-    }
-  }
-
-  // Place player at top-left open cell
-  for (let y = 1; y < mSize; y++) {
-    for (let x = 1; x < mSize; x++) {
-      if (maze[y][x] === 1) {
-        const wp = mazeToWorld(x, y);
-        playerPos.set(wp.x, 1.6, wp.z);
-        playerYaw = 0; playerPitch = 0;
-        break;
-      }
-    }
-    if (playerPos.x !== 0) break;
-  }
-
-  // Place hamsters at far positions
-  const numH = cfg.numHamsters;
-  for (let h = 0; h < numH; h++) {
-    // Find a spot far from player
-    let bestX = mSize-2, bestY = mSize-2;
-    let bestDist = 0;
-    for (let tries = 0; tries < 50; tries++) {
-      const rx = 1 + Math.floor(Math.random() * (mSize-2));
-      const ry = 1 + Math.floor(Math.random() * (mSize-2));
-      if (maze[ry][rx] === 1) {
-        const wp = mazeToWorld(rx, ry);
-        const d = Math.sqrt((wp.x-playerPos.x)**2 + (wp.z-playerPos.z)**2);
-        if (d > bestDist) { bestDist = d; bestX = rx; bestY = ry; }
-      }
-    }
-    const hp = mazeToWorld(bestX, bestY);
-    const mesh = createHamsterMesh(lvl);
-    mesh.position.set(hp.x, 0, hp.z);
-    scene.add(mesh);
-
     hamsters.push({
-      mesh,
-      state: 'patrol', // patrol, chase, search
-      speed: cfg.hamsterPatrolSpeed,
-      chaseSpeed: cfg.hamsterChaseSpeed,
-      detectRange: cfg.hamsterDetectRange,
-      loseInterest: cfg.hamsterLoseInterest,
-      chaseTimer: 0,
-      path: [],
-      pathIdx: 0,
-      targetX: bestX, targetY: bestY,
-      searchTimer: 0,
-      lastSeenX: 0, lastSeenZ: 0,
-      bobPhase: Math.random() * Math.PI * 2,
+      x:bx+0.5, y:by+0.5,
+      state:'patrol',
+      path:[], pathIdx:0,
+      chaseTimer:0, searchTimer:0,
+      lastSeenX:0, lastSeenY:0,
+      animPhase: Math.random()*Math.PI*2,
+      dir: 0,
     });
   }
 }
 
-// ===================== MENU =====================
+// ============ GAME FUNCS ============
 function showMenu() {
   hideAll();
   document.getElementById('menuScreen').classList.add('show');
-  gameState = 'menu';
-  const grid = document.getElementById('levelGrid');
-  grid.innerHTML = '';
-  const mu = highestUnlocked();
-  for (let i = 1; i <= 100; i++) {
-    const t = document.createElement('div');
-    t.className = 'lt';
-    if (saveData.beaten.includes(i)) t.classList.add('beat');
-    else if (i > mu) t.classList.add('locked');
-    if (i === mu && !saveData.beaten.includes(i)) t.classList.add('current');
-    t.textContent = i;
-    if (i <= mu) t.onclick = () => launchLevel(i);
-    grid.appendChild(t);
+  state = 'menu';
+  const g = document.getElementById('lvlGrid');
+  g.innerHTML = '';
+  const mu = maxUnlocked();
+  for (let i=1;i<=100;i++) {
+    const t=document.createElement('div');
+    t.className='lt';
+    if(sd.b.includes(i)) t.classList.add('beat');
+    else if(i>mu) t.classList.add('locked');
+    if(i===mu&&!sd.b.includes(i)) t.classList.add('cur');
+    t.textContent=i;
+    if(i<=mu) t.onclick=()=>launch(i);
+    g.appendChild(t);
   }
 }
 
 function hideAll() {
-  document.querySelectorAll('.overlay-screen').forEach(s => s.classList.remove('show'));
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('crosshair').style.display = 'none';
-  document.getElementById('minimap').style.display = 'none';
-  document.getElementById('dangerOverlay').className = 'danger-overlay';
-  document.getElementById('hamsterAlert').classList.remove('show');
+  document.querySelectorAll('.overlay').forEach(s=>s.classList.remove('show'));
+  document.getElementById('hud').style.display='none';
 }
 
-function launchLevel(lvl) {
-  currentLevel = lvl;
-  buildLevel(lvl);
-  gameTime = 0;
-  sprint = 0; sprintCooldown = 0;
-
+function launch(lvl) {
+  curLvl=lvl;
+  const c=cfg(lvl);
+  let ms=c.mazeSize;
+  genMaze(ms,ms);
+  // Place player
+  for(let y=1;y<ms;y++) for(let x=1;x<ms;x++) if(maze[y][x]===1){px=x+0.5;py=y+0.5;break;}
+  spawnHamsters(lvl);
+  gTime=0; sprintAmt=0; sprintCD=0; dangerFlash=0;
   hideAll();
-  document.getElementById('hud').style.display = 'flex';
-  document.getElementById('crosshair').style.display = 'block';
-  document.getElementById('minimap').style.display = 'block';
-  document.getElementById('lvlVal').textContent = lvl;
-
-  gameState = 'playing';
-  clock.start();
-  renderer.domElement.requestPointerLock();
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('hudLvl').textContent=lvl;
+  state='playing';
+  lastTime=performance.now();
 }
 
-function caught() {
-  gameState = 'caught';
-  document.exitPointerLock();
+function gotCaught() {
+  state='caught';
   hideAll();
-  document.getElementById('caughtLvl').textContent = currentLevel;
-  const mins = Math.floor(gameTime / 60);
-  const secs = Math.floor(gameTime % 60);
-  document.getElementById('caughtTime').textContent = mins + ':' + String(secs).padStart(2,'0');
-  document.getElementById('retryBtn').onclick = () => launchLevel(currentLevel);
+  document.getElementById('caughtLvl').textContent=curLvl;
+  const m=Math.floor(gTime/60),s=Math.floor(gTime%60);
+  document.getElementById('caughtTime').textContent=m+':'+String(s).padStart(2,'0');
+  document.getElementById('retryBtn').onclick=()=>launch(curLvl);
   document.getElementById('caughtScreen').classList.add('show');
 }
 
-function winLevel() {
-  gameState = 'won';
-  document.exitPointerLock();
-  if (!saveData.beaten.includes(currentLevel)) { saveData.beaten.push(currentLevel); save(); }
+function winLvl() {
+  state='won';
+  if(!sd.b.includes(curLvl)){sd.b.push(curLvl);save();}
   hideAll();
-  document.getElementById('winLvl').textContent = currentLevel;
-  const btns = document.getElementById('winBtns');
-  btns.innerHTML = '';
-  if (currentLevel < 100) {
-    const nb = document.createElement('button');
-    nb.className = 'btn green';
-    nb.textContent = 'LEVEL ' + (currentLevel+1) + ' \u2192';
-    nb.onclick = () => launchLevel(currentLevel+1);
+  document.getElementById('winLvl').textContent=curLvl;
+  const btns=document.getElementById('winBtns');
+  btns.innerHTML='';
+  if(curLvl<100){
+    const nb=document.createElement('button');nb.className='btn g';
+    nb.textContent='LEVEL '+(curLvl+1)+' \u2192';nb.onclick=()=>launch(curLvl+1);
     btns.appendChild(nb);
   }
-  const mb = document.createElement('button');
-  mb.className = 'btn';
-  mb.textContent = 'LEVEL SELECT';
-  mb.onclick = showMenu;
+  const mb=document.createElement('button');mb.className='btn';mb.textContent='LEVELS';mb.onclick=showMenu;
   btns.appendChild(mb);
   document.getElementById('winScreen').classList.add('show');
 }
 
-// ===================== UPDATE =====================
-const clock = new THREE.Clock();
-
-function tryMove(pos, dx, dz) {
-  const r = 0.35;
-  // X axis
-  const newX = pos.x + dx;
-  const mc1 = worldToMaze(newX + r, pos.z);
-  const mc2 = worldToMaze(newX - r, pos.z);
-  if (!isWall(mc1.x, mc1.y) && !isWall(mc2.x, mc2.y)) {
-    pos.x = newX;
+// ============ MOVEMENT ============
+function tryMove(ox,oy,dx,dy) {
+  const r=0.2;
+  let nx=ox+dx, ny=oy+dy;
+  // X
+  if(dx!==0) {
+    const testX=dx>0?nx+r:nx-r;
+    if(isWall(Math.floor(testX),Math.floor(oy-r))||isWall(Math.floor(testX),Math.floor(oy+r-0.01))) nx=ox;
   }
-  // Z axis
-  const newZ = pos.z + dz;
-  const mc3 = worldToMaze(pos.x, newZ + r);
-  const mc4 = worldToMaze(pos.x, newZ - r);
-  if (!isWall(mc3.x, mc3.y) && !isWall(mc4.x, mc4.y)) {
-    pos.z = newZ;
+  // Y
+  if(dy!==0) {
+    const testY=dy>0?ny+r:ny-r;
+    if(isWall(Math.floor(nx-r),Math.floor(testY))||isWall(Math.floor(nx+r-0.01),Math.floor(testY))) ny=oy;
   }
+  return {x:nx,y:ny};
 }
+
+// ============ UPDATE ============
+let lastTime = performance.now();
 
 function update() {
-  if (gameState !== 'playing') return;
-  const dt = Math.min(clock.getDelta(), 0.05);
-  const t = clock.elapsedTime;
-  const cfg = getLvlCfg(currentLevel);
+  if(state!=='playing') return;
+  const now=performance.now();
+  const dt=Math.min((now-lastTime)/1000,0.05);
+  lastTime=now;
+  const c=cfg(curLvl);
 
-  gameTime += dt;
-
-  // Win check
-  if (gameTime >= SURVIVE_TIME) { winLevel(); return; }
+  gTime+=dt;
+  if(gTime>=SURVIVE){winLvl();return;}
 
   // Sprint
-  const wantSprint = keys['ShiftLeft'] || keys['ShiftRight'];
-  let curSpeed = cfg.playerSpeed;
-  if (wantSprint && sprintCooldown <= 0 && sprint < cfg.sprintMax) {
-    curSpeed = cfg.sprintSpeed;
-    sprint += dt;
-    if (sprint >= cfg.sprintMax) sprintCooldown = cfg.sprintRecharge;
-  } else {
-    sprint = Math.max(0, sprint - dt * 0.5);
-    if (sprintCooldown > 0) sprintCooldown -= dt;
-  }
+  const wantSprint=keys['ShiftLeft']||keys['ShiftRight'];
+  let spd=c.pSpeed;
+  if(wantSprint&&sprintCD<=0&&sprintAmt<c.sprintMax){spd=c.sprint;sprintAmt+=dt;if(sprintAmt>=c.sprintMax)sprintCD=c.sprintRecharge;}
+  else{sprintAmt=Math.max(0,sprintAmt-dt*0.5);if(sprintCD>0)sprintCD-=dt;}
 
-  // Movement
-  let mx = 0, mz = 0;
-  if (keys['KeyW'] || keys['ArrowUp']) mz -= 1;
-  if (keys['KeyS'] || keys['ArrowDown']) mz += 1;
-  if (keys['KeyA'] || keys['ArrowLeft']) mx -= 1;
-  if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
+  // Player move
+  let mx=0,my=0;
+  if(keys['KeyW']||keys['ArrowUp']) my-=1;
+  if(keys['KeyS']||keys['ArrowDown']) my+=1;
+  if(keys['KeyA']||keys['ArrowLeft']) mx-=1;
+  if(keys['KeyD']||keys['ArrowRight']) mx+=1;
+  if(mx||my){const l=Math.sqrt(mx*mx+my*my);mx/=l;my/=l;const r=tryMove(px,py,mx*spd*dt,my*spd*dt);px=r.x;py=r.y;}
 
-  if (mx || mz) {
-    const len = Math.sqrt(mx*mx + mz*mz);
-    mx /= len; mz /= len;
-    const sin = Math.sin(playerYaw), cos = Math.cos(playerYaw);
-    const worldMx = (mx * cos - mz * sin) * curSpeed * dt;
-    const worldMz = (mx * sin + mz * cos) * curSpeed * dt;
-    tryMove(playerPos, worldMx, worldMz);
-  }
+  // Hamster AI
+  let closestDist=Infinity;
+  let anyChasing=false;
 
-  // Camera
-  camera.position.copy(playerPos);
-  camera.rotation.order = 'YXZ';
-  camera.rotation.y = playerYaw;
-  camera.rotation.x = playerPitch;
+  hamsters.forEach(h=>{
+    const dist=Math.sqrt((h.x-px)**2+(h.y-py)**2);
+    closestDist=Math.min(closestDist,dist);
+    const canSee=dist<c.hDetect&&hasLOS(h.x,h.y,px,py);
 
-  playerLight.position.copy(playerPos);
-
-  // ===================== HAMSTER AI =====================
-  let closestDist = Infinity;
-  let anyChasing = false;
-
-  hamsters.forEach(h => {
-    const hx = h.mesh.position.x, hz = h.mesh.position.z;
-    const distToPlayer = Math.sqrt((hx - playerPos.x)**2 + (hz - playerPos.z)**2);
-    closestDist = Math.min(closestDist, distToPlayer);
-
-    const canSee = distToPlayer < h.detectRange && hasLineOfSight(hx, hz, playerPos.x, playerPos.z);
-
-    if (h.state === 'patrol') {
-      // Patrol: walk to random spots
-      if (h.path.length === 0 || h.pathIdx >= h.path.length) {
-        // Pick new random target
-        for (let tries = 0; tries < 20; tries++) {
-          const rx = 1 + Math.floor(Math.random() * (mazeW-2));
-          const ry = 1 + Math.floor(Math.random() * (mazeH-2));
-          if (maze[ry][rx] === 1) {
-            const hmc = worldToMaze(hx, hz);
-            h.path = findPath(hmc.x, hmc.y, rx, ry);
-            h.pathIdx = 0;
-            break;
-          }
+    if(h.state==='patrol'){
+      if(h.path.length===0||h.pathIdx>=h.path.length){
+        for(let t=0;t<30;t++){
+          const rx=1+Math.floor(Math.random()*(mW-2));
+          const ry=1+Math.floor(Math.random()*(mH-2));
+          if(maze[ry][rx]===1){h.path=bfs(Math.floor(h.x),Math.floor(h.y),rx,ry);h.pathIdx=0;break;}
         }
       }
-      if (canSee) {
-        h.state = 'chase';
-        h.chaseTimer = 0;
-        h.lastSeenX = playerPos.x;
-        h.lastSeenZ = playerPos.z;
-      }
-      moveHamsterAlongPath(h, cfg.hamsterPatrolSpeed, dt);
-    }
-    else if (h.state === 'chase') {
-      anyChasing = true;
-      if (canSee) {
-        h.chaseTimer = 0;
-        h.lastSeenX = playerPos.x;
-        h.lastSeenZ = playerPos.z;
-        // Direct chase with pathfinding
-        const hmc = worldToMaze(hx, hz);
-        const pmc = worldToMaze(playerPos.x, playerPos.z);
-        h.path = findPath(hmc.x, hmc.y, pmc.x, pmc.y);
-        h.pathIdx = 0;
+      if(canSee){h.state='chase';h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;}
+      moveH(h,c.hPatrol,dt);
+    } else if(h.state==='chase'){
+      anyChasing=true;
+      if(canSee){
+        h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;
+        h.path=bfs(Math.floor(h.x),Math.floor(h.y),Math.floor(px),Math.floor(py));h.pathIdx=0;
       } else {
-        h.chaseTimer += dt;
-        if (h.chaseTimer > h.loseInterest) {
-          h.state = 'search';
-          h.searchTimer = 4;
-          // Path to last seen
-          const hmc = worldToMaze(hx, hz);
-          const lmc = worldToMaze(h.lastSeenX, h.lastSeenZ);
-          h.path = findPath(hmc.x, hmc.y, lmc.x, lmc.y);
-          h.pathIdx = 0;
+        h.chaseTimer+=dt;
+        if(h.chaseTimer>c.hLoseTime){
+          h.state='search';h.searchTimer=3;
+          h.path=bfs(Math.floor(h.x),Math.floor(h.y),Math.floor(h.lastSeenX),Math.floor(h.lastSeenY));h.pathIdx=0;
         }
       }
-      moveHamsterAlongPath(h, h.chaseSpeed, dt);
-
-      // Catch check
-      if (distToPlayer < 1.2) { caught(); return; }
+      moveH(h,c.hChase,dt);
+      if(dist<0.6){gotCaught();return;}
+    } else if(h.state==='search'){
+      h.searchTimer-=dt;
+      if(canSee){h.state='chase';h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;}
+      else if(h.searchTimer<=0){h.state='patrol';h.path=[];}
+      moveH(h,c.hPatrol*1.3,dt);
     }
-    else if (h.state === 'search') {
-      h.searchTimer -= dt;
-      if (canSee) {
-        h.state = 'chase';
-        h.chaseTimer = 0;
-        h.lastSeenX = playerPos.x;
-        h.lastSeenZ = playerPos.z;
-      } else if (h.searchTimer <= 0) {
-        h.state = 'patrol';
-        h.path = [];
+
+    h.animPhase+=dt*(h.state==='chase'?14:6);
+  });
+
+  // Danger flash
+  if(anyChasing) dangerFlash=Math.min(1,dangerFlash+dt*4);
+  else dangerFlash=Math.max(0,dangerFlash-dt*2);
+
+  // HUD
+  const rem=Math.max(0,SURVIVE-gTime);
+  const mins=Math.floor(rem/60),secs=Math.floor(rem%60);
+  document.getElementById('hudTime').textContent=mins+':'+String(secs).padStart(2,'0');
+  document.getElementById('timerFill').style.width=(gTime/SURVIVE*100)+'%';
+  document.getElementById('sprintFill').style.width=(Math.max(0,1-sprintAmt/c.sprintMax)*100)+'%';
+
+  const st=document.getElementById('hudStatus');
+  if(anyChasing){st.textContent='CHASING!';st.style.color='#ff4444';}
+  else if(closestDist<8){st.textContent='Nearby...';st.style.color='#ffaa00';}
+  else{st.textContent='Patrolling';st.style.color='#44ff44';}
+}
+
+function moveH(h,spd,dt){
+  if(!h.path.length||h.pathIdx>=h.path.length) return;
+  const tx=h.path[h.pathIdx][0]+0.5, ty=h.path[h.pathIdx][1]+0.5;
+  const dx=tx-h.x, dy=ty-h.y;
+  const d=Math.sqrt(dx*dx+dy*dy);
+  if(d>0.01) h.dir=Math.atan2(dy,dx);
+  if(d<0.15){h.pathIdx++;return;}
+  const mv=spd*dt;
+  if(mv>=d){h.x=tx;h.y=ty;h.pathIdx++;}
+  else{h.x+=dx/d*mv;h.y+=dy/d*mv;}
+}
+
+// ============ DRAW ============
+function draw() {
+  ctx.clearRect(0,0,C.width,C.height);
+  if(state!=='playing'){requestAnimationFrame(draw);return;}
+
+  const camX=px-viewTilesX/2;
+  const camY=py-viewTilesY/2;
+
+  // Draw tiles
+  const startTX=Math.floor(camX), startTY=Math.floor(camY);
+  const endTX=startTX+viewTilesX+2, endTY=startTY+viewTilesY+2;
+
+  const t=(curLvl-1)/99;
+
+  for(let ty=startTY;ty<endTY;ty++){
+    for(let tx=startTX;tx<endTX;tx++){
+      const sx=(tx-camX)*TILE, sy=(ty-camY)*TILE;
+      if(tx<0||tx>=mW||ty<0||ty>=mH||maze[ty][tx]===0){
+        // Wall
+        const shade=Math.floor(25+t*15);
+        ctx.fillStyle=`rgb(${shade+10},${shade},${shade-5})`;
+        ctx.fillRect(sx,sy,TILE+1,TILE+1);
+        // Wall detail
+        ctx.fillStyle=`rgb(${shade+18},${shade+8},${shade})`;
+        ctx.fillRect(sx+1,sy+1,TILE-2,1);
+        ctx.fillRect(sx+1,sy+1,1,TILE-2);
+      } else {
+        // Floor
+        ctx.fillStyle=`rgb(${15+Math.floor(t*8)},${12+Math.floor(t*4)},${8})`;
+        ctx.fillRect(sx,sy,TILE+1,TILE+1);
+        // Floor texture
+        if((tx+ty)%2===0){
+          ctx.fillStyle='rgba(255,255,255,0.02)';
+          ctx.fillRect(sx,sy,TILE,TILE);
+        }
       }
-      moveHamsterAlongPath(h, cfg.hamsterPatrolSpeed * 1.3, dt);
     }
+  }
 
-    // Animation
-    h.bobPhase += dt * (h.state === 'chase' ? 12 : 5);
-    h.mesh.position.y = Math.abs(Math.sin(h.bobPhase)) * 0.15;
+  // Lighting effect - darken distant tiles, glow around player
+  const gradient=ctx.createRadialGradient(C.width/2,C.height/2,TILE*2,C.width/2,C.height/2,TILE*(4+t*3));
+  gradient.addColorStop(0,'rgba(0,0,0,0)');
+  gradient.addColorStop(1,'rgba(0,0,0,0.85)');
+  ctx.fillStyle=gradient;
+  ctx.fillRect(0,0,C.width,C.height);
 
-    // Face movement direction
-    if (h.path.length > 0 && h.pathIdx < h.path.length) {
-      const tp = mazeToWorld(h.path[h.pathIdx][0], h.path[h.pathIdx][1]);
-      const angle = Math.atan2(tp.x - hx, tp.z - hz);
-      h.mesh.rotation.y = angle + Math.PI;
+  // Hamster detection range visualization (faint circle)
+  const c2=cfg(curLvl);
+  hamsters.forEach(h=>{
+    if(h.state==='chase'||h.state==='search'){
+      const hsx=(h.x-camX)*TILE, hsy=(h.y-camY)*TILE;
+      const rPx=c2.hDetect*TILE;
+      const g=ctx.createRadialGradient(hsx,hsy,0,hsx,hsy,rPx);
+      g.addColorStop(0,h.state==='chase'?'rgba(255,0,0,0.06)':'rgba(255,150,0,0.04)');
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g;
+      ctx.fillRect(hsx-rPx,hsy-rPx,rPx*2,rPx*2);
     }
   });
 
-  // Danger UI
-  const danger = document.getElementById('dangerOverlay');
-  const alert = document.getElementById('hamsterAlert');
-  if (anyChasing) {
-    danger.className = 'danger-overlay close';
-    alert.classList.add('show');
-    document.getElementById('hamsterStatus').textContent = 'CHASING YOU!';
-    document.getElementById('hamsterStatus').style.color = '#ff4444';
-  } else if (closestDist < 15) {
-    danger.className = 'danger-overlay near';
-    alert.classList.remove('show');
-    document.getElementById('hamsterStatus').textContent = 'Nearby...';
-    document.getElementById('hamsterStatus').style.color = '#ffaa00';
-  } else {
-    danger.className = 'danger-overlay';
-    alert.classList.remove('show');
-    document.getElementById('hamsterStatus').textContent = 'Searching...';
-    document.getElementById('hamsterStatus').style.color = '#44ff44';
-  }
+  // Draw hamsters
+  hamsters.forEach(h=>{
+    const hsx=(h.x-camX)*TILE, hsy=(h.y-camY)*TILE;
+    const bob=Math.abs(Math.sin(h.animPhase))*3;
+    const sz=TILE*0.7;
 
-  // Distance display
-  document.getElementById('distVal').textContent = closestDist < 100 ? Math.floor(closestDist) + 'm away' : 'Safe';
+    // Body
+    const bodyColor=h.state==='chase'?`rgb(255,${50+Math.floor(Math.sin(h.animPhase*2)*30)},0)`:
+      h.state==='search'?'rgb(255,140,50)':
+      `rgb(${200+Math.floor(t*55)},${130-Math.floor(t*80)},${60-Math.floor(t*40)})`;
 
-  // Timer
-  const remaining = Math.max(0, SURVIVE_TIME - gameTime);
-  const mins = Math.floor(remaining / 60);
-  const secs = Math.floor(remaining % 60);
-  document.getElementById('timeLeft').textContent = mins + ':' + String(secs).padStart(2, '0');
-  document.getElementById('timerBar').style.width = (gameTime / SURVIVE_TIME * 100) + '%';
+    ctx.save();
+    ctx.translate(hsx, hsy-bob);
 
-  // Minimap
-  drawMinimap();
-}
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(0,bob+sz*0.3,sz*0.4,sz*0.15,0,0,Math.PI*2);
+    ctx.fill();
 
-function moveHamsterAlongPath(h, spd, dt) {
-  if (h.path.length === 0 || h.pathIdx >= h.path.length) return;
-  const target = mazeToWorld(h.path[h.pathIdx][0], h.path[h.pathIdx][1]);
-  const dx = target.x - h.mesh.position.x;
-  const dz = target.z - h.mesh.position.z;
-  const dist = Math.sqrt(dx*dx + dz*dz);
+    // Body
+    ctx.fillStyle=bodyColor;
+    ctx.beginPath();
+    ctx.ellipse(0,0,sz*0.45,sz*0.35,0,0,Math.PI*2);
+    ctx.fill();
 
-  if (dist < 0.3) {
-    h.pathIdx++;
-    return;
-  }
+    // Head
+    const headX=Math.cos(h.dir)*sz*0.3;
+    const headY=Math.sin(h.dir)*sz*0.3;
+    ctx.fillStyle=bodyColor;
+    ctx.beginPath();
+    ctx.arc(headX,headY,sz*0.25,0,Math.PI*2);
+    ctx.fill();
 
-  const moveAmt = spd * dt;
-  if (moveAmt >= dist) {
-    h.mesh.position.x = target.x;
-    h.mesh.position.z = target.z;
-    h.pathIdx++;
-  } else {
-    h.mesh.position.x += (dx / dist) * moveAmt;
-    h.mesh.position.z += (dz / dist) * moveAmt;
-  }
-}
+    // Eyes (glow when chasing)
+    const eyeGlow=h.state==='chase'?'#ff0000':'#220000';
+    const eyeOff=sz*0.12;
+    const perpX=-Math.sin(h.dir)*eyeOff;
+    const perpY=Math.cos(h.dir)*eyeOff;
+    const eyeForward=sz*0.15;
+    ctx.fillStyle=eyeGlow;
+    ctx.beginPath();
+    ctx.arc(headX+Math.cos(h.dir)*eyeForward+perpX, headY+Math.sin(h.dir)*eyeForward+perpY, sz*0.06+t*0.03,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(headX+Math.cos(h.dir)*eyeForward-perpX, headY+Math.sin(h.dir)*eyeForward-perpY, sz*0.06+t*0.03,0,Math.PI*2);
+    ctx.fill();
 
-// ===================== MINIMAP =====================
-const mmCanvas = document.getElementById('minimap');
-const mmCtx = mmCanvas.getContext('2d');
-
-function drawMinimap() {
-  const s = 160;
-  mmCtx.clearRect(0, 0, s, s);
-  mmCtx.fillStyle = 'rgba(0,0,0,0.6)';
-  mmCtx.fillRect(0, 0, s, s);
-
-  const pmc = worldToMaze(playerPos.x, playerPos.z);
-  const viewR = 12;
-  const cellPx = s / (viewR * 2 + 1);
-
-  for (let dy = -viewR; dy <= viewR; dy++) {
-    for (let dx = -viewR; dx <= viewR; dx++) {
-      const mx = pmc.x + dx, my = pmc.y + dy;
-      const px = (dx + viewR) * cellPx, py = (dy + viewR) * cellPx;
-      if (mx < 0 || mx >= mazeW || my < 0 || my >= mazeH) {
-        mmCtx.fillStyle = '#111';
-      } else if (maze[my][mx] === 0) {
-        mmCtx.fillStyle = '#333';
-      } else {
-        mmCtx.fillStyle = '#1a1208';
-      }
-      mmCtx.fillRect(px, py, cellPx + 0.5, cellPx + 0.5);
+    // Eye glow effect when chasing
+    if(h.state==='chase'){
+      ctx.fillStyle='rgba(255,0,0,0.3)';
+      ctx.beginPath();
+      ctx.arc(headX+Math.cos(h.dir)*eyeForward, headY+Math.sin(h.dir)*eyeForward, sz*0.2,0,Math.PI*2);
+      ctx.fill();
     }
-  }
 
-  // Player dot
-  mmCtx.fillStyle = '#4dacff';
-  mmCtx.beginPath();
-  mmCtx.arc(s/2, s/2, 3, 0, Math.PI*2);
-  mmCtx.fill();
+    // Ears
+    ctx.fillStyle='#ffaa88';
+    ctx.beginPath();
+    ctx.arc(headX+perpX*2, headY+perpY*2-sz*0.15, sz*0.1,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(headX-perpX*2, headY-perpY*2-sz*0.15, sz*0.1,0,Math.PI*2);
+    ctx.fill();
 
-  // Player direction
-  mmCtx.strokeStyle = '#4dacff';
-  mmCtx.lineWidth = 1.5;
-  mmCtx.beginPath();
-  mmCtx.moveTo(s/2, s/2);
-  mmCtx.lineTo(s/2 - Math.sin(playerYaw)*8, s/2 - Math.cos(playerYaw)*8);
-  mmCtx.stroke();
+    // Tail
+    ctx.fillStyle=bodyColor;
+    ctx.beginPath();
+    ctx.arc(-Math.cos(h.dir)*sz*0.4, -Math.sin(h.dir)*sz*0.4, sz*0.08,0,Math.PI*2);
+    ctx.fill();
 
-  // Hamster dots (only if close enough to detect on minimap)
-  hamsters.forEach(h => {
-    const hmc = worldToMaze(h.mesh.position.x, h.mesh.position.z);
-    const hdx = hmc.x - pmc.x, hdy = hmc.y - pmc.y;
-    if (Math.abs(hdx) <= viewR && Math.abs(hdy) <= viewR) {
-      const hpx = (hdx + viewR) * cellPx + cellPx/2;
-      const hpy = (hdy + viewR) * cellPx + cellPx/2;
-      mmCtx.fillStyle = h.state === 'chase' ? '#ff0000' : (h.state === 'search' ? '#ff8800' : '#ff6600');
-      mmCtx.beginPath();
-      mmCtx.arc(hpx, hpy, 3, 0, Math.PI*2);
-      mmCtx.fill();
+    ctx.restore();
+
+    // Exclamation mark when chasing
+    if(h.state==='chase'){
+      ctx.fillStyle='#ff0000';
+      ctx.font='bold 14px "Press Start 2P"';
+      ctx.textAlign='center';
+      ctx.fillText('!',hsx,hsy-TILE*0.8-bob);
+    }
+    if(h.state==='search'){
+      ctx.fillStyle='#ff8800';
+      ctx.font='bold 10px "Press Start 2P"';
+      ctx.textAlign='center';
+      ctx.fillText('?',hsx,hsy-TILE*0.7-bob);
     }
   });
+
+  // Draw player
+  const psx=C.width/2, psy=C.height/2;
+
+  // Player glow
+  const pg=ctx.createRadialGradient(psx,psy,0,psx,psy,TILE*1.5);
+  pg.addColorStop(0,'rgba(77,172,255,0.15)');
+  pg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=pg;
+  ctx.fillRect(psx-TILE*2,psy-TILE*2,TILE*4,TILE*4);
+
+  // Player body
+  ctx.fillStyle='#4dacff';
+  ctx.beginPath();
+  ctx.arc(psx,psy,TILE*0.3,0,Math.PI*2);
+  ctx.fill();
+  // Inner
+  ctx.fillStyle='#88ccff';
+  ctx.beginPath();
+  ctx.arc(psx-2,psy-2,TILE*0.15,0,Math.PI*2);
+  ctx.fill();
+
+  // Sprint effect
+  if(keys['ShiftLeft']||keys['ShiftRight']){
+    ctx.fillStyle='rgba(77,172,255,0.2)';
+    ctx.beginPath();
+    ctx.arc(psx,psy,TILE*0.5,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  // Danger red overlay
+  if(dangerFlash>0){
+    ctx.fillStyle=`rgba(255,0,0,${dangerFlash*0.12})`;
+    ctx.fillRect(0,0,C.width,C.height);
+    // Red vignette
+    const vg=ctx.createRadialGradient(C.width/2,C.height/2,C.width*0.3,C.width/2,C.height/2,C.width*0.7);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(1,`rgba(255,0,0,${dangerFlash*0.2})`);
+    ctx.fillStyle=vg;
+    ctx.fillRect(0,0,C.width,C.height);
+  }
+
+  // Chase text
+  if(dangerFlash>0.5){
+    ctx.globalAlpha=Math.min(1,(dangerFlash-0.5)*2)*((Math.sin(performance.now()*0.008)+1)/2*0.5+0.5);
+    ctx.fillStyle='#ff0000';
+    ctx.font='12px "Press Start 2P"';
+    ctx.textAlign='center';
+    ctx.fillText('THE HAMSTER SEES YOU!',C.width/2,40);
+    ctx.globalAlpha=1;
+  }
+
+  requestAnimationFrame(draw);
 }
 
-// ===================== RENDER =====================
-function animate() {
-  requestAnimationFrame(animate);
+requestAnimationFrame(draw);
+
+// Game loop (separate from draw for consistent timing)
+function tick(){
   update();
-  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
 }
-animate();
+tick();
+
 showMenu();
 </script>
 </body>
