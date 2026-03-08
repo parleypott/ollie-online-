@@ -154,17 +154,17 @@ const TUNNEL_RADIUS = 12;
 function getLevelConfig(lvl) {
   const t = (lvl - 1) / 99; // 0 to 1
   return {
-    courseLength: Math.floor(150 + t * 1200),
-    baseSpeed: 0.5 + t * 1.2,
-    boostMultiplier: 1.8 - t * 0.3,
-    health: Math.max(60, 120 - t * 60),
-    damagePerHit: 15 + t * 10,
-    healPerCP: Math.max(5, 20 - t * 15),
-    obstacleGap: Math.max(12, 28 - t * 16),
-    holeSize: Math.max(2.2, 4.5 - t * 2.3),
-    spinnerSpeed: 0.4 + t * 2.0,
-    moverSpeed: 0.6 + t * 2.0,
-    moverRange: 3 + t * 4,
+    courseLength: Math.floor(60 + t * 300),
+    baseSpeed: 0.3 + t * 0.5,
+    boostMultiplier: 2.0 - t * 0.3,
+    health: 1,
+    damagePerHit: 1,
+    healPerCP: 0,
+    obstacleGap: Math.max(22, 50 - t * 28),
+    holeSize: Math.max(3.5, 6.5 - t * 3.0),
+    spinnerSpeed: 0.2 + t * 0.8,
+    moverSpeed: 0.3 + t * 0.8,
+    moverRange: 2 + t * 2,
     numCheckpoints: Math.max(2, Math.floor(3 + t * 7)),
   };
 }
@@ -821,9 +821,8 @@ function update() {
 }
 
 function takeDamage(cfg) {
-  health -= cfg.damagePerHit;
-  invulnTimer = 1.0;
-  if (health <= 0) { health = 0; die(); }
+  health = 0;
+  die();
 }
 
 // ===================== RENDER =====================

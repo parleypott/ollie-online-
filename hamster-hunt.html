@@ -219,17 +219,17 @@ const SURVIVE = 60; // 1 minute
 function cfg(lvl) {
   const t=(lvl-1)/99;
   return {
-    mazeSize: (Math.floor(11+t*18))|1, // 11 to 29, odd
-    hSpeed: 2.4+t*3.6,
-    hChase: 3.6+t*5.4,
-    hDetect: 6+t*14,
-    hLoseTime: Math.max(1, 5-t*4),
-    hPatrol: 1.6+t*2.8,
-    pSpeed: 3.2,
-    sprint: 5.5,
-    sprintMax: 2.5-t*1,
-    sprintRecharge: 4.5+t*2,
-    numH: Math.min(6, 1+Math.floor(t*5.5)),
+    mazeSize: (Math.floor(9+t*12))|1, // 9 to 21, smaller = harder to hide
+    hSpeed: 3.2+t*5.0,
+    hChase: 5.0+t*7.0,
+    hDetect: 10+t*20,
+    hLoseTime: Math.max(0.3, 2.5-t*2.2),
+    hPatrol: 2.8+t*4.5,
+    pSpeed: 2.6,
+    sprint: 4.5,
+    sprintMax: 1.8-t*1.0,
+    sprintRecharge: 6+t*4,
+    numH: Math.min(10, 2+Math.floor(t*8.5)),
   };
 }
 
