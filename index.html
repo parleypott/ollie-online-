@@ -234,7 +234,7 @@
         <div class="ring"></div>
       </div>
       <div class="dog-wrap">
-        <canvas id="dogCanvas" width="200" height="200"></canvas>
+        <canvas id="dogCanvas" width="300" height="300"></canvas>
       </div>
     </div>
 
@@ -248,298 +248,353 @@
   </div>
 
   <script>
-    // Draw evil corgi
+    // Draw photorealistic corgi with cheeky smile
     (function(){
       const dc = document.getElementById('dogCanvas');
       const c = dc.getContext('2d');
-      const W = 200, H = 200;
-      const cx = W/2, cy = 105;
+      const W = 300, H = 300;
+      const cx = W/2, cy = 155;
 
-      // Helper: ellipse shortcut
-      function ell(x,y,rx,ry,color,outline){
+      // Soft blur helper
+      function softEll(x,y,rx,ry,color,rot){
         c.fillStyle=color;
-        c.beginPath();c.ellipse(x,y,rx,ry,0,0,Math.PI*2);c.fill();
-        if(outline){c.strokeStyle=outline;c.lineWidth=1.5;c.stroke();}
+        c.beginPath();c.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);c.fill();
+      }
+
+      // === NECK / BODY peek ===
+      const neckG = c.createLinearGradient(cx,cy+60,cx,cy+100);
+      neckG.addColorStop(0,'#d49540');
+      neckG.addColorStop(1,'#b07828');
+      softEll(cx,cy+82,70,30,neckG);
+
+      // White chest
+      const chestG = c.createRadialGradient(cx,cy+78,5,cx,cy+78,35);
+      chestG.addColorStop(0,'#fffcf6');
+      chestG.addColorStop(0.7,'#f5ece0');
+      chestG.addColorStop(1,'#ddd0c0');
+      softEll(cx,cy+78,40,22,chestG);
+
+      // Chest fur tufts
+      for(let i=-4;i<=4;i++){
+        softEll(cx+i*8, cy+76, 6, 12, 'rgba(255,250,240,0.25)');
       }
 
       // === EARS (behind head) ===
-      // Left ear - big pointy corgi ear
-      c.fillStyle='#c07830';
-      c.beginPath();
-      c.moveTo(42,72);
-      c.quadraticCurveTo(25,18,52,8);
-      c.quadraticCurveTo(78,14,72,72);
-      c.closePath();
-      c.fill();
-      // Left ear inner
-      c.fillStyle='#ffbbaa';
-      c.beginPath();
-      c.moveTo(48,68);
-      c.quadraticCurveTo(36,28,54,18);
-      c.quadraticCurveTo(70,24,66,68);
-      c.closePath();
-      c.fill();
-      // Left ear inner darker
-      c.fillStyle='#ee9988';
-      c.beginPath();
-      c.moveTo(52,64);
-      c.quadraticCurveTo(42,36,56,26);
-      c.quadraticCurveTo(66,32,62,64);
-      c.closePath();
-      c.fill();
+      for(let side=-1;side<=1;side+=2){
+        const ex = cx+side*50;
+        // Ear outer
+        const earG = c.createLinearGradient(ex,100,ex-side*10,20);
+        earG.addColorStop(0,'#c48030');
+        earG.addColorStop(0.5,'#d49540');
+        earG.addColorStop(1,'#b87828');
+        c.fillStyle=earG;
+        c.beginPath();
+        c.moveTo(ex-side*18, 108);
+        c.bezierCurveTo(ex-side*30, 50, ex+side*5, 12, ex+side*18, 15);
+        c.bezierCurveTo(ex+side*35, 18, ex+side*28, 65, ex+side*18, 108);
+        c.closePath();
+        c.fill();
 
-      // Right ear
-      c.fillStyle='#c07830';
-      c.beginPath();
-      c.moveTo(158,72);
-      c.quadraticCurveTo(175,18,148,8);
-      c.quadraticCurveTo(122,14,128,72);
-      c.closePath();
-      c.fill();
-      // Right ear inner
-      c.fillStyle='#ffbbaa';
-      c.beginPath();
-      c.moveTo(152,68);
-      c.quadraticCurveTo(164,28,146,18);
-      c.quadraticCurveTo(130,24,134,68);
-      c.closePath();
-      c.fill();
-      c.fillStyle='#ee9988';
-      c.beginPath();
-      c.moveTo(148,64);
-      c.quadraticCurveTo(158,36,144,26);
-      c.quadraticCurveTo(134,32,138,64);
-      c.closePath();
-      c.fill();
+        // Ear edge highlight
+        c.strokeStyle='rgba(220,170,100,0.4)';
+        c.lineWidth=2;
+        c.beginPath();
+        c.moveTo(ex-side*16, 105);
+        c.bezierCurveTo(ex-side*28, 52, ex+side*5, 16, ex+side*16, 18);
+        c.stroke();
+
+        // Ear inner pink
+        const earInG = c.createLinearGradient(ex,95,ex,30);
+        earInG.addColorStop(0,'#f0b8a0');
+        earInG.addColorStop(0.4,'#f2c0aa');
+        earInG.addColorStop(1,'#e8a890');
+        c.fillStyle=earInG;
+        c.beginPath();
+        c.moveTo(ex-side*10, 100);
+        c.bezierCurveTo(ex-side*20, 56, ex+side*6, 26, ex+side*12, 28);
+        c.bezierCurveTo(ex+side*24, 30, ex+side*20, 68, ex+side*12, 100);
+        c.closePath();
+        c.fill();
+
+        // Ear inner shadow
+        softEll(ex+side*2, 80, 10, 25, 'rgba(180,100,70,0.15)');
+      }
 
       // === HEAD (main shape) ===
-      // Fur base - orange/sable
-      const headGrad = c.createRadialGradient(cx,cy-5,10,cx,cy,62);
-      headGrad.addColorStop(0,'#e8a050');
-      headGrad.addColorStop(0.6,'#cc8030');
-      headGrad.addColorStop(1,'#a06020');
-      c.fillStyle=headGrad;
+      // Base fur with multi-stop gradient
+      const headG = c.createRadialGradient(cx,cy-10,15,cx,cy+5,90);
+      headG.addColorStop(0,'#eaac58');
+      headG.addColorStop(0.3,'#dca048');
+      headG.addColorStop(0.6,'#cc8c38');
+      headG.addColorStop(0.85,'#b87828');
+      headG.addColorStop(1,'#9a6420');
+      c.fillStyle=headG;
       c.beginPath();
-      c.ellipse(cx,cy,60,55,0,0,Math.PI*2);
+      c.ellipse(cx,cy,88,80,0,0,Math.PI*2);
       c.fill();
 
-      // Darker fur on sides
-      c.fillStyle='rgba(140,80,30,0.35)';
-      c.beginPath();c.ellipse(cx-42,cy-5,22,40,0.15,0,Math.PI*2);c.fill();
-      c.beginPath();c.ellipse(cx+42,cy-5,22,40,-0.15,0,Math.PI*2);c.fill();
+      // Subtle side shading
+      softEll(cx-65,cy, 30,55, 'rgba(130,70,20,0.2)', 0.1);
+      softEll(cx+65,cy, 30,55, 'rgba(130,70,20,0.2)', -0.1);
 
-      // Forehead lighter streak
-      c.fillStyle='rgba(240,190,120,0.4)';
-      c.beginPath();c.ellipse(cx,cy-28,18,18,0,0,Math.PI*2);c.fill();
+      // Top of head lighter
+      softEll(cx,cy-45, 40,25, 'rgba(240,190,110,0.3)');
 
-      // === WHITE FACE MARKINGS (corgi blaze) ===
-      // White stripe down center of face
-      c.fillStyle='#fff8f0';
+      // Cheek fluff
+      softEll(cx-55,cy+15, 28,30, 'rgba(210,160,80,0.3)');
+      softEll(cx+55,cy+15, 28,30, 'rgba(210,160,80,0.3)');
+
+      // === WHITE BLAZE (corgi marking) ===
+      // Smooth white stripe
+      const blazeG = c.createLinearGradient(cx,cy-65,cx,cy+70);
+      blazeG.addColorStop(0,'#fff9f2');
+      blazeG.addColorStop(0.5,'#fffcf8');
+      blazeG.addColorStop(1,'#fff5ea');
+      c.fillStyle=blazeG;
       c.beginPath();
-      c.moveTo(cx-16, cy-40);
-      c.quadraticCurveTo(cx-20, cy-10, cx-22, cy+10);
-      c.quadraticCurveTo(cx-24, cy+35, cx-18, cy+48);
-      c.lineTo(cx+18, cy+48);
-      c.quadraticCurveTo(cx+24, cy+35, cx+22, cy+10);
-      c.quadraticCurveTo(cx+20, cy-10, cx+16, cy-40);
+      c.moveTo(cx-20, cy-62);
+      c.bezierCurveTo(cx-26, cy-30, cx-30, cy, cx-32, cy+20);
+      c.bezierCurveTo(cx-34, cy+45, cx-28, cy+68, cx, cy+72);
+      c.bezierCurveTo(cx+28, cy+68, cx+34, cy+45, cx+32, cy+20);
+      c.bezierCurveTo(cx+30, cy, cx+26, cy-30, cx+20, cy-62);
       c.closePath();
       c.fill();
 
-      // White muzzle area
-      c.fillStyle='#fff8f0';
-      c.beginPath();
-      c.ellipse(cx, cy+22, 30, 26, 0, 0, Math.PI*2);
-      c.fill();
+      // Blaze soft edge blending
+      softEll(cx-28, cy+5, 8, 50, 'rgba(220,170,90,0.15)');
+      softEll(cx+28, cy+5, 8, 50, 'rgba(220,170,90,0.15)');
 
-      // Muzzle puff - slightly raised
-      c.fillStyle='#ffefe0';
-      c.beginPath();
-      c.ellipse(cx-10, cy+18, 16, 14, 0.1, 0, Math.PI*2);
-      c.fill();
-      c.beginPath();
-      c.ellipse(cx+10, cy+18, 16, 14, -0.1, 0, Math.PI*2);
-      c.fill();
+      // === MUZZLE ===
+      // White muzzle puffs
+      const muzzG = c.createRadialGradient(cx,cy+28,5,cx,cy+28,40);
+      muzzG.addColorStop(0,'#fffdf8');
+      muzzG.addColorStop(0.6,'#fef8f0');
+      muzzG.addColorStop(1,'#f5ece0');
+      softEll(cx,cy+28, 42, 32, muzzG);
 
-      // === EYES - narrowed and evil ===
-      const eyeY = cy-6;
-      const eyeSpread = 22;
+      // Left muzzle puff
+      softEll(cx-14, cy+24, 22, 20, 'rgba(255,252,245,0.7)', 0.1);
+      // Right muzzle puff
+      softEll(cx+14, cy+24, 22, 20, 'rgba(255,252,245,0.7)', -0.1);
+      // Muzzle highlight
+      softEll(cx, cy+18, 14, 8, 'rgba(255,255,255,0.3)');
 
-      // Eye shadow/brow area (furrowed brows)
-      c.fillStyle='rgba(100,50,10,0.35)';
-      c.beginPath();c.ellipse(cx-eyeSpread,eyeY-3,16,10,-0.15,0,Math.PI*2);c.fill();
-      c.beginPath();c.ellipse(cx+eyeSpread,eyeY-3,16,10,0.15,0,Math.PI*2);c.fill();
+      // === EYES ===
+      const eyeY = cy-10;
+      const eyeSpread = 32;
 
-      // Angry brow ridges
-      c.strokeStyle='#8a4a10';
-      c.lineWidth=3;
-      c.lineCap='round';
-      // Left brow - angled down toward center (angry)
-      c.beginPath();
-      c.moveTo(cx-eyeSpread-14, eyeY-14);
-      c.quadraticCurveTo(cx-eyeSpread, eyeY-18, cx-eyeSpread+10, eyeY-10);
-      c.stroke();
-      // Right brow
-      c.beginPath();
-      c.moveTo(cx+eyeSpread+14, eyeY-14);
-      c.quadraticCurveTo(cx+eyeSpread, eyeY-18, cx+eyeSpread-10, eyeY-10);
-      c.stroke();
-
-      // Eye whites (narrow slits - evil squint)
       for(let side=-1;side<=1;side+=2){
-        const ex=cx+eyeSpread*side;
-        // Eye white - narrow almond shape
-        c.fillStyle='#f8f0e8';
+        const ex = cx+eyeSpread*side;
+
+        // Eye socket shadow
+        softEll(ex, eyeY, 18, 15, 'rgba(120,70,20,0.12)');
+
+        // Eye white
+        const ewG = c.createRadialGradient(ex,eyeY,2,ex,eyeY,13);
+        ewG.addColorStop(0,'#ffffff');
+        ewG.addColorStop(0.7,'#f8f4ee');
+        ewG.addColorStop(1,'#e8ddd0');
+        c.fillStyle=ewG;
         c.beginPath();
-        c.moveTo(ex-11,eyeY);
-        c.quadraticCurveTo(ex,eyeY-7,ex+11,eyeY);
-        c.quadraticCurveTo(ex,eyeY+6,ex-11,eyeY);
+        c.moveTo(ex-14,eyeY+1);
+        c.bezierCurveTo(ex-10,eyeY-12, ex+10,eyeY-12, ex+14,eyeY+1);
+        c.bezierCurveTo(ex+10,eyeY+10, ex-10,eyeY+10, ex-14,eyeY+1);
         c.fill();
 
         // Iris
-        const irisGrad=c.createRadialGradient(ex+side*1,eyeY,1,ex+side*1,eyeY,7);
-        irisGrad.addColorStop(0,'#dd2200');
-        irisGrad.addColorStop(0.5,'#cc1100');
-        irisGrad.addColorStop(1,'#880000');
-        c.fillStyle=irisGrad;
-        c.beginPath();c.arc(ex+side*1,eyeY,6,0,Math.PI*2);c.fill();
+        const iG = c.createRadialGradient(ex+side,eyeY,1,ex+side,eyeY,9);
+        iG.addColorStop(0,'#5a3010');
+        iG.addColorStop(0.3,'#6a3a18');
+        iG.addColorStop(0.7,'#3a1e08');
+        iG.addColorStop(1,'#2a1505');
+        c.fillStyle=iG;
+        c.beginPath();c.arc(ex+side,eyeY,9,0,Math.PI*2);c.fill();
 
         // Pupil
-        c.fillStyle='#110000';
-        c.beginPath();c.ellipse(ex+side*1,eyeY,3.5,4,0,0,Math.PI*2);c.fill();
+        c.fillStyle='#0a0502';
+        c.beginPath();c.arc(ex+side,eyeY+0.5,5,0,Math.PI*2);c.fill();
 
-        // Eye shine
-        c.fillStyle='rgba(255,255,255,0.85)';
-        c.beginPath();c.arc(ex+side*1+2.5,eyeY-2,1.8,0,Math.PI*2);c.fill();
-        c.fillStyle='rgba(255,255,255,0.4)';
-        c.beginPath();c.arc(ex+side*1-1.5,eyeY+1.5,1,0,Math.PI*2);c.fill();
+        // Eye shine (big)
+        c.fillStyle='rgba(255,255,255,0.92)';
+        c.beginPath();c.arc(ex+side+3.5,eyeY-3,2.8,0,Math.PI*2);c.fill();
+        // Eye shine (small)
+        c.fillStyle='rgba(255,255,255,0.5)';
+        c.beginPath();c.arc(ex+side-2,eyeY+2.5,1.5,0,Math.PI*2);c.fill();
+
+        // Warm iris reflection
+        c.fillStyle='rgba(200,150,80,0.15)';
+        c.beginPath();c.arc(ex+side,eyeY+3,4,0,Math.PI*2);c.fill();
 
         // Eye outline
-        c.strokeStyle='#3a1a00';
-        c.lineWidth=1.2;
+        c.strokeStyle='#3a1a08';
+        c.lineWidth=1.5;
         c.beginPath();
-        c.moveTo(ex-11,eyeY);
-        c.quadraticCurveTo(ex,eyeY-7,ex+11,eyeY);
-        c.quadraticCurveTo(ex,eyeY+6,ex-11,eyeY);
+        c.moveTo(ex-14,eyeY+1);
+        c.bezierCurveTo(ex-10,eyeY-12, ex+10,eyeY-12, ex+14,eyeY+1);
+        c.bezierCurveTo(ex+10,eyeY+10, ex-10,eyeY+10, ex-14,eyeY+1);
+        c.stroke();
+
+        // Lower eyelid subtle line
+        c.strokeStyle='rgba(80,40,10,0.2)';
+        c.lineWidth=1;
+        c.beginPath();
+        c.bezierCurveTo(ex-12,eyeY+9,ex,eyeY+12,ex+12,eyeY+9);
+        c.stroke();
+
+        // Eyelash flicks (top)
+        c.strokeStyle='rgba(60,30,10,0.3)';
+        c.lineWidth=1;
+        c.beginPath();c.moveTo(ex+side*12,eyeY-5);c.lineTo(ex+side*16,eyeY-9);c.stroke();
+        c.beginPath();c.moveTo(ex+side*10,eyeY-8);c.lineTo(ex+side*13,eyeY-13);c.stroke();
+      }
+
+      // Slight squint / happy lines under eyes
+      for(let side=-1;side<=1;side+=2){
+        const ex = cx+eyeSpread*side;
+        c.strokeStyle='rgba(160,100,50,0.12)';
+        c.lineWidth=1;
+        c.beginPath();
+        c.arc(ex, eyeY+4, 16, 0.2*side+0.3, 0.2*side+1.2);
         c.stroke();
       }
 
-      // Red eye glow
-      c.globalCompositeOperation='lighter';
-      c.fillStyle='rgba(255,30,0,0.12)';
-      c.beginPath();c.arc(cx-eyeSpread,eyeY,14,0,Math.PI*2);c.fill();
-      c.beginPath();c.arc(cx+eyeSpread,eyeY,14,0,Math.PI*2);c.fill();
-      c.globalCompositeOperation='source-over';
-
       // === NOSE ===
-      c.fillStyle='#1a1a1a';
+      // Nose shape
+      const noseG = c.createRadialGradient(cx-2,cy+14,2,cx,cy+18,12);
+      noseG.addColorStop(0,'#333');
+      noseG.addColorStop(0.5,'#1a1a1a');
+      noseG.addColorStop(1,'#111');
+      c.fillStyle=noseG;
       c.beginPath();
-      c.moveTo(cx,cy+10);
-      c.quadraticCurveTo(cx-8,cy+6,cx-7,cy+10);
-      c.quadraticCurveTo(cx,cy+16,cx+7,cy+10);
-      c.quadraticCurveTo(cx+8,cy+6,cx,cy+10);
+      c.moveTo(cx, cy+10);
+      c.bezierCurveTo(cx-12, cy+8, cx-14, cy+18, cx-8, cy+22);
+      c.bezierCurveTo(cx-4, cy+24, cx+4, cy+24, cx+8, cy+22);
+      c.bezierCurveTo(cx+14, cy+18, cx+12, cy+8, cx, cy+10);
       c.fill();
+
       // Nose shine
-      c.fillStyle='rgba(255,255,255,0.2)';
-      c.beginPath();c.ellipse(cx-2,cy+8,2.5,1.5,0.3,0,Math.PI*2);c.fill();
-      // Nose to mouth line
-      c.strokeStyle='#5a3010';
+      c.fillStyle='rgba(255,255,255,0.18)';
+      c.beginPath();c.ellipse(cx-3,cy+13,4,2.5,0.4,0,Math.PI*2);c.fill();
+      c.fillStyle='rgba(255,255,255,0.08)';
+      c.beginPath();c.ellipse(cx+2,cy+12,2.5,1.5,-0.2,0,Math.PI*2);c.fill();
+
+      // Nostrils
+      c.fillStyle='#050505';
+      c.beginPath();c.ellipse(cx-4,cy+18,2.5,1.8,0.2,0,Math.PI*2);c.fill();
+      c.beginPath();c.ellipse(cx+4,cy+18,2.5,1.8,-0.2,0,Math.PI*2);c.fill();
+
+      // Nose to mouth line (philtrum)
+      c.strokeStyle='rgba(100,60,30,0.3)';
       c.lineWidth=1.5;
-      c.beginPath();c.moveTo(cx,cy+15);c.lineTo(cx,cy+22);c.stroke();
+      c.beginPath();c.moveTo(cx,cy+23);c.lineTo(cx,cy+32);c.stroke();
 
-      // === EVIL GRIN ===
-      // Mouth line - wide sinister smile curving up at edges
-      c.strokeStyle='#4a2008';
-      c.lineWidth=2;
+      // === SMILE ===
+      // Natural corgi smile - wide and happy with upturned corners
+      c.strokeStyle='#6a3a18';
+      c.lineWidth=2.2;
       c.lineCap='round';
+      c.lineJoin='round';
+
+      // Main mouth curve
       c.beginPath();
-      c.moveTo(cx-28,cy+22);
-      c.quadraticCurveTo(cx-18,cy+20,cx,cy+24);
-      c.quadraticCurveTo(cx+18,cy+20,cx+28,cy+22);
+      c.moveTo(cx-38,cy+28);
+      c.bezierCurveTo(cx-28,cy+34, cx-10,cy+38, cx,cy+35);
+      c.bezierCurveTo(cx+10,cy+38, cx+28,cy+34, cx+38,cy+28);
       c.stroke();
 
-      // Corners curled up (evil smile)
+      // Smile corners turning up
+      c.strokeStyle='#7a4420';
+      c.lineWidth=1.8;
       c.beginPath();
-      c.moveTo(cx-28,cy+22);
-      c.quadraticCurveTo(cx-32,cy+18,cx-30,cy+15);
+      c.moveTo(cx-38,cy+28);
+      c.bezierCurveTo(cx-42,cy+25, cx-43,cy+22, cx-40,cy+20);
       c.stroke();
       c.beginPath();
-      c.moveTo(cx+28,cy+22);
-      c.quadraticCurveTo(cx+32,cy+18,cx+30,cy+15);
+      c.moveTo(cx+38,cy+28);
+      c.bezierCurveTo(cx+42,cy+25, cx+43,cy+22, cx+40,cy+20);
       c.stroke();
 
-      // Teeth peeking through
-      c.fillStyle='#ffffff';
-      // Left fang
+      // Tongue peeking out
+      const tongueG = c.createRadialGradient(cx,cy+42,2,cx,cy+44,14);
+      tongueG.addColorStop(0,'#ff8888');
+      tongueG.addColorStop(0.5,'#ee6666');
+      tongueG.addColorStop(1,'#cc4444');
+      c.fillStyle=tongueG;
       c.beginPath();
-      c.moveTo(cx-20,cy+21);
-      c.lineTo(cx-17,cy+28);
-      c.lineTo(cx-14,cy+21);
+      c.moveTo(cx-10,cy+35);
+      c.bezierCurveTo(cx-12,cy+42, cx-8,cy+52, cx,cy+54);
+      c.bezierCurveTo(cx+8,cy+52, cx+12,cy+42, cx+10,cy+35);
+      c.closePath();
       c.fill();
-      // Right fang
-      c.beginPath();
-      c.moveTo(cx+20,cy+21);
-      c.lineTo(cx+17,cy+28);
-      c.lineTo(cx+14,cy+21);
-      c.fill();
-      // Small center teeth
-      c.beginPath();
-      c.moveTo(cx-5,cy+23);
-      c.lineTo(cx-4,cy+27);
-      c.lineTo(cx-2,cy+23);
-      c.fill();
-      c.beginPath();
-      c.moveTo(cx+2,cy+23);
-      c.lineTo(cx+4,cy+27);
-      c.lineTo(cx+5,cy+23);
-      c.fill();
+
+      // Tongue center line
+      c.strokeStyle='rgba(180,60,60,0.3)';
+      c.lineWidth=1;
+      c.beginPath();c.moveTo(cx,cy+36);c.lineTo(cx,cy+51);c.stroke();
+
+      // Tongue highlight
+      softEll(cx-2, cy+42, 4, 6, 'rgba(255,170,170,0.35)');
 
       // === WHISKER DOTS ===
-      c.fillStyle='#9a6a30';
+      c.fillStyle='rgba(80,50,20,0.3)';
       for(let side=-1;side<=1;side+=2){
-        for(let i=0;i<3;i++){
-          c.beginPath();
-          c.arc(cx+side*18, cy+14+i*4, 1, 0, Math.PI*2);
-          c.fill();
+        for(let row=0;row<3;row++){
+          for(let col=0;col<2;col++){
+            c.beginPath();
+            c.arc(cx+side*(20+col*6), cy+20+row*5, 1.2, 0, Math.PI*2);
+            c.fill();
+          }
         }
       }
 
-      // === CHEST FLUFF (bottom) ===
-      c.fillStyle='#fff8f0';
-      c.beginPath();
-      c.ellipse(cx, cy+52, 34, 14, 0, 0, Math.PI);
-      c.fill();
-      // Fluff texture
-      c.fillStyle='rgba(220,200,180,0.3)';
-      for(let i=-3;i<=3;i++){
-        c.beginPath();
-        c.ellipse(cx+i*8, cy+50, 5, 8, 0, 0, Math.PI*2);
-        c.fill();
-      }
-
-      // === FUR TEXTURE (subtle) ===
-      c.strokeStyle='rgba(160,90,30,0.12)';
-      c.lineWidth=0.5;
-      for(let i=0;i<40;i++){
-        const angle=Math.random()*Math.PI*2;
-        const dist=20+Math.random()*35;
-        const fx=cx+Math.cos(angle)*dist;
-        const fy=cy+Math.sin(angle)*dist*0.85;
-        const fl=3+Math.random()*5;
-        const fa=angle+Math.PI+(-0.3+Math.random()*0.6);
+      // === FUR TEXTURE ===
+      // Many tiny strokes radiating outward for fur feel
+      const seed = 42;
+      function prand(i){ return ((Math.sin(i*127.1+seed)*43758.5453)%1+1)%1; }
+      c.lineWidth=0.7;
+      for(let i=0;i<120;i++){
+        const angle = prand(i)*Math.PI*2;
+        const dist = 30+prand(i+500)*55;
+        const fx = cx+Math.cos(angle)*dist;
+        const fy = cy+Math.sin(angle)*dist*0.85;
+        // Skip if in white blaze area
+        if(Math.abs(fx-cx)<25 && fy>cy-40) continue;
+        const fl = 4+prand(i+200)*7;
+        const fa = angle+Math.PI+(-0.4+prand(i+300)*0.8);
+        const bright = 140+Math.floor(prand(i+400)*60);
+        c.strokeStyle=`rgba(${bright},${Math.floor(bright*0.6)},${Math.floor(bright*0.3)},0.08)`;
         c.beginPath();
         c.moveTo(fx,fy);
-        c.lineTo(fx+Math.cos(fa)*fl,fy+Math.sin(fa)*fl);
+        c.lineTo(fx+Math.cos(fa)*fl, fy+Math.sin(fa)*fl);
         c.stroke();
       }
 
-      // === OUTER GLOW (evil aura) ===
-      c.globalCompositeOperation='lighter';
-      const glow=c.createRadialGradient(cx,cy,40,cx,cy,90);
-      glow.addColorStop(0,'rgba(255,50,0,0.04)');
-      glow.addColorStop(1,'rgba(255,0,0,0)');
-      c.fillStyle=glow;
+      // White blaze fur strokes
+      c.strokeStyle='rgba(200,190,175,0.06)';
+      for(let i=0;i<30;i++){
+        const fx = cx-15+prand(i+600)*30;
+        const fy = cy-20+prand(i+700)*60;
+        const fl = 3+prand(i+800)*5;
+        c.beginPath();
+        c.moveTo(fx,fy);
+        c.lineTo(fx,fy+fl);
+        c.stroke();
+      }
+
+      // === SOFT LIGHTING ===
+      // Top light source
+      const topLight = c.createRadialGradient(cx-20,cy-60,10,cx,cy,100);
+      topLight.addColorStop(0,'rgba(255,240,200,0.1)');
+      topLight.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=topLight;
       c.fillRect(0,0,W,H);
-      c.globalCompositeOperation='source-over';
+
+      // Subtle warm rim light on right
+      const rimG = c.createRadialGradient(cx+80,cy-20,10,cx+80,cy-20,60);
+      rimG.addColorStop(0,'rgba(255,200,120,0.06)');
+      rimG.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=rimG;
+      c.fillRect(0,0,W,H);
     })();
 
     // generate random stars
