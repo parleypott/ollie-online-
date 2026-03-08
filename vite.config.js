@@ -9,6 +9,7 @@ export default defineConfig({
         picktheplot: resolve(__dirname, 'pick-the-plot.html'),
         dinorun: resolve(__dirname, 'dino-run.html'),
         rocketrun: resolve(__dirname, 'rocket-run.html'),
+        hamsterhunt: resolve(__dirname, 'hamster-hunt.html'),
       },
     },
   },
