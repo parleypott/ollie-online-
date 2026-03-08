@@ -60,6 +60,10 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
+// ===== PRELOAD IMAGES =====
+const jamonImg = new Image();
+jamonImg.src = 'jamon.png';
+
 // ===== SAVE DATA =====
 let saveData = JSON.parse(localStorage.getItem('rf_save') || '{"unlocked":1}');
 function save() { localStorage.setItem('rf_save', JSON.stringify(saveData)); }
@@ -1337,29 +1341,22 @@ function drawPickup(pk) {
     ctx.fillStyle = '#A05820';
     ctx.fillRect(x + 2, y - 6, 16, 3);
   } else {
-    // Jamon iberico
-    ctx.fillStyle = '#654321';
-    ctx.fillRect(x - 2, y + 10, 3, 14);
-    ctx.fillRect(x + 18, y + 10, 3, 14);
-    ctx.fillRect(x - 4, y + 22, 26, 4);
-    // Ham body
-    ctx.fillStyle = '#8B2020';
-    ctx.fillRect(x - 4, y - 8, 26, 18);
-    ctx.fillStyle = '#A03030';
-    ctx.fillRect(x - 2, y - 6, 22, 14);
-    // Fat/marbling
-    ctx.fillStyle = '#F0D0B0';
-    ctx.fillRect(x + 4, y - 3, 4, 3);
-    ctx.fillRect(x + 12, y, 3, 4);
-    ctx.fillRect(x + 2, y + 3, 3, 2);
-    // Hoof
-    ctx.fillStyle = '#3A2010';
-    ctx.fillRect(x + 20, y - 5, 6, 12);
-    // Gold highlight (rare item glow)
-    ctx.fillStyle = 'rgba(255,215,0,0.15)';
-    ctx.beginPath();
-    ctx.arc(x + 10, y + 4, 20, 0, Math.PI * 2);
-    ctx.fill();
+    // Jamon iberico - use loaded image
+    const jw = 56, jh = 56;
+    if (jamonImg.complete && jamonImg.naturalWidth > 0) {
+      // Gold glow behind
+      ctx.fillStyle = 'rgba(255,215,0,0.15)';
+      ctx.beginPath();
+      ctx.arc(x + 4, y + 4, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.drawImage(jamonImg, x - jw/2, y - jh/2, jw, jh);
+    } else {
+      // Fallback if image hasn't loaded
+      ctx.fillStyle = '#8B2020';
+      ctx.fillRect(x - 10, y - 10, 24, 20);
+      ctx.fillStyle = '#A03030';
+      ctx.fillRect(x - 8, y - 8, 20, 16);
+    }
   }
 }
 
