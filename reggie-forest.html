@@ -141,8 +141,8 @@ function addParticle(x, y, color, count, spread) {
 }
 
 // ===== PHYSICS =====
-const GRAVITY = 0.38;
-const JUMP_FORCE = -12.5;
+const GRAVITY = 0.32;
+const JUMP_FORCE = -13.5;
 const MOVE_SPEED = 4.5;
 const MAX_VX = 5.5;
 const FRICTION = 0.88;
@@ -303,8 +303,8 @@ function update() {
   if (!jumpKey) jumpHeld = false;
 
   // Variable jump height - release early for short hop
-  if (!jumpKey && player.vy < -4) {
-    player.vy *= 0.85;
+  if (!jumpKey && player.vy < -3) {
+    player.vy *= 0.88;
   }
 
   // Gravity
@@ -764,7 +764,7 @@ function drawDecoration(d) {
   }
 }
 
-// ===== DRAW REGGIE (3x scale) =====
+// ===== DRAW REGGIE (3x scale, enhanced) =====
 function drawReggie() {
   if (player.invincible > 0 && Math.floor(player.invincible / 4) % 2 === 0) return;
 
@@ -775,123 +775,172 @@ function drawReggie() {
 
   ctx.save();
   if (f < 0) {
-    ctx.translate(x + PW, 0);
+    ctx.translate(x + PW, y);
     ctx.scale(-1, 1);
   } else {
-    ctx.translate(x, 0);
+    ctx.translate(x, y);
   }
 
   // Shadow under dog
-  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
   ctx.beginPath();
-  ctx.ellipse(PW/2, PH + y + 2, PW * 0.4, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(PW/2, PH + 3, PW * 0.4, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Body - brown top
+  // Tail (behind body)
+  const tailWag = Math.sin(player.tailWag) * 3 * s;
+  // Tail base brown
   ctx.fillStyle = '#8B5E3C';
-  ctx.fillRect(4*s, 6*s + y, 24*s, 10*s);
-  // Brown shading
-  ctx.fillStyle = '#7A4E2C';
-  ctx.fillRect(4*s, 14*s + y, 24*s, 2*s);
-
-  // Body - white belly/chest
+  ctx.fillRect(0, 5*s + tailWag, 4*s, 3*s);
+  // Tail tip white
   ctx.fillStyle = '#F5F0E8';
-  ctx.fillRect(4*s, 13*s + y, 24*s, 6*s);
-  // Chest highlight
+  ctx.fillRect(-1*s, 5*s + tailWag, 3*s, 4*s);
+  ctx.fillStyle = '#E8E0D0';
+  ctx.fillRect(-1*s, 8*s + tailWag, 2*s, 1*s);
+
+  // Back legs (behind body)
+  ctx.fillStyle = '#6B3F1F';
+  if (!player.grounded) {
+    ctx.fillRect(4*s, 18*s, 4*s, 5*s);
+    ctx.fillRect(0*s, 16*s, 4*s, 4*s);
+    ctx.fillStyle = '#E8E0D0';
+    ctx.fillRect(4*s, 22*s, 4*s, 2*s);
+    ctx.fillRect(0*s, 19*s, 4*s, 2*s);
+  } else {
+    const frame = player.animFrame;
+    const lo = [[0,4,0,4],[-2,6,2,2],[0,4,0,4],[2,2,-2,6]][frame] || [0,4,0,4];
+    ctx.fillRect(5*s, (18+lo[2])*s, 4*s, (4+lo[3])*s);
+    ctx.fillRect(9*s, (18+lo[0])*s, 4*s, (4+lo[1])*s);
+    ctx.fillStyle = '#E8E0D0';
+    ctx.fillRect(5*s, (18+lo[2]+2+lo[3])*s, 4*s, 2*s);
+    ctx.fillRect(9*s, (18+lo[0]+2+lo[1])*s, 4*s, 2*s);
+  }
+
+  // Body - brown back with gradient feel
+  ctx.fillStyle = '#8B5E3C';
+  ctx.fillRect(4*s, 6*s, 24*s, 5*s);
+  // Mid-body warm tone
+  ctx.fillStyle = '#9A6D4A';
+  ctx.fillRect(6*s, 7*s, 20*s, 3*s);
+  // Body darker underside of brown
+  ctx.fillStyle = '#7A4E2C';
+  ctx.fillRect(4*s, 11*s, 24*s, 2*s);
+
+  // White belly/chest
+  ctx.fillStyle = '#F5F0E8';
+  ctx.fillRect(4*s, 13*s, 24*s, 6*s);
+  // Belly highlight
   ctx.fillStyle = '#FFFDF8';
-  ctx.fillRect(10*s, 14*s + y, 12*s, 3*s);
+  ctx.fillRect(8*s, 14*s, 16*s, 3*s);
+  // Belly shadow
+  ctx.fillStyle = '#E8E0D0';
+  ctx.fillRect(6*s, 18*s, 20*s, 1*s);
+
+  // Front legs (in front of body)
+  ctx.fillStyle = '#7A4E2C';
+  if (!player.grounded) {
+    ctx.fillRect(21*s, 18*s, 4*s, 5*s);
+    ctx.fillRect(26*s, 16*s, 4*s, 4*s);
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(21*s, 22*s, 4*s, 2*s);
+    ctx.fillRect(26*s, 19*s, 4*s, 2*s);
+  } else {
+    const frame = player.animFrame;
+    const lo = [[0,4,0,4],[-2,6,2,2],[0,4,0,4],[2,2,-2,6]][frame] || [0,4,0,4];
+    ctx.fillRect(20*s, (18+lo[0])*s, 4*s, (4+lo[1])*s);
+    ctx.fillRect(24*s, (18+lo[2])*s, 4*s, (4+lo[3])*s);
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(20*s, (18+lo[0]+2+lo[1])*s, 4*s, 2*s);
+    ctx.fillRect(24*s, (18+lo[2]+2+lo[3])*s, 4*s, 2*s);
+  }
+
+  // Neck
+  ctx.fillStyle = '#8B5E3C';
+  ctx.fillRect(24*s, 4*s, 4*s, 8*s);
 
   // Head
   ctx.fillStyle = '#8B5E3C';
-  ctx.fillRect(22*s, 1*s + y, 10*s, 13*s);
-  // Head shading
+  ctx.fillRect(22*s, 0*s, 11*s, 13*s);
+  // Head top highlight
+  ctx.fillStyle = '#9A6D4A';
+  ctx.fillRect(23*s, 1*s, 9*s, 3*s);
+  // Head bottom shadow
   ctx.fillStyle = '#7A4E2C';
-  ctx.fillRect(22*s, 12*s + y, 10*s, 2*s);
+  ctx.fillRect(22*s, 11*s, 11*s, 2*s);
+
+  // Floppy ear (hangs down from back of head)
+  ctx.fillStyle = '#6B3F1F';
+  ctx.fillRect(21*s, 3*s, 4*s, 13*s);
+  // Ear highlight
+  ctx.fillStyle = '#7A4E2C';
+  ctx.fillRect(22*s, 4*s, 2*s, 10*s);
+  // Ear tip rounded
+  ctx.fillStyle = '#5A2E0E';
+  ctx.fillRect(21*s, 14*s, 4*s, 2*s);
+  ctx.fillRect(22*s, 15*s, 2*s, 1*s);
 
   // White face blaze
   ctx.fillStyle = '#F5F0E8';
-  ctx.fillRect(25*s, 2*s + y, 4*s, 11*s);
+  ctx.fillRect(25*s, 1*s, 5*s, 12*s);
+  // Blaze highlight
+  ctx.fillStyle = '#FFFDF8';
+  ctx.fillRect(26*s, 2*s, 3*s, 8*s);
 
   // Muzzle
   ctx.fillStyle = '#F5F0E8';
-  ctx.fillRect(28*s, 7*s + y, 5*s, 6*s);
-  // Muzzle shading
-  ctx.fillStyle = '#E8E0D8';
-  ctx.fillRect(28*s, 11*s + y, 5*s, 2*s);
+  ctx.fillRect(29*s, 6*s, 5*s, 7*s);
+  // Muzzle puff
+  ctx.fillStyle = '#FFFDF8';
+  ctx.fillRect(29*s, 7*s, 4*s, 4*s);
+  // Muzzle shadow
+  ctx.fillStyle = '#E0D8CC';
+  ctx.fillRect(29*s, 11*s, 5*s, 2*s);
 
-  // Nose
+  // Nose - larger, rounded look
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(30*s, 7*s + y, 3*s, 3*s);
+  ctx.fillRect(31*s, 6*s, 3*s, 3*s);
+  ctx.fillRect(30*s, 7*s, 1*s, 1*s);
   // Nose shine
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillRect(31*s, 7*s + y, 1*s, 1*s);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.fillRect(32*s, 6*s, 1*s, 1*s);
 
-  // Mouth line
+  // Mouth / smile
   ctx.fillStyle = '#6B3F1F';
-  ctx.fillRect(30*s, 10*s + y, 2*s, 1*s);
+  ctx.fillRect(31*s, 9*s, 2*s, 1*s);
+  ctx.fillRect(30*s, 10*s, 1*s, 1*s);
+  // Tongue peek when idle
+  if (player.grounded && Math.abs(player.vx) < 0.5) {
+    ctx.fillStyle = '#E06060';
+    ctx.fillRect(31*s, 10*s, 2*s, 2*s);
+    ctx.fillStyle = '#C04848';
+    ctx.fillRect(31*s, 11*s, 2*s, 1*s);
+  }
 
   // Eye white
   ctx.fillStyle = '#fff';
-  ctx.fillRect(27*s, 3*s + y, 4*s, 4*s);
+  ctx.fillRect(27*s, 3*s, 4*s, 4*s);
   // Iris
-  ctx.fillStyle = '#3a1e0a';
-  ctx.fillRect(28*s, 4*s + y, 3*s, 3*s);
+  ctx.fillStyle = '#4A2810';
+  ctx.fillRect(28*s, 3*s, 3*s, 4*s);
   // Pupil
   ctx.fillStyle = '#000';
-  ctx.fillRect(29*s, 4*s + y, 2*s, 2*s);
+  ctx.fillRect(29*s, 4*s, 2*s, 2*s);
   // Eye shine
   ctx.fillStyle = '#fff';
-  ctx.fillRect(30*s, 4*s + y, 1*s, 1*s);
+  ctx.fillRect(30*s, 3*s, 1*s, 1*s);
+  // Eye lower lid
+  ctx.fillStyle = 'rgba(100,60,30,0.2)';
+  ctx.fillRect(27*s, 6*s, 4*s, 1*s);
 
-  // Floppy ear
-  ctx.fillStyle = '#6B3F1F';
-  ctx.fillRect(21*s, 3*s + y, 4*s, 12*s);
-  // Ear inner
-  ctx.fillStyle = '#8B5E3C';
-  ctx.fillRect(22*s, 5*s + y, 2*s, 8*s);
-
-  // Tail
-  const tailWag = Math.sin(player.tailWag) * 3 * s;
-  ctx.fillStyle = '#F5F0E8';
-  ctx.fillRect(0, 6*s + y + tailWag, 5*s, 4*s);
-  ctx.fillStyle = '#8B5E3C';
-  ctx.fillRect(0, 5*s + y + tailWag, 5*s, 2*s);
-
-  // Legs
+  // Eyebrow hint
   ctx.fillStyle = '#7A4E2C';
-  if (!player.grounded) {
-    // Jump - spread eagle
-    ctx.fillRect(21*s, 18*s + y, 4*s, 5*s);
-    ctx.fillRect(26*s, 16*s + y, 4*s, 4*s);
-    ctx.fillRect(4*s, 18*s + y, 4*s, 5*s);
-    ctx.fillRect(0*s, 16*s + y, 4*s, 4*s);
-    // White paws
-    ctx.fillStyle = '#F5F0E8';
-    ctx.fillRect(21*s, 22*s + y, 4*s, 2*s);
-    ctx.fillRect(26*s, 19*s + y, 4*s, 2*s);
-    ctx.fillRect(4*s, 22*s + y, 4*s, 2*s);
-    ctx.fillRect(0*s, 19*s + y, 4*s, 2*s);
-  } else {
-    const frame = player.animFrame;
-    const lo = [
-      [0, 4, 0, 4],
-      [-2, 6, 2, 2],
-      [0, 4, 0, 4],
-      [2, 2, -2, 6],
-    ][frame] || [0, 4, 0, 4];
+  ctx.fillRect(27*s, 2*s, 5*s, 1*s);
 
-    ctx.fillRect(20*s, (18 + lo[0])*s + y, 4*s, (4 + lo[1])*s);
-    ctx.fillRect(24*s, (18 + lo[2])*s + y, 4*s, (4 + lo[3])*s);
-    ctx.fillRect(5*s, (18 + lo[2])*s + y, 4*s, (4 + lo[3])*s);
-    ctx.fillRect(9*s, (18 + lo[0])*s + y, 4*s, (4 + lo[1])*s);
-
-    // White paws
-    ctx.fillStyle = '#F5F0E8';
-    ctx.fillRect(20*s, (18 + lo[0] + 2 + lo[1])*s + y, 4*s, 2*s);
-    ctx.fillRect(24*s, (18 + lo[2] + 2 + lo[3])*s + y, 4*s, 2*s);
-    ctx.fillRect(5*s, (18 + lo[2] + 2 + lo[3])*s + y, 4*s, 2*s);
-    ctx.fillRect(9*s, (18 + lo[0] + 2 + lo[1])*s + y, 4*s, 2*s);
-  }
+  // Collar (fun detail)
+  ctx.fillStyle = '#CC3333';
+  ctx.fillRect(24*s, 12*s, 6*s, 2*s);
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(27*s, 12*s, 2*s, 2*s);
 
   ctx.restore();
 }
@@ -906,146 +955,217 @@ function drawEnemy(e) {
 
   ctx.save();
   if (facing < 0) {
-    ctx.translate(x + e.w, 0);
+    ctx.translate(x + e.w, y);
     ctx.scale(-1, 1);
-    ctx.translate(0, 0);
   } else {
-    ctx.translate(x, 0);
+    ctx.translate(x, y);
   }
 
   const w = e.w, h = e.h;
 
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(w/2, h + 2, w * 0.35, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
   if (e.type === 'fox') {
+    // Bushy tail (behind body)
+    ctx.fillStyle = '#D4652A';
+    ctx.fillRect(-w*0.1, h*0.1, w*0.22, h*0.25);
+    ctx.fillStyle = '#E07838';
+    ctx.fillRect(-w*0.06, h*0.12, w*0.14, h*0.18);
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(-w*0.12, h*0.22, w*0.12, h*0.14);
+
     // Body
     ctx.fillStyle = '#D4652A';
-    ctx.fillRect(w * 0.1, h * 0.2, w * 0.75, h * 0.45);
-    // Darker back
+    ctx.fillRect(w*0.1, h*0.18, w*0.72, h*0.42);
+    // Back highlight
+    ctx.fillStyle = '#E07838';
+    ctx.fillRect(w*0.15, h*0.2, w*0.6, h*0.12);
+    // Darker underside
     ctx.fillStyle = '#B84A1A';
-    ctx.fillRect(w * 0.1, h * 0.2, w * 0.75, h * 0.15);
+    ctx.fillRect(w*0.1, h*0.48, w*0.72, h*0.12);
     // White belly
     ctx.fillStyle = '#F5F0E8';
-    ctx.fillRect(w * 0.15, h * 0.5, w * 0.6, h * 0.15);
+    ctx.fillRect(w*0.15, h*0.5, w*0.55, h*0.1);
+
+    // Legs
+    ctx.fillStyle = '#2a2a2a';
+    const legOff = f === 0 ? [0.35, 0.3] : [0.3, 0.35];
+    ctx.fillRect(w*0.18, h*0.6, w*0.08, h*legOff[0]);
+    ctx.fillRect(w*0.32, h*0.6, w*0.07, h*legOff[1]);
+    ctx.fillRect(w*0.58, h*0.6, w*0.07, h*legOff[1]);
+    ctx.fillRect(w*0.7, h*0.6, w*0.08, h*legOff[0]);
+
     // Head
     ctx.fillStyle = '#D4652A';
-    ctx.fillRect(w * 0.65, 0, w * 0.3, h * 0.45);
-    // Snout
-    ctx.fillStyle = '#E07030';
-    ctx.fillRect(w * 0.85, h * 0.15, w * 0.15, h * 0.25);
+    ctx.fillRect(w*0.62, h*0.02, w*0.32, h*0.4);
+    // Head highlight
+    ctx.fillStyle = '#E07838';
+    ctx.fillRect(w*0.65, h*0.04, w*0.25, h*0.12);
+    // Pointed snout
+    ctx.fillStyle = '#E07838';
+    ctx.fillRect(w*0.85, h*0.12, w*0.15, h*0.22);
+    ctx.fillStyle = '#F5F0E8';
+    ctx.fillRect(w*0.88, h*0.18, w*0.12, h*0.14);
     // White cheek
     ctx.fillStyle = '#F5F0E8';
-    ctx.fillRect(w * 0.7, h * 0.25, w * 0.15, h * 0.15);
+    ctx.fillRect(w*0.68, h*0.22, w*0.18, h*0.14);
     // Nose
-    ctx.fillStyle = '#222';
-    ctx.fillRect(w * 0.93, h * 0.18, w * 0.07, h * 0.1);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(w*0.95, h*0.15, w*0.05, h*0.08);
     // Eye
     ctx.fillStyle = '#FFD700';
-    ctx.fillRect(w * 0.78, h * 0.08, w * 0.08, h * 0.12);
+    ctx.fillRect(w*0.76, h*0.08, w*0.1, h*0.12);
     ctx.fillStyle = '#000';
-    ctx.fillRect(w * 0.8, h * 0.1, w * 0.05, h * 0.08);
-    // Eye shine
+    ctx.fillRect(w*0.78, h*0.1, w*0.06, h*0.08);
     ctx.fillStyle = '#fff';
-    ctx.fillRect(w * 0.82, h * 0.08, w * 0.02, h * 0.04);
-    // Ears
+    ctx.fillRect(w*0.81, h*0.08, w*0.02, h*0.04);
+    // Ears - tall pointed
     ctx.fillStyle = '#B84A1A';
-    ctx.fillRect(w * 0.65, -h * 0.12, w * 0.1, h * 0.2);
-    ctx.fillRect(w * 0.78, -h * 0.08, w * 0.08, h * 0.16);
-    // Ear inner
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(w * 0.67, -h * 0.06, w * 0.05, h * 0.1);
-    // Bushy tail
+    ctx.fillRect(w*0.64, -h*0.14, w*0.1, h*0.22);
+    ctx.fillRect(w*0.78, -h*0.1, w*0.09, h*0.18);
     ctx.fillStyle = '#D4652A';
-    ctx.fillRect(-w * 0.05, h * 0.15, w * 0.2, h * 0.2);
-    ctx.fillStyle = '#F5F0E8';
-    ctx.fillRect(-w * 0.08, h * 0.25, w * 0.1, h * 0.12);
-    // Legs
-    ctx.fillStyle = '#1a1a1a';
-    if (f === 0) {
-      ctx.fillRect(w * 0.18, h * 0.65, w * 0.08, h * 0.35);
-      ctx.fillRect(w * 0.65, h * 0.65, w * 0.08, h * 0.3);
-    } else {
-      ctx.fillRect(w * 0.18, h * 0.65, w * 0.08, h * 0.3);
-      ctx.fillRect(w * 0.65, h * 0.65, w * 0.08, h * 0.35);
-    }
-  } else if (e.type === 'raccoon') {
-    // Body
-    ctx.fillStyle = '#808080';
-    ctx.fillRect(w * 0.08, h * 0.2, w * 0.78, h * 0.45);
-    // Darker back stripe
-    ctx.fillStyle = '#606060';
-    ctx.fillRect(w * 0.2, h * 0.2, w * 0.5, h * 0.12);
-    // Lighter belly
-    ctx.fillStyle = '#A0A0A0';
-    ctx.fillRect(w * 0.15, h * 0.5, w * 0.6, h * 0.12);
-    // Head
-    ctx.fillStyle = '#707070';
-    ctx.fillRect(w * 0.62, 0, w * 0.32, h * 0.4);
-    // Face mask
-    ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(w * 0.65, h * 0.08, w * 0.28, h * 0.15);
-    // Eyes in mask
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(w * 0.68, h * 0.09, w * 0.08, h * 0.12);
-    ctx.fillRect(w * 0.8, h * 0.09, w * 0.08, h * 0.12);
-    ctx.fillStyle = '#000';
-    ctx.fillRect(w * 0.7, h * 0.11, w * 0.05, h * 0.08);
-    ctx.fillRect(w * 0.82, h * 0.11, w * 0.05, h * 0.08);
-    // Nose
+    ctx.fillRect(w*0.66, -h*0.08, w*0.06, h*0.12);
+    ctx.fillRect(w*0.8, -h*0.04, w*0.05, h*0.1);
+    // Inner ear
     ctx.fillStyle = '#222';
-    ctx.fillRect(w * 0.88, h * 0.2, w * 0.06, h * 0.06);
-    // White muzzle
-    ctx.fillStyle = '#C0C0C0';
-    ctx.fillRect(w * 0.75, h * 0.22, w * 0.15, h * 0.1);
-    // Ears
-    ctx.fillStyle = '#606060';
-    ctx.fillRect(w * 0.65, -h * 0.06, w * 0.08, h * 0.12);
-    ctx.fillRect(w * 0.82, -h * 0.04, w * 0.08, h * 0.1);
-    // Striped tail
+    ctx.fillRect(w*0.67, -h*0.04, w*0.04, h*0.08);
+    ctx.fillRect(w*0.81, -h*0.01, w*0.03, h*0.06);
+  } else if (e.type === 'raccoon') {
+    // Striped tail (behind)
     ctx.fillStyle = '#808080';
-    ctx.fillRect(-w * 0.08, h * 0.1, w * 0.2, h * 0.18);
+    ctx.fillRect(-w*0.12, h*0.08, w*0.24, h*0.22);
     ctx.fillStyle = '#2a2a2a';
-    ctx.fillRect(-w * 0.06, h * 0.1, w * 0.05, h * 0.18);
-    ctx.fillRect(w * 0.02, h * 0.1, w * 0.05, h * 0.18);
+    ctx.fillRect(-w*0.1, h*0.08, w*0.06, h*0.22);
+    ctx.fillRect(-w*0.0, h*0.08, w*0.06, h*0.22);
+    ctx.fillStyle = '#909090';
+    ctx.fillRect(-w*0.04, h*0.08, w*0.06, h*0.22);
+    // Tail tip
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(-w*0.14, h*0.1, w*0.06, h*0.16);
+
+    // Body
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(w*0.08, h*0.18, w*0.76, h*0.42);
+    // Back darker
+    ctx.fillStyle = '#606060';
+    ctx.fillRect(w*0.15, h*0.18, w*0.6, h*0.1);
+    // Belly lighter
+    ctx.fillStyle = '#A0A0A0';
+    ctx.fillRect(w*0.12, h*0.48, w*0.65, h*0.12);
+
     // Legs
-    ctx.fillStyle = '#444';
-    ctx.fillRect(w * 0.15, h * 0.65, w * 0.08, h * 0.35);
-    ctx.fillRect(w * 0.35, h * 0.65, w * 0.08, h * 0.32);
-    ctx.fillRect(w * 0.55, h * 0.65, w * 0.08, h * 0.33);
-    ctx.fillRect(w * 0.7, h * 0.65, w * 0.08, h * 0.35);
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(w*0.15, h*0.6, w*0.08, h*0.35);
+    ctx.fillRect(w*0.3, h*0.6, w*0.07, h*0.32);
+    ctx.fillRect(w*0.55, h*0.6, w*0.07, h*0.33);
+    ctx.fillRect(w*0.7, h*0.6, w*0.08, h*0.35);
+    // Paws
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(w*0.14, h*0.9, w*0.1, h*0.06);
+    ctx.fillRect(w*0.69, h*0.9, w*0.1, h*0.06);
+
+    // Head - rounder
+    ctx.fillStyle = '#707070';
+    ctx.fillRect(w*0.6, h*0.0, w*0.34, h*0.38);
+    // Head highlight
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(w*0.64, h*0.02, w*0.26, h*0.1);
+    // Face mask - iconic raccoon feature
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(w*0.62, h*0.08, w*0.32, h*0.14);
+    // Mask white border
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(w*0.62, h*0.06, w*0.32, h*0.03);
+    ctx.fillRect(w*0.62, h*0.21, w*0.32, h*0.03);
+    // Eyes - bright in dark mask
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(w*0.66, h*0.09, w*0.1, h*0.12);
+    ctx.fillRect(w*0.8, h*0.09, w*0.1, h*0.12);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(w*0.69, h*0.11, w*0.06, h*0.08);
+    ctx.fillRect(w*0.83, h*0.11, w*0.06, h*0.08);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(w*0.71, h*0.1, w*0.02, h*0.03);
+    ctx.fillRect(w*0.85, h*0.1, w*0.02, h*0.03);
+    // Snout
+    ctx.fillStyle = '#909090';
+    ctx.fillRect(w*0.85, h*0.18, w*0.12, h*0.12);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(w*0.92, h*0.2, w*0.05, h*0.05);
+    // Whiskers
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(w*0.75, h*0.24, w*0.18, h*0.04);
+    // Ears - rounded
+    ctx.fillStyle = '#606060';
+    ctx.fillRect(w*0.64, -h*0.08, w*0.1, h*0.14);
+    ctx.fillRect(w*0.82, -h*0.06, w*0.1, h*0.12);
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(w*0.66, -h*0.04, w*0.06, h*0.08);
+    ctx.fillRect(w*0.84, -h*0.02, w*0.06, h*0.06);
   } else if (e.type === 'squirrel') {
+    // Big fluffy tail (behind) - signature feature
+    ctx.fillStyle = '#9B7250';
+    ctx.fillRect(-w*0.15, -h*0.1, w*0.25, h*0.4);
+    ctx.fillStyle = '#B08860';
+    ctx.fillRect(-w*0.1, -h*0.05, w*0.15, h*0.28);
+    ctx.fillStyle = '#C4A070';
+    ctx.fillRect(-w*0.08, h*0.0, w*0.1, h*0.15);
+    // Tail curve top
+    ctx.fillStyle = '#8B6240';
+    ctx.fillRect(-w*0.18, -h*0.2, w*0.2, h*0.15);
+
     // Body
     ctx.fillStyle = '#8B6240';
-    ctx.fillRect(w * 0.1, h * 0.25, w * 0.7, h * 0.4);
-    // Lighter belly
-    ctx.fillStyle = '#C4A070';
-    ctx.fillRect(w * 0.2, h * 0.45, w * 0.45, h * 0.15);
-    // Head
-    ctx.fillStyle = '#8B6240';
-    ctx.fillRect(w * 0.6, h * 0.05, w * 0.3, h * 0.35);
-    // Eye
-    ctx.fillStyle = '#000';
-    ctx.fillRect(w * 0.78, h * 0.1, w * 0.08, h * 0.1);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(w * 0.82, h * 0.1, w * 0.03, h * 0.04);
-    // Nose
-    ctx.fillStyle = '#4a2a10';
-    ctx.fillRect(w * 0.87, h * 0.18, w * 0.06, h * 0.06);
-    // Ears
-    ctx.fillStyle = '#7A5230';
-    ctx.fillRect(w * 0.65, -h * 0.05, w * 0.08, h * 0.14);
-    ctx.fillRect(w * 0.78, -h * 0.08, w * 0.07, h * 0.16);
-    // Big fluffy tail
+    ctx.fillRect(w*0.1, h*0.2, w*0.65, h*0.38);
+    // Back highlight
     ctx.fillStyle = '#9B7250';
-    ctx.fillRect(-w * 0.1, h * 0.0, w * 0.2, h * 0.3);
-    ctx.fillRect(-w * 0.15, -h * 0.15, w * 0.18, h * 0.25);
-    ctx.fillStyle = '#B08860';
-    ctx.fillRect(-w * 0.08, h * 0.05, w * 0.1, h * 0.15);
+    ctx.fillRect(w*0.15, h*0.22, w*0.55, h*0.1);
+    // Belly
+    ctx.fillStyle = '#C4A070';
+    ctx.fillRect(w*0.18, h*0.42, w*0.45, h*0.14);
+
     // Legs
     ctx.fillStyle = '#6B4220';
-    ctx.fillRect(w * 0.2, h * 0.65, w * 0.08, h * 0.35);
-    ctx.fillRect(w * 0.6, h * 0.65, w * 0.08, h * 0.35);
+    ctx.fillRect(w*0.18, h*0.58, w*0.08, h*0.35);
+    ctx.fillRect(w*0.58, h*0.58, w*0.08, h*0.35);
+    // Back legs thicker
+    ctx.fillRect(w*0.3, h*0.55, w*0.07, h*0.3);
     // Tiny paws
     ctx.fillStyle = '#8B6240';
-    ctx.fillRect(w * 0.55, h * 0.35, w * 0.1, h * 0.08);
+    ctx.fillRect(w*0.5, h*0.35, w*0.12, h*0.08);
+
+    // Head
+    ctx.fillStyle = '#8B6240';
+    ctx.fillRect(w*0.6, h*0.02, w*0.32, h*0.32);
+    // Head highlight
+    ctx.fillStyle = '#9B7250';
+    ctx.fillRect(w*0.64, h*0.04, w*0.24, h*0.08);
+    // White cheek
+    ctx.fillStyle = '#C4A070';
+    ctx.fillRect(w*0.65, h*0.18, w*0.2, h*0.1);
+    // Eye - big and cute
+    ctx.fillStyle = '#000';
+    ctx.fillRect(w*0.76, h*0.06, w*0.12, h*0.14);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(w*0.78, h*0.08, w*0.08, h*0.1);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(w*0.82, h*0.06, w*0.04, h*0.05);
+    ctx.fillRect(w*0.78, h*0.14, w*0.02, h*0.03);
+    // Nose
+    ctx.fillStyle = '#4a2a10';
+    ctx.fillRect(w*0.88, h*0.15, w*0.06, h*0.06);
+    // Ears - rounded tufts
+    ctx.fillStyle = '#7A5230';
+    ctx.fillRect(w*0.64, -h*0.1, w*0.1, h*0.16);
+    ctx.fillRect(w*0.8, -h*0.12, w*0.09, h*0.18);
+    // Ear tufts
+    ctx.fillStyle = '#C4A070';
+    ctx.fillRect(w*0.66, -h*0.12, w*0.04, h*0.06);
+    ctx.fillRect(w*0.82, -h*0.14, w*0.04, h*0.06);
   }
 
   ctx.restore();
