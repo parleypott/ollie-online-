@@ -6,115 +6,65 @@
 <title>Rocket Run - Ollie's Universe</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #000;
-    overflow: hidden;
-    font-family: 'Press Start 2P', monospace;
-    cursor: none;
-  }
-  canvas { display: block; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;overflow:hidden;font-family:'Press Start 2P',monospace;cursor:none}
+  canvas{display:block}
 
-  #hud {
-    position: fixed; top: 0; left: 0; width: 100%; padding: 16px 24px;
-    pointer-events: none; z-index: 10;
-    display: flex; justify-content: space-between; align-items: flex-start;
-  }
+  #hud{position:fixed;top:0;left:0;width:100%;padding:16px 24px;pointer-events:none;z-index:10;display:flex;justify-content:space-between;align-items:flex-start}
+  .hud-left,.hud-right{display:flex;flex-direction:column;gap:6px}
+  .hud-right{align-items:flex-end}
+  .hud-label{font-size:8px;color:#4dacff;text-transform:uppercase;letter-spacing:1px}
+  .hud-value{font-size:16px;color:#fff;text-shadow:0 0 10px rgba(77,172,255,0.6)}
+  .hud-small{font-size:10px;color:#aaa}
 
-  .hud-left, .hud-right { display: flex; flex-direction: column; gap: 6px; }
-  .hud-right { align-items: flex-end; }
+  .health-bar{width:200px;height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;border:1px solid rgba(77,172,255,0.3)}
+  .health-fill{height:100%;transition:width 0.3s;border-radius:5px;background:linear-gradient(90deg,#ff4444,#ffaa00,#44ff44)}
 
-  .hud-label { font-size: 8px; color: #4dacff; text-transform: uppercase; letter-spacing: 1px; }
-  .hud-value { font-size: 16px; color: #fff; text-shadow: 0 0 10px rgba(77,172,255,0.6); }
-  .hud-small { font-size: 10px; color: #aaa; }
+  .checkpoint-flash{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(77,172,255,0.15);pointer-events:none;z-index:5;opacity:0;transition:opacity 0.1s}
+  .checkpoint-flash.active{opacity:1}
 
-  .health-bar {
-    width: 200px; height: 10px; background: rgba(255,255,255,0.1);
-    border-radius: 5px; overflow: hidden; border: 1px solid rgba(77,172,255,0.3);
-  }
-  .health-fill {
-    height: 100%; transition: width 0.3s; border-radius: 5px;
-    background: linear-gradient(90deg, #ff4444, #ffaa00, #44ff44);
-  }
+  .overlay-screen{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,0.88);text-align:center;cursor:default;overflow-y:auto;padding:20px}
+  .overlay-screen.show{display:flex}
 
-  .checkpoint-flash {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(77,172,255,0.15); pointer-events: none; z-index: 5;
-    opacity: 0; transition: opacity 0.1s;
-  }
-  .checkpoint-flash.active { opacity: 1; }
+  .overlay-screen h1{font-size:clamp(20px,5vw,42px);color:#4dacff;margin-bottom:12px;text-shadow:0 0 20px rgba(77,172,255,0.8),4px 4px 0 #0a2a5c}
+  .overlay-screen .sub{font-size:11px;color:#aaa;margin-bottom:20px;line-height:1.8}
+  .overlay-screen .controls-info{font-size:8px;color:#666;margin-bottom:20px;line-height:2}
 
-  #overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 20; background: rgba(0,0,0,0.85); text-align: center;
-    cursor: default;
-  }
+  .start-btn{font-family:'Press Start 2P',monospace;font-size:12px;padding:14px 32px;border:2px solid #4dacff;border-radius:8px;background:rgba(77,172,255,0.15);color:#4dacff;cursor:pointer;transition:all 0.3s;margin:6px}
+  .start-btn:hover{background:rgba(77,172,255,0.3);box-shadow:0 0 30px rgba(77,172,255,0.4);transform:scale(1.05)}
+  .start-btn.gold{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.1)}
+  .start-btn.gold:hover{background:rgba(255,215,0,0.25);box-shadow:0 0 30px rgba(255,215,0,0.3)}
 
-  #overlay h1 {
-    font-size: clamp(24px, 5vw, 48px); color: #4dacff; margin-bottom: 12px;
-    text-shadow: 0 0 20px rgba(77,172,255,0.8), 4px 4px 0 #0a2a5c;
-  }
+  .back-link{font-family:'Press Start 2P',monospace;color:#555;text-decoration:none;font-size:9px;transition:color 0.2s;margin-top:12px}
+  .back-link:hover{color:#4dacff}
 
-  #overlay .sub { font-size: 11px; color: #aaa; margin-bottom: 30px; line-height: 1.8; }
-  #overlay .controls-info { font-size: 8px; color: #666; margin-bottom: 20px; line-height: 2; }
+  .lvl-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;max-width:520px;margin:16px auto;max-height:55vh;overflow-y:auto;padding:4px}
+  .lvl-tile{width:44px;height:44px;border:2px solid rgba(77,172,255,0.2);border-radius:6px;background:rgba(77,172,255,0.05);display:flex;align-items:center;justify-content:center;font-size:8px;color:#888;cursor:pointer;transition:all 0.2s}
+  .lvl-tile:hover{border-color:#4dacff;transform:scale(1.1);background:rgba(77,172,255,0.15)}
+  .lvl-tile.beat{border-color:#44ff44;color:#44ff44;background:rgba(68,255,68,0.08)}
+  .lvl-tile.locked{opacity:0.3;cursor:default;pointer-events:none}
+  .lvl-tile.current{border-color:#ffd700;color:#ffd700;box-shadow:0 0 10px rgba(255,215,0,0.3)}
 
-  .start-btn {
-    font-family: 'Press Start 2P', monospace; font-size: 14px;
-    padding: 16px 40px; border: 2px solid #4dacff; border-radius: 8px;
-    background: rgba(77,172,255,0.15); color: #4dacff; cursor: pointer;
-    transition: all 0.3s; margin-bottom: 16px;
-  }
-  .start-btn:hover {
-    background: rgba(77,172,255,0.3); box-shadow: 0 0 30px rgba(77,172,255,0.4);
-    transform: scale(1.05);
-  }
+  .stats{font-size:11px;color:#aaa;margin-bottom:20px;line-height:2.2}
+  .stats span{color:#4dacff}
+  .win-stats span{color:#ffd700}
 
-  .back-link {
-    font-family: 'Press Start 2P', monospace;
-    color: #555; text-decoration: none; font-size: 9px;
-    transition: color 0.2s;
-  }
-  .back-link:hover { color: #4dacff; }
+  .rocket-preview{margin:16px 0;font-size:9px;color:#666}
 
-  #deathOverlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 20; background: rgba(0,0,0,0.8); text-align: center; cursor: default;
-  }
-
-  #deathOverlay h1 { font-size: 32px; color: #ff4444; margin-bottom: 16px; text-shadow: 0 0 20px rgba(255,68,68,0.6); }
-  #deathOverlay .stats { font-size: 11px; color: #aaa; margin-bottom: 24px; line-height: 2.2; }
-  #deathOverlay .stats span { color: #4dacff; }
-
-  #winOverlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 20; background: rgba(0,0,0,0.8); text-align: center; cursor: default;
-  }
-  #winOverlay h1 { font-size: 28px; color: #44ff44; margin-bottom: 16px; text-shadow: 0 0 20px rgba(68,255,68,0.6); }
-  #winOverlay .stats { font-size: 11px; color: #aaa; margin-bottom: 24px; line-height: 2.2; }
-  #winOverlay .stats span { color: #ffd700; }
-
-  .crosshair {
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    width: 20px; height: 20px; pointer-events: none; z-index: 8;
-  }
-  .crosshair::before, .crosshair::after {
-    content: ''; position: absolute; background: rgba(77,172,255,0.4);
-  }
-  .crosshair::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
-  .crosshair::after { width: 100%; height: 2px; top: 50%; transform: translateY(-50%); }
+  .crosshair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;pointer-events:none;z-index:8}
+  .crosshair::before,.crosshair::after{content:'';position:absolute;background:rgba(77,172,255,0.4)}
+  .crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+  .crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
 </style>
 </head>
 <body>
 
-<div id="hud" style="display:none;">
+<div id="hud" style="display:none">
   <div class="hud-left">
+    <div><span class="hud-label">Level</span></div>
+    <div><span class="hud-value" id="lvlVal">1</span></div>
     <div><span class="hud-label">Distance</span></div>
-    <div><span class="hud-value" id="distVal">0m</span></div>
-    <div><span class="hud-label">Checkpoint</span></div>
-    <div><span class="hud-small" id="cpVal">0 / 10</span></div>
+    <div><span class="hud-small" id="distVal">0m</span></div>
   </div>
   <div class="hud-right">
     <div><span class="hud-label">Shield</span></div>
@@ -124,510 +74,621 @@
   </div>
 </div>
 
-<div class="crosshair" id="crosshair" style="display:none;"></div>
+<div class="crosshair" id="crosshair" style="display:none"></div>
 <div class="checkpoint-flash" id="cpFlash"></div>
 
-<div id="overlay">
+<!-- MENU -->
+<div id="menuScreen" class="overlay-screen show">
   <h1>ROCKET RUN</h1>
-  <div class="sub">Navigate a massive 3D obstacle course<br>Don't crash!</div>
+  <div class="sub">100 Levels &bull; Your rocket evolves as you progress!</div>
   <div class="controls-info">
-    WASD or ARROWS = Move &bull; MOUSE = Look<br>
-    SHIFT = Boost &bull; Reach the end to win!
+    WASD / ARROWS = Move &bull; MOUSE = Aim &bull; SHIFT = Boost<br>
+    Dodge obstacles and reach the finish!
   </div>
-  <button class="start-btn" onclick="startGame()">LAUNCH</button>
+  <div id="levelGrid" class="lvl-grid"></div>
+  <div class="rocket-preview" id="rocketPreview"></div>
   <a href="index.html" class="back-link">&larr; Back to Ollie's Universe</a>
 </div>
 
-<div id="deathOverlay">
-  <h1>DESTROYED</h1>
+<!-- DEATH -->
+<div id="deathScreen" class="overlay-screen">
+  <h1 style="color:#ff4444;text-shadow:0 0 20px rgba(255,68,68,0.6)">DESTROYED</h1>
   <div class="stats">
-    Distance: <span id="deathDist">0m</span><br>
-    Checkpoints: <span id="deathCP">0/10</span>
+    Level: <span id="deathLvl">1</span><br>
+    Distance: <span id="deathDist">0m</span>
   </div>
-  <button class="start-btn" onclick="startGame()">RETRY</button>
+  <button class="start-btn" id="retryBtn">RETRY</button>
   <a href="index.html" class="back-link">&larr; Back</a>
 </div>
 
-<div id="winOverlay">
-  <h1>COURSE COMPLETE!</h1>
-  <div class="stats">
-    You conquered the obstacle course!<br>
-    Final Time: <span id="winTime">0s</span>
+<!-- WIN -->
+<div id="winScreen" class="overlay-screen">
+  <h1 style="color:#44ff44;text-shadow:0 0 20px rgba(68,255,68,0.6)">LEVEL COMPLETE!</h1>
+  <div class="stats win-stats">
+    Level <span id="winLvl">1</span> cleared!<br>
+    Time: <span id="winTime">0s</span>
   </div>
-  <button class="start-btn" onclick="startGame()">PLAY AGAIN</button>
+  <div id="upgradeMsg" style="font-size:9px;color:#ffd700;margin-bottom:12px"></div>
+  <div id="winBtns"></div>
+  <a href="index.html" class="back-link">&larr; Back</a>
+</div>
+
+<!-- ALL COMPLETE -->
+<div id="allCompleteScreen" class="overlay-screen">
+  <h1 style="color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,0.8)">MASTER PILOT!</h1>
+  <div class="stats win-stats">You beat all 100 levels!<br>Your rocket has reached its ultimate form!</div>
+  <button class="start-btn gold" onclick="showMenu()">LEVEL SELECT</button>
   <a href="index.html" class="back-link">&larr; Back</a>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ===================== SETUP =====================
+// ===================== THREE.JS SETUP =====================
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000022, 0.0025);
-
-const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 800);
+scene.fog = new THREE.FogExp2(0x000022, 0.003);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 600);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setClearColor(0x000011);
 document.body.appendChild(renderer.domElement);
+window.addEventListener('resize', () => { camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-// Lighting
 const ambLight = new THREE.AmbientLight(0x334466, 0.6);
-scene.add(ambLight);
 const dirLight = new THREE.DirectionalLight(0x4dacff, 0.8);
 dirLight.position.set(5, 10, -5);
-scene.add(dirLight);
 const pointLight = new THREE.PointLight(0x4dacff, 1, 50);
-scene.add(pointLight);
 
-// ===================== MATERIALS =====================
-const matObstacle = new THREE.MeshPhongMaterial({ color: 0x334455, emissive: 0x111122, shininess: 30 });
-const matObstRed = new THREE.MeshPhongMaterial({ color: 0x882222, emissive: 0x220000 });
-const matObstGreen = new THREE.MeshPhongMaterial({ color: 0x228844, emissive: 0x002200 });
-const matObstPurple = new THREE.MeshPhongMaterial({ color: 0x663388, emissive: 0x110022 });
-const matWall = new THREE.MeshPhongMaterial({ color: 0x2a3a5c, emissive: 0x0a1020 });
-const matCheckpoint = new THREE.MeshPhongMaterial({ color: 0x44aaff, emissive: 0x2266aa, transparent: true, opacity: 0.4 });
-const matGlow = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x4dacff, transparent: true, opacity: 0.5 });
-const matFloor = new THREE.MeshPhongMaterial({ color: 0x1a2a44, emissive: 0x050a15 });
-const matRocket = new THREE.MeshPhongMaterial({ color: 0xcccccc, emissive: 0x222222, shininess: 80 });
-const matFlame = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0xff4400, transparent: true, opacity: 0.8 });
+// ===================== SAVE DATA =====================
+let saveData = JSON.parse(localStorage.getItem('rr_save') || '{"beaten":[]}');
+function save() { localStorage.setItem('rr_save', JSON.stringify(saveData)); }
+function highestUnlocked() {
+  if (saveData.beaten.length === 0) return 1;
+  return Math.min(100, Math.max(...saveData.beaten) + 1);
+}
+
+// ===================== LEVEL CONFIG =====================
+let currentLevel = 1;
+const TUNNEL_RADIUS = 12;
+
+function getLevelConfig(lvl) {
+  const t = (lvl - 1) / 99; // 0 to 1
+  return {
+    courseLength: Math.floor(150 + t * 1200),
+    baseSpeed: 0.5 + t * 1.2,
+    boostMultiplier: 1.8 - t * 0.3,
+    health: Math.max(60, 120 - t * 60),
+    damagePerHit: 15 + t * 10,
+    healPerCP: Math.max(5, 20 - t * 15),
+    obstacleGap: Math.max(12, 28 - t * 16),
+    holeSize: Math.max(2.2, 4.5 - t * 2.3),
+    spinnerSpeed: 0.4 + t * 2.0,
+    moverSpeed: 0.6 + t * 2.0,
+    moverRange: 3 + t * 4,
+    numCheckpoints: Math.max(2, Math.floor(3 + t * 7)),
+  };
+}
+
+// ===================== ROCKET BUILDER =====================
+let rocket;
+const flames = [];
+
+function lerpColor(a, b, t) {
+  const ar = (a>>16)&0xff, ag = (a>>8)&0xff, ab = a&0xff;
+  const br = (b>>16)&0xff, bg = (b>>8)&0xff, bb = b&0xff;
+  const r = Math.round(ar + (br-ar)*t);
+  const g = Math.round(ag + (bg-ag)*t);
+  const bl = Math.round(ab + (bb-ab)*t);
+  return (r<<16)|(g<<8)|bl;
+}
+
+function createRocket(lvl) {
+  const g = new THREE.Group();
+  const t = (lvl - 1) / 99; // 0 to 1
+  flames.length = 0;
+
+  // === BODY ===
+  const bodyLen = 2.5 + t * 1.5;
+  const bodyR1 = 0.3 - t * 0.05;
+  const bodyR2 = 0.4 - t * 0.05;
+  const segs = 8 + Math.floor(t * 16);
+  const bodyColor = lerpColor(0xcccccc, 0xf0f0ff, t);
+  const bodyEmissive = lerpColor(0x111111, 0x334466, t);
+  const bodyMat = new THREE.MeshPhongMaterial({ color: bodyColor, emissive: bodyEmissive, shininess: 30 + t * 70 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(bodyR1, bodyR2, bodyLen, segs), bodyMat);
+  body.rotation.x = Math.PI / 2;
+  g.add(body);
+
+  // === NOSE CONE ===
+  const noseLen = 0.8 + t * 0.8;
+  const noseColor = lerpColor(0xcc3333, 0xff2200, t * 0.5);
+  const noseEmissive = lerpColor(0x330000, 0xff4400, t);
+  const noseMat = new THREE.MeshPhongMaterial({ color: noseColor, emissive: noseEmissive, shininess: 50 + t * 50 });
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(bodyR1, noseLen, segs), noseMat);
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.z = -(bodyLen/2 + noseLen/2);
+  g.add(nose);
+
+  // === FINS ===
+  const numFins = Math.floor(4 + t * 4); // 4 to 8
+  const finH = 0.5 + t * 0.5;
+  const finW = 0.4 + t * 0.3;
+  const finColor = lerpColor(0x4dacff, 0xffd700, t);
+  const finEmissive = lerpColor(0x112244, 0x886600, t);
+  const finMat = new THREE.MeshPhongMaterial({ color: finColor, emissive: finEmissive, shininess: 60 });
+  for (let i = 0; i < numFins; i++) {
+    const angle = (i / numFins) * Math.PI * 2;
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.05, finH, finW), finMat);
+    fin.position.set(Math.cos(angle) * (bodyR2 + 0.02), Math.sin(angle) * (bodyR2 + 0.02), bodyLen * 0.35);
+    fin.rotation.z = angle;
+    g.add(fin);
+  }
+
+  // === WINGS (appear lvl 15+) ===
+  if (lvl >= 15) {
+    const wt = Math.min(1, (lvl - 15) / 60);
+    const wingSpan = 0.8 + wt * 1.8;
+    const wingLen = 0.8 + wt * 1.2;
+    const wingColor = lerpColor(0x4dacff, 0xffd700, wt);
+    const wingMat = new THREE.MeshPhongMaterial({ color: wingColor, emissive: lerpColor(0x112244, 0x664400, wt), shininess: 70 + wt * 30 });
+    for (let side of [-1, 1]) {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(wingSpan, 0.06, wingLen), wingMat);
+      wing.position.set(side * (bodyR2 + wingSpan/2), 0, 0.2);
+      wing.rotation.z = side * (-0.1 - wt * 0.15);
+      g.add(wing);
+      // Wing tip glow
+      if (lvl >= 40) {
+        const tipGlow = new THREE.Mesh(new THREE.SphereGeometry(0.08 + wt * 0.12, 8, 8),
+          new THREE.MeshPhongMaterial({ color: 0x44ffff, emissive: 0x44ffff, transparent: true, opacity: 0.6 + wt * 0.3 }));
+        tipGlow.position.set(side * (bodyR2 + wingSpan), 0, 0.2);
+        g.add(tipGlow);
+      }
+    }
+  }
+
+  // === EXTRA BODY RINGS (lvl 25+) ===
+  if (lvl >= 25) {
+    const rt = Math.min(1, (lvl - 25) / 50);
+    const numRings = 1 + Math.floor(rt * 3);
+    const ringMat = new THREE.MeshPhongMaterial({ color: lerpColor(0x4dacff, 0xffd700, rt), emissive: lerpColor(0x224488, 0xaa8800, rt), shininess: 90 });
+    for (let i = 0; i < numRings; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(bodyR2 + 0.08, 0.04 + rt * 0.03, 8, segs), ringMat);
+      ring.position.z = -bodyLen * 0.2 + i * (bodyLen * 0.3 / numRings);
+      g.add(ring);
+    }
+  }
+
+  // === ENGINE GLOW RING (lvl 10+) ===
+  if (lvl >= 10) {
+    const et = Math.min(1, (lvl - 10) / 40);
+    const eRing = new THREE.Mesh(new THREE.TorusGeometry(bodyR2 + 0.05, 0.05, 8, 16),
+      new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: lerpColor(0x883300, 0xff6600, et), transparent: true, opacity: 0.5 + et * 0.4 }));
+    eRing.position.z = bodyLen / 2;
+    g.add(eRing);
+  }
+
+  // === COCKPIT WINDOW (lvl 20+) ===
+  if (lvl >= 20) {
+    const ct = Math.min(1, (lvl - 20) / 40);
+    const cockpit = new THREE.Mesh(new THREE.SphereGeometry(bodyR1 * (0.5 + ct * 0.3), 8, 8),
+      new THREE.MeshPhongMaterial({ color: lerpColor(0x66aaff, 0x88ffff, ct), emissive: lerpColor(0x224488, 0x44aaaa, ct), transparent: true, opacity: 0.6 + ct * 0.3, shininess: 100 }));
+    cockpit.position.z = -(bodyLen * 0.25);
+    cockpit.position.y = bodyR1 * 0.5;
+    g.add(cockpit);
+  }
+
+  // === SHIELD BUBBLE (lvl 60+) ===
+  if (lvl >= 60) {
+    const st = Math.min(1, (lvl - 60) / 40);
+    const shield = new THREE.Mesh(new THREE.SphereGeometry(1.2 + st * 0.5, 16, 16),
+      new THREE.MeshPhongMaterial({ color: lerpColor(0x4dacff, 0xffd700, st), emissive: lerpColor(0x224488, 0x886600, st), transparent: true, opacity: 0.06 + st * 0.08, shininess: 100 }));
+    shield.userData = { isShield: true };
+    g.add(shield);
+  }
+
+  // === SIDE ENGINES (lvl 35+) ===
+  if (lvl >= 35) {
+    const set = Math.min(1, (lvl - 35) / 40);
+    const numSide = lvl >= 70 ? 4 : 2;
+    for (let i = 0; i < numSide; i++) {
+      const angle = (i / numSide) * Math.PI * 2 + Math.PI / 4;
+      const dist = bodyR2 + 0.2 + set * 0.15;
+      const eng = new THREE.Mesh(new THREE.CylinderGeometry(0.08 + set * 0.04, 0.12 + set * 0.05, 0.6, 8),
+        new THREE.MeshPhongMaterial({ color: 0x888888, emissive: 0x222222, shininess: 60 }));
+      eng.rotation.x = Math.PI / 2;
+      eng.position.set(Math.cos(angle) * dist, Math.sin(angle) * dist, bodyLen * 0.3);
+      g.add(eng);
+      // Side flames
+      const sf = new THREE.Mesh(new THREE.ConeGeometry(0.06 + set * 0.04, 0.3 + set * 0.4, 6),
+        new THREE.MeshPhongMaterial({ color: 0xff4400, emissive: 0xff2200, transparent: true, opacity: 0.7 }));
+      sf.rotation.x = Math.PI / 2;
+      sf.position.set(Math.cos(angle) * dist, Math.sin(angle) * dist, bodyLen * 0.3 + 0.5);
+      g.add(sf);
+      flames.push(sf);
+    }
+  }
+
+  // === ANTENNA / SENSOR (lvl 50+) ===
+  if (lvl >= 50) {
+    const at = Math.min(1, (lvl - 50) / 30);
+    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4 + at * 0.4, 4),
+      new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0x444444 }));
+    antenna.position.set(0, bodyR1 + 0.2 + at * 0.2, -(bodyLen * 0.3));
+    g.add(antenna);
+    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.04 + at * 0.03, 6, 6),
+      new THREE.MeshPhongMaterial({ color: 0xff0000, emissive: 0xff0000 }));
+    tip.position.set(0, bodyR1 + 0.4 + at * 0.4, -(bodyLen * 0.3));
+    g.add(tip);
+  }
+
+  // === MAIN FLAME ===
+  const flameSize = 0.2 + t * 0.2;
+  const flameLen = 1.0 + t * 1.0;
+  const mainFlame = new THREE.Mesh(new THREE.ConeGeometry(flameSize, flameLen, 6),
+    new THREE.MeshPhongMaterial({ color: lerpColor(0xff6600, 0x4dacff, t * 0.5), emissive: lerpColor(0xff4400, 0x4dacff, t * 0.3), transparent: true, opacity: 0.8 }));
+  mainFlame.rotation.x = Math.PI / 2;
+  mainFlame.position.z = bodyLen / 2 + flameLen / 2 + 0.1;
+  g.add(mainFlame);
+  flames.push(mainFlame);
+
+  // === INNER FLAME (lvl 30+) ===
+  if (lvl >= 30) {
+    const inner = new THREE.Mesh(new THREE.ConeGeometry(flameSize * 0.5, flameLen * 0.7, 6),
+      new THREE.MeshPhongMaterial({ color: 0xffff44, emissive: 0xffaa00, transparent: true, opacity: 0.6 }));
+    inner.rotation.x = Math.PI / 2;
+    inner.position.z = bodyLen / 2 + flameLen * 0.35 + 0.1;
+    g.add(inner);
+    flames.push(inner);
+  }
+
+  // === PARTICLE TRAIL EMITTERS (lvl 80+) represented as small glow spheres ===
+  if (lvl >= 80) {
+    const pt = Math.min(1, (lvl - 80) / 20);
+    for (let i = 0; i < 3; i++) {
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.06 + pt * 0.06, 6, 6),
+        new THREE.MeshPhongMaterial({ color: 0xffd700, emissive: 0xffd700, transparent: true, opacity: 0.5 }));
+      orb.position.set(0, 0, bodyLen / 2 + 0.5 + i * 0.3);
+      orb.userData = { isTrail: true, idx: i };
+      g.add(orb);
+    }
+  }
+
+  return g;
+}
+
+function getRocketDescription(lvl) {
+  if (lvl <= 5) return "Basic Rocket";
+  if (lvl <= 14) return "Rocket MK-" + Math.ceil(lvl/5);
+  if (lvl <= 24) return "Winged Cruiser";
+  if (lvl <= 34) return "Ringed Vanguard";
+  if (lvl <= 49) return "Twin-Engine Fighter";
+  if (lvl <= 59) return "Sensor-Array Interceptor";
+  if (lvl <= 69) return "Shield-Class Destroyer";
+  if (lvl <= 79) return "Quad-Engine Warship";
+  if (lvl <= 89) return "Plasma-Trail Dreadnought";
+  if (lvl <= 99) return "Golden Titan";
+  return "ULTIMATE STARBREAKER";
+}
 
 // ===================== GAME STATE =====================
-let gameState = 'menu'; // menu, playing, dead, won
-let health = 100;
-let distance = 0;
-let checkpoints = 0;
-let totalCheckpoints = 10;
-let speed = 0.8;
-let baseSpeed = 0.8;
-let boostSpeed = 1.5;
-let startTime = 0;
-let invulnTimer = 0;
+let gameState = 'menu';
+let health, distance, checkpoints, totalCheckpoints;
+let speed, baseSpeed, boostSpeed;
+let startTime, invulnTimer;
+let courseLength;
 
-// Input
 const keys = {};
-let mouseX = 0, mouseY = 0;
-let pointerLocked = false;
+let mouseX = 0, mouseY = 0, pointerLocked = false;
 
 document.addEventListener('keydown', e => keys[e.code] = true);
 document.addEventListener('keyup', e => keys[e.code] = false);
 document.addEventListener('mousemove', e => {
-  if (pointerLocked) {
-    mouseX += e.movementX * 0.002;
-    mouseY += e.movementY * 0.002;
-    mouseY = Math.max(-0.8, Math.min(0.8, mouseY));
-  }
+  if (pointerLocked) { mouseX += e.movementX * 0.002; mouseY += e.movementY * 0.002; mouseY = Math.max(-0.8, Math.min(0.8, mouseY)); }
 });
+document.addEventListener('pointerlockchange', () => { pointerLocked = document.pointerLockElement === renderer.domElement; });
 
-document.addEventListener('pointerlockchange', () => {
-  pointerLocked = document.pointerLockElement === renderer.domElement;
-});
-
-// ===================== ROCKET =====================
-let rocket, flameMesh;
-
-function createRocket() {
-  const group = new THREE.Group();
-
-  // Body
-  const bodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 2.5, 8);
-  const body = new THREE.Mesh(bodyGeo, matRocket);
-  body.rotation.x = Math.PI / 2;
-  group.add(body);
-
-  // Nose cone
-  const noseGeo = new THREE.ConeGeometry(0.3, 0.8, 8);
-  const nose = new THREE.Mesh(noseGeo, new THREE.MeshPhongMaterial({ color: 0xff3333, emissive: 0x440000 }));
-  nose.rotation.x = -Math.PI / 2;
-  nose.position.z = -1.6;
-  group.add(nose);
-
-  // Fins
-  const finGeo = new THREE.BoxGeometry(0.05, 0.6, 0.5);
-  const finMat = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x112244 });
-  for (let i = 0; i < 4; i++) {
-    const fin = new THREE.Mesh(finGeo, finMat);
-    const angle = (i / 4) * Math.PI * 2;
-    fin.position.set(Math.cos(angle) * 0.4, Math.sin(angle) * 0.4, 1.0);
-    fin.rotation.z = angle;
-    group.add(fin);
-  }
-
-  // Engine flame
-  const flameGeo = new THREE.ConeGeometry(0.25, 1.2, 6);
-  flameMesh = new THREE.Mesh(flameGeo, matFlame);
-  flameMesh.rotation.x = Math.PI / 2;
-  flameMesh.position.z = 2.0;
-  group.add(flameMesh);
-
-  return group;
-}
-
-// ===================== OBSTACLE COURSE =====================
+// ===================== COURSE BUILDER =====================
 const obstacleObjects = [];
 const checkpointObjects = [];
-const COURSE_LENGTH = 2000;
-const TUNNEL_RADIUS = 12;
 
-function buildCourse() {
-  // Clear old
-  obstacleObjects.forEach(o => scene.remove(o));
-  checkpointObjects.forEach(o => scene.remove(o));
+function buildCourse(lvl) {
+  const cfg = getLevelConfig(lvl);
+  courseLength = cfg.courseLength;
+  totalCheckpoints = cfg.numCheckpoints;
+  baseSpeed = cfg.baseSpeed;
+  boostSpeed = baseSpeed * cfg.boostMultiplier;
+  health = cfg.health;
+
   obstacleObjects.length = 0;
   checkpointObjects.length = 0;
 
-  // Floor/tunnel segments
-  for (let z = 0; z > -COURSE_LENGTH - 100; z -= 40) {
-    // Floor
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.5, 40), matFloor);
-    floor.position.set(0, -TUNNEL_RADIUS, z);
-    scene.add(floor);
-    obstacleObjects.push(floor);
-
-    // Ceiling
-    const ceil = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.5, 40), matFloor);
-    ceil.position.set(0, TUNNEL_RADIUS, z);
-    scene.add(ceil);
-    obstacleObjects.push(ceil);
-
-    // Walls
-    const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.5, TUNNEL_RADIUS * 2, 40), matFloor);
-    wallL.position.set(-TUNNEL_RADIUS, 0, z);
-    scene.add(wallL);
-    obstacleObjects.push(wallL);
-
-    const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.5, TUNNEL_RADIUS * 2, 40), matFloor);
-    wallR.position.set(TUNNEL_RADIUS, 0, z);
-    scene.add(wallR);
-    obstacleObjects.push(wallR);
-
-    // Edge glow strips
-    if (z % 80 === 0) {
-      const strip = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.1, 0.5), matGlow);
-      strip.position.set(0, -TUNNEL_RADIUS + 0.3, z);
-      scene.add(strip);
-      obstacleObjects.push(strip);
-    }
-  }
-
-  // Generate obstacles in sections
-  let z = -30;
-  let section = 0;
-
-  while (z > -COURSE_LENGTH + 50) {
-    section++;
-    const difficulty = Math.min(section / 8, 1); // 0 to 1
-
-    // Every ~200m place a checkpoint
-    if (section % 4 === 0 && checkpointObjects.length < totalCheckpoints) {
-      const cpRing = new THREE.Mesh(new THREE.TorusGeometry(TUNNEL_RADIUS * 0.6, 0.5, 8, 24), matCheckpoint);
-      cpRing.position.set(0, 0, z);
-      cpRing.userData = { type: 'checkpoint', collected: false };
-      scene.add(cpRing);
-      checkpointObjects.push(cpRing);
-      z -= 15;
-    }
-
-    // Pick obstacle pattern
-    const pattern = Math.floor(Math.random() * 12);
-
-    if (pattern === 0) {
-      // Wall with hole
-      const holeX = (Math.random() - 0.5) * TUNNEL_RADIUS;
-      const holeY = (Math.random() - 0.5) * TUNNEL_RADIUS * 0.5;
-      const holeSize = Math.max(3.5 - difficulty * 1.2, 2.2);
-      addWallWithHole(z, holeX, holeY, holeSize);
-      z -= 20;
-    }
-    else if (pattern === 1) {
-      // Horizontal bars
-      const count = 2 + Math.floor(difficulty * 3);
-      for (let i = 0; i < count; i++) {
-        const bar = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 1.2, 1.2), matObstRed);
-        const yPos = -TUNNEL_RADIUS + (i + 1) * (TUNNEL_RADIUS * 2 / (count + 1));
-        bar.position.set(0, yPos, z - i * 8);
-        bar.userData = { type: 'obstacle' };
-        scene.add(bar);
-        obstacleObjects.push(bar);
-      }
-      z -= count * 8 + 10;
-    }
-    else if (pattern === 2) {
-      // Spinning cross (marked for rotation)
-      const arm1 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.6, 1.5, 1.5), matObstPurple);
-      const arm2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, TUNNEL_RADIUS * 1.6, 1.5), matObstPurple);
-      const pivot = new THREE.Group();
-      pivot.add(arm1);
-      pivot.add(arm2);
-      pivot.position.set(0, 0, z);
-      pivot.userData = { type: 'spinner', speed: 0.5 + difficulty * 1.0 };
-      scene.add(pivot);
-      obstacleObjects.push(pivot);
-      z -= 25;
-    }
-    else if (pattern === 3) {
-      // Pillars
-      const numPillars = 3 + Math.floor(difficulty * 4);
-      for (let i = 0; i < numPillars; i++) {
-        const px = (Math.random() - 0.5) * TUNNEL_RADIUS * 1.4;
-        const py = (Math.random() - 0.5) * TUNNEL_RADIUS * 1.0;
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.8 + Math.random() * 0.8, 0.8 + Math.random() * 0.8, 3 + Math.random() * 4, 8), matObstacle);
-        pillar.position.set(px, py, z - i * 6);
-        pillar.rotation.x = Math.random() * Math.PI;
-        pillar.userData = { type: 'obstacle' };
-        scene.add(pillar);
-        obstacleObjects.push(pillar);
-      }
-      z -= numPillars * 6 + 10;
-    }
-    else if (pattern === 4) {
-      // Moving wall (side to side)
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.2, TUNNEL_RADIUS * 1.8, 1.5), matObstGreen);
-      wall.position.set(0, 0, z);
-      wall.userData = { type: 'mover', axis: 'x', range: TUNNEL_RADIUS * 0.6, speed: 1 + difficulty * 1.5, offset: Math.random() * Math.PI * 2 };
-      scene.add(wall);
-      obstacleObjects.push(wall);
-      z -= 22;
-    }
-    else if (pattern === 5) {
-      // Vertical slats you weave through
-      const num = 4 + Math.floor(difficulty * 3);
-      for (let i = 0; i < num; i++) {
-        const slat = new THREE.Mesh(new THREE.BoxGeometry(1.2, TUNNEL_RADIUS * 2, 1), matObstacle);
-        const xOff = (i % 2 === 0) ? -TUNNEL_RADIUS * 0.35 : TUNNEL_RADIUS * 0.35;
-        slat.position.set(xOff, 0, z - i * 7);
-        slat.userData = { type: 'obstacle' };
-        scene.add(slat);
-        obstacleObjects.push(slat);
-      }
-      z -= num * 7 + 10;
-    }
-    else if (pattern === 6) {
-      // Double wall squeeze
-      const gap = Math.max(4 - difficulty * 1.5, 2.5);
-      const w1 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS - gap/2, TUNNEL_RADIUS * 2, 2), matWall);
-      w1.position.set(-TUNNEL_RADIUS/2 - gap/4, 0, z);
-      w1.userData = { type: 'obstacle' };
-      scene.add(w1);
-      obstacleObjects.push(w1);
-
-      const w2 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS - gap/2, TUNNEL_RADIUS * 2, 2), matWall);
-      w2.position.set(TUNNEL_RADIUS/2 + gap/4, 0, z);
-      w2.userData = { type: 'obstacle' };
-      scene.add(w2);
-      obstacleObjects.push(w2);
-      z -= 18;
-    }
-    else if (pattern === 7) {
-      // Rising/falling blocks
-      const num = 3 + Math.floor(difficulty * 3);
-      for (let i = 0; i < num; i++) {
-        const block = new THREE.Mesh(new THREE.BoxGeometry(3 + Math.random()*2, 3 + Math.random()*2, 2), matObstRed);
-        block.position.set((Math.random()-0.5)*TUNNEL_RADIUS, 0, z - i*10);
-        block.userData = { type: 'mover', axis: 'y', range: TUNNEL_RADIUS * 0.5, speed: 0.8 + difficulty * 1.2, offset: i * 1.5 };
-        scene.add(block);
-        obstacleObjects.push(block);
-      }
-      z -= num * 10 + 10;
-    }
-    else if (pattern === 8) {
-      // Ring of death (big ring with gap)
-      const segments = 6 + Math.floor(difficulty * 4);
-      const gapIndex = Math.floor(Math.random() * segments);
-      const pivot = new THREE.Group();
-      for (let i = 0; i < segments; i++) {
-        if (i === gapIndex) continue;
-        const angle = (i / segments) * Math.PI * 2;
-        const block = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1.5), matObstPurple);
-        block.position.set(Math.cos(angle) * TUNNEL_RADIUS * 0.6, Math.sin(angle) * TUNNEL_RADIUS * 0.6, 0);
-        block.rotation.z = angle;
-        pivot.add(block);
-      }
-      pivot.position.set(0, 0, z);
-      pivot.userData = { type: 'spinner', speed: 0.3 + difficulty * 0.8 };
-      scene.add(pivot);
-      obstacleObjects.push(pivot);
-      z -= 22;
-    }
-    else if (pattern === 9) {
-      // Zigzag walls
-      for (let i = 0; i < 5; i++) {
-        const side = i % 2 === 0 ? -1 : 1;
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.0, TUNNEL_RADIUS * 2, 1.5), matWall);
-        wall.position.set(side * TUNNEL_RADIUS * 0.35, 0, z - i * 10);
-        wall.userData = { type: 'obstacle' };
-        scene.add(wall);
-        obstacleObjects.push(wall);
-      }
-      z -= 60;
-    }
-    else if (pattern === 10) {
-      // Checkerboard grid
-      const size = 3;
-      for (let gx = -2; gx <= 2; gx++) {
-        for (let gy = -2; gy <= 2; gy++) {
-          if ((gx + gy) % 2 === 0) continue;
-          const block = new THREE.Mesh(new THREE.BoxGeometry(size, size, 1.5), matObstacle);
-          block.position.set(gx * (size + 0.5), gy * (size + 0.5), z);
-          block.userData = { type: 'obstacle' };
-          scene.add(block);
-          obstacleObjects.push(block);
-        }
-      }
-      z -= 20;
-    }
-    else {
-      // Asteroid field - random spheres
-      const num = 5 + Math.floor(difficulty * 6);
-      for (let i = 0; i < num; i++) {
-        const r = 0.8 + Math.random() * 1.5;
-        const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), matObstRed);
-        sphere.position.set(
-          (Math.random()-0.5) * TUNNEL_RADIUS * 1.4,
-          (Math.random()-0.5) * TUNNEL_RADIUS * 1.0,
-          z - i * 5
-        );
-        sphere.userData = { type: 'mover', axis: Math.random() > 0.5 ? 'x' : 'y', range: 2 + Math.random()*3, speed: 0.5 + Math.random() * 1.5, offset: Math.random() * 10 };
-        scene.add(sphere);
-        obstacleObjects.push(sphere);
-      }
-      z -= num * 5 + 15;
-    }
-  }
-
-  // Final checkpoint at the end
-  const finalCP = new THREE.Mesh(new THREE.TorusGeometry(TUNNEL_RADIUS * 0.7, 0.8, 8, 24), matCheckpoint);
-  finalCP.position.set(0, 0, -COURSE_LENGTH + 20);
-  finalCP.userData = { type: 'checkpoint', collected: false, isFinal: true };
-  scene.add(finalCP);
-  checkpointObjects.push(finalCP);
-
-  // Starfield background
-  const starGeo = new THREE.BufferGeometry();
-  const starVerts = [];
-  for (let i = 0; i < 3000; i++) {
-    starVerts.push(
-      (Math.random()-0.5) * 400,
-      (Math.random()-0.5) * 400,
-      -Math.random() * COURSE_LENGTH * 1.5
-    );
-  }
-  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
-  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.7 });
-  const starField = new THREE.Points(starGeo, starMat);
-  scene.add(starField);
-  obstacleObjects.push(starField);
-}
-
-function addWallWithHole(z, hx, hy, holeSize) {
-  // Build wall as 4 pieces around a hole
-  const wallThick = 1.5;
   const R = TUNNEL_RADIUS;
-  const hs = holeSize;
+  const matFloor = new THREE.MeshPhongMaterial({ color: lerpColor(0x1a2a44, 0x2a1a44, (lvl-1)/99), emissive: 0x050a15 });
+  const matGlow = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x4dacff, transparent: true, opacity: 0.5 });
+  const matWall = new THREE.MeshPhongMaterial({ color: 0x2a3a5c, emissive: 0x0a1020 });
+  const matCP = new THREE.MeshPhongMaterial({ color: 0x44aaff, emissive: 0x2266aa, transparent: true, opacity: 0.4 });
 
-  // Left of hole
-  if (hx - hs/2 > -R) {
-    const w = (hx - hs/2) + R;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, R*2, wallThick), matWall);
-    m.position.set(-R + w/2, 0, z);
-    m.userData = { type: 'obstacle' };
-    scene.add(m);
-    obstacleObjects.push(m);
+  const obstMats = [
+    new THREE.MeshPhongMaterial({ color: 0x334455, emissive: 0x111122, shininess: 30 }),
+    new THREE.MeshPhongMaterial({ color: 0x882222, emissive: 0x220000 }),
+    new THREE.MeshPhongMaterial({ color: 0x228844, emissive: 0x002200 }),
+    new THREE.MeshPhongMaterial({ color: 0x663388, emissive: 0x110022 }),
+  ];
+
+  // Tunnel
+  for (let z = 0; z > -courseLength - 60; z -= 40) {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(R*2, 0.5, 40), matFloor);
+    f.position.set(0, -R, z); scene.add(f); obstacleObjects.push(f);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(R*2, 0.5, 40), matFloor);
+    c.position.set(0, R, z); scene.add(c); obstacleObjects.push(c);
+    const wl = new THREE.Mesh(new THREE.BoxGeometry(0.5, R*2, 40), matFloor);
+    wl.position.set(-R, 0, z); scene.add(wl); obstacleObjects.push(wl);
+    const wr = new THREE.Mesh(new THREE.BoxGeometry(0.5, R*2, 40), matFloor);
+    wr.position.set(R, 0, z); scene.add(wr); obstacleObjects.push(wr);
+    if (z % 80 === 0) {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(R*2, 0.1, 0.5), matGlow);
+      s.position.set(0, -R+0.3, z); scene.add(s); obstacleObjects.push(s);
+    }
   }
-  // Right of hole
-  if (hx + hs/2 < R) {
-    const w = R - (hx + hs/2);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, R*2, wallThick), matWall);
-    m.position.set(R - w/2, 0, z);
-    m.userData = { type: 'obstacle' };
-    scene.add(m);
-    obstacleObjects.push(m);
+
+  // Checkpoints evenly spaced
+  const cpSpacing = courseLength / (totalCheckpoints + 1);
+  for (let i = 1; i <= totalCheckpoints; i++) {
+    const cp = new THREE.Mesh(new THREE.TorusGeometry(R*0.6, 0.5, 8, 24), matCP);
+    cp.position.set(0, 0, -cpSpacing * i);
+    cp.userData = { type: 'checkpoint', collected: false, isFinal: i === totalCheckpoints };
+    scene.add(cp); checkpointObjects.push(cp);
   }
-  // Above hole
-  if (hy + hs/2 < R) {
-    const h = R - (hy + hs/2);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(hs, h, wallThick), matWall);
-    m.position.set(hx, R - h/2, z);
-    m.userData = { type: 'obstacle' };
-    scene.add(m);
-    obstacleObjects.push(m);
+
+  // Obstacles
+  let z = -25;
+  while (z > -courseLength + 40) {
+    const sectionT = Math.min(1, -z / courseLength);
+    const diff = sectionT * 0.7 + ((lvl-1)/99) * 0.3;
+    const pat = Math.floor(Math.random() * 12);
+    const mat = obstMats[Math.floor(Math.random() * obstMats.length)];
+
+    if (pat === 0) {
+      const hx = (Math.random()-0.5) * R;
+      const hy = (Math.random()-0.5) * R * 0.5;
+      const hs = cfg.holeSize;
+      addWallWithHole(z, hx, hy, hs, matWall);
+      z -= cfg.obstacleGap;
+    } else if (pat === 1) {
+      const cnt = 2 + Math.floor(diff * 3);
+      for (let i = 0; i < cnt; i++) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(R*2, 1.2, 1.2), mat);
+        bar.position.set(0, -R + (i+1)*(R*2/(cnt+1)), z - i*7);
+        bar.userData = { type: 'obstacle' };
+        scene.add(bar); obstacleObjects.push(bar);
+      }
+      z -= cnt*7 + cfg.obstacleGap * 0.5;
+    } else if (pat === 2) {
+      const pivot = new THREE.Group();
+      pivot.add(new THREE.Mesh(new THREE.BoxGeometry(R*1.6, 1.5, 1.5), mat));
+      pivot.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, R*1.6, 1.5), mat));
+      pivot.position.set(0, 0, z);
+      pivot.userData = { type: 'spinner', speed: cfg.spinnerSpeed };
+      scene.add(pivot); obstacleObjects.push(pivot);
+      z -= cfg.obstacleGap * 1.2;
+    } else if (pat === 3) {
+      const np = 3 + Math.floor(diff * 4);
+      for (let i = 0; i < np; i++) {
+        const p = new THREE.Mesh(new THREE.CylinderGeometry(0.8+Math.random()*0.8, 0.8+Math.random()*0.8, 3+Math.random()*4, 8), mat);
+        p.position.set((Math.random()-0.5)*R*1.4, (Math.random()-0.5)*R, z-i*5);
+        p.rotation.x = Math.random()*Math.PI;
+        p.userData = { type: 'obstacle' };
+        scene.add(p); obstacleObjects.push(p);
+      }
+      z -= np*5 + cfg.obstacleGap * 0.4;
+    } else if (pat === 4) {
+      const w = new THREE.Mesh(new THREE.BoxGeometry(R*1.2, R*1.8, 1.5), mat);
+      w.position.set(0, 0, z);
+      w.userData = { type: 'mover', axis: 'x', range: R*0.5, speed: cfg.moverSpeed, offset: Math.random()*6 };
+      scene.add(w); obstacleObjects.push(w);
+      z -= cfg.obstacleGap;
+    } else if (pat === 5) {
+      const n = 3 + Math.floor(diff * 3);
+      for (let i = 0; i < n; i++) {
+        const sl = new THREE.Mesh(new THREE.BoxGeometry(1.2, R*2, 1), mat);
+        sl.position.set((i%2===0?-1:1)*R*0.35, 0, z-i*6);
+        sl.userData = { type: 'obstacle' };
+        scene.add(sl); obstacleObjects.push(sl);
+      }
+      z -= n*6 + cfg.obstacleGap * 0.4;
+    } else if (pat === 6) {
+      const gap = cfg.holeSize;
+      for (let side of [-1, 1]) {
+        const wm = new THREE.Mesh(new THREE.BoxGeometry(R-gap/2, R*2, 2), matWall);
+        wm.position.set(side*(R/2+gap/4), 0, z);
+        wm.userData = { type: 'obstacle' };
+        scene.add(wm); obstacleObjects.push(wm);
+      }
+      z -= cfg.obstacleGap;
+    } else if (pat === 7) {
+      const n = 3 + Math.floor(diff * 3);
+      for (let i = 0; i < n; i++) {
+        const b = new THREE.Mesh(new THREE.BoxGeometry(3+Math.random()*2, 3+Math.random()*2, 2), mat);
+        b.position.set((Math.random()-0.5)*R, 0, z-i*8);
+        b.userData = { type: 'mover', axis: 'y', range: cfg.moverRange, speed: cfg.moverSpeed, offset: i*1.5 };
+        scene.add(b); obstacleObjects.push(b);
+      }
+      z -= n*8 + cfg.obstacleGap * 0.4;
+    } else if (pat === 8) {
+      const segs = 6 + Math.floor(diff * 4);
+      const gapI = Math.floor(Math.random()*segs);
+      const pivot = new THREE.Group();
+      for (let i = 0; i < segs; i++) {
+        if (i === gapI) continue;
+        const a = (i/segs)*Math.PI*2;
+        const bl = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1.5), mat);
+        bl.position.set(Math.cos(a)*R*0.6, Math.sin(a)*R*0.6, 0);
+        bl.rotation.z = a;
+        pivot.add(bl);
+      }
+      pivot.position.set(0, 0, z);
+      pivot.userData = { type: 'spinner', speed: cfg.spinnerSpeed * 0.7 };
+      scene.add(pivot); obstacleObjects.push(pivot);
+      z -= cfg.obstacleGap * 1.1;
+    } else if (pat === 9) {
+      for (let i = 0; i < 5; i++) {
+        const wl = new THREE.Mesh(new THREE.BoxGeometry(R, R*2, 1.5), matWall);
+        wl.position.set((i%2===0?-1:1)*R*0.35, 0, z-i*8);
+        wl.userData = { type: 'obstacle' };
+        scene.add(wl); obstacleObjects.push(wl);
+      }
+      z -= 48;
+    } else if (pat === 10) {
+      const sz = 3;
+      for (let gx = -2; gx <= 2; gx++) for (let gy = -2; gy <= 2; gy++) {
+        if ((gx+gy)%2===0) continue;
+        const bl = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, 1.5), mat);
+        bl.position.set(gx*(sz+0.5), gy*(sz+0.5), z);
+        bl.userData = { type: 'obstacle' };
+        scene.add(bl); obstacleObjects.push(bl);
+      }
+      z -= cfg.obstacleGap;
+    } else {
+      const n = 4 + Math.floor(diff * 5);
+      for (let i = 0; i < n; i++) {
+        const r = 0.8+Math.random()*1.2;
+        const sp = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), mat);
+        sp.position.set((Math.random()-0.5)*R*1.4, (Math.random()-0.5)*R, z-i*4);
+        sp.userData = { type: 'mover', axis: Math.random()>0.5?'x':'y', range: cfg.moverRange*0.6, speed: cfg.moverSpeed*0.8, offset: Math.random()*10 };
+        scene.add(sp); obstacleObjects.push(sp);
+      }
+      z -= n*4 + cfg.obstacleGap * 0.5;
+    }
   }
-  // Below hole
-  if (hy - hs/2 > -R) {
-    const h = (hy - hs/2) + R;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(hs, h, wallThick), matWall);
-    m.position.set(hx, -R + h/2, z);
-    m.userData = { type: 'obstacle' };
-    scene.add(m);
-    obstacleObjects.push(m);
-  }
+
+  // Stars
+  const sg = new THREE.BufferGeometry();
+  const sv = [];
+  for (let i = 0; i < 2000; i++) sv.push((Math.random()-0.5)*300, (Math.random()-0.5)*300, -Math.random()*courseLength*1.3);
+  sg.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3));
+  const sf = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.7 }));
+  scene.add(sf); obstacleObjects.push(sf);
 }
 
-// ===================== GAME FUNCTIONS =====================
-function startGame() {
-  // Clean old scene
-  while(scene.children.length > 0) scene.remove(scene.children[0]);
-  scene.add(ambLight);
-  scene.add(dirLight);
-  scene.add(pointLight);
+function addWallWithHole(z, hx, hy, hs, matWall) {
+  const R = TUNNEL_RADIUS;
+  if (hx-hs/2 > -R) { const w=hx-hs/2+R; const m=new THREE.Mesh(new THREE.BoxGeometry(w,R*2,1.5),matWall); m.position.set(-R+w/2,0,z); m.userData={type:'obstacle'}; scene.add(m); obstacleObjects.push(m); }
+  if (hx+hs/2 < R) { const w=R-(hx+hs/2); const m=new THREE.Mesh(new THREE.BoxGeometry(w,R*2,1.5),matWall); m.position.set(R-w/2,0,z); m.userData={type:'obstacle'}; scene.add(m); obstacleObjects.push(m); }
+  if (hy+hs/2 < R) { const h=R-(hy+hs/2); const m=new THREE.Mesh(new THREE.BoxGeometry(hs,h,1.5),matWall); m.position.set(hx,R-h/2,z); m.userData={type:'obstacle'}; scene.add(m); obstacleObjects.push(m); }
+  if (hy-hs/2 > -R) { const h=hy-hs/2+R; const m=new THREE.Mesh(new THREE.BoxGeometry(hs,h,1.5),matWall); m.position.set(hx,-R+h/2,z); m.userData={type:'obstacle'}; scene.add(m); obstacleObjects.push(m); }
+}
 
-  // Reset state
-  health = 100;
+// ===================== MENU =====================
+function showMenu() {
+  hideAllScreens();
+  document.getElementById('menuScreen').classList.add('show');
+  gameState = 'menu';
+  const grid = document.getElementById('levelGrid');
+  grid.innerHTML = '';
+  const maxUnlocked = highestUnlocked();
+  for (let i = 1; i <= 100; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'lvl-tile';
+    if (saveData.beaten.includes(i)) tile.classList.add('beat');
+    else if (i > maxUnlocked) tile.classList.add('locked');
+    if (i === maxUnlocked && !saveData.beaten.includes(i)) tile.classList.add('current');
+    tile.textContent = i;
+    if (i <= maxUnlocked) tile.onclick = () => launchLevel(i);
+    grid.appendChild(tile);
+  }
+  document.getElementById('rocketPreview').textContent = 'Your rocket: ' + getRocketDescription(maxUnlocked);
+}
+
+function hideAllScreens() {
+  document.querySelectorAll('.overlay-screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('crosshair').style.display = 'none';
+}
+
+function launchLevel(lvl) {
+  currentLevel = lvl;
+  // Clean scene
+  while(scene.children.length > 0) scene.remove(scene.children[0]);
+  scene.add(ambLight); scene.add(dirLight); scene.add(pointLight);
+
+  buildCourse(lvl);
+  rocket = createRocket(lvl);
+  rocket.position.set(0, 0, 0);
+  scene.add(rocket);
+
+  const cfg = getLevelConfig(lvl);
+  health = cfg.health;
   distance = 0;
   checkpoints = 0;
   speed = baseSpeed;
   invulnTimer = 0;
-  mouseX = 0;
-  mouseY = 0;
-
-  // Build course
-  buildCourse();
-
-  // Create rocket
-  rocket = createRocket();
-  rocket.position.set(0, 0, 0);
-  scene.add(rocket);
-
-  // Camera
+  mouseX = 0; mouseY = 0;
   camera.position.set(0, 2, 8);
 
-  // UI
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('deathOverlay').style.display = 'none';
-  document.getElementById('winOverlay').style.display = 'none';
+  hideAllScreens();
   document.getElementById('hud').style.display = 'flex';
   document.getElementById('crosshair').style.display = 'block';
+  document.getElementById('lvlVal').textContent = lvl;
 
   gameState = 'playing';
   startTime = performance.now();
-
+  clock.start();
   renderer.domElement.requestPointerLock();
 }
 
 function die() {
   gameState = 'dead';
   document.exitPointerLock();
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('crosshair').style.display = 'none';
+  hideAllScreens();
+  document.getElementById('deathLvl').textContent = currentLevel;
   document.getElementById('deathDist').textContent = Math.floor(distance) + 'm';
-  document.getElementById('deathCP').textContent = checkpoints + '/' + totalCheckpoints;
-  document.getElementById('deathOverlay').style.display = 'flex';
+  document.getElementById('deathScreen').classList.add('show');
+  document.getElementById('retryBtn').onclick = () => launchLevel(currentLevel);
 }
 
-function win() {
+function winLevel() {
   gameState = 'won';
   document.exitPointerLock();
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('crosshair').style.display = 'none';
+  if (!saveData.beaten.includes(currentLevel)) {
+    saveData.beaten.push(currentLevel);
+    save();
+  }
+  hideAllScreens();
   const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+  document.getElementById('winLvl').textContent = currentLevel;
   document.getElementById('winTime').textContent = elapsed + 's';
-  document.getElementById('winOverlay').style.display = 'flex';
+
+  const nextLvl = currentLevel + 1;
+  const upgradeMsg = document.getElementById('upgradeMsg');
+  if (nextLvl <= 100) {
+    const oldDesc = getRocketDescription(currentLevel);
+    const newDesc = getRocketDescription(nextLvl);
+    upgradeMsg.textContent = oldDesc !== newDesc ? 'Rocket upgraded: ' + newDesc + '!' : '';
+  } else {
+    upgradeMsg.textContent = '';
+  }
+
+  const btns = document.getElementById('winBtns');
+  btns.innerHTML = '';
+  if (nextLvl <= 100) {
+    const nb = document.createElement('button');
+    nb.className = 'start-btn gold';
+    nb.textContent = 'LEVEL ' + nextLvl + ' \u2192';
+    nb.onclick = () => launchLevel(nextLvl);
+    btns.appendChild(nb);
+  }
+  const mb = document.createElement('button');
+  mb.className = 'start-btn';
+  mb.textContent = 'LEVEL SELECT';
+  mb.onclick = showMenu;
+  btns.appendChild(mb);
+
+  if (nextLvl > 100 && saveData.beaten.length >= 100) {
+    document.getElementById('winScreen').classList.remove('show');
+    document.getElementById('allCompleteScreen').classList.add('show');
+  } else {
+    document.getElementById('winScreen').classList.add('show');
+  }
 }
 
 // ===================== UPDATE =====================
@@ -637,61 +698,68 @@ const obstBox = new THREE.Box3();
 
 function update() {
   if (gameState !== 'playing') return;
-
   const dt = Math.min(clock.getDelta(), 0.05);
   const t = clock.elapsedTime;
+  const cfg = getLevelConfig(currentLevel);
 
-  // Boost
   const boosting = keys['ShiftLeft'] || keys['ShiftRight'];
   speed = boosting ? boostSpeed : baseSpeed;
 
-  // Move rocket forward
+  // Slow down when pressing S / Down
+  if (keys['KeyS'] || keys['ArrowDown']) speed *= 0.6;
+  // Extra speed when pressing W / Up
+  if (keys['KeyW'] || keys['ArrowUp']) speed *= 1.15;
+
   rocket.position.z -= speed;
   distance = -rocket.position.z;
 
-  // Steer
   const moveSpeed = 15 * dt;
   let mx = 0, my = 0;
   if (keys['KeyA'] || keys['ArrowLeft']) mx -= moveSpeed;
   if (keys['KeyD'] || keys['ArrowRight']) mx += moveSpeed;
-  if (keys['KeyW'] || keys['ArrowUp']) my += moveSpeed;
-  if (keys['KeyS'] || keys['ArrowDown']) my -= moveSpeed;
+  if (keys['KeyW'] || keys['ArrowUp']) my += moveSpeed * 0.5;
+  if (keys['KeyS'] || keys['ArrowDown']) my -= moveSpeed * 0.5;
 
-  // Mouse steering
   mx += mouseX * 20 * dt;
   my -= mouseY * 20 * dt;
-  mouseX *= 0.9;
-  mouseY *= 0.9;
+  mouseX *= 0.9; mouseY *= 0.9;
 
   rocket.position.x += mx;
   rocket.position.y += my;
 
-  // Clamp to tunnel
   const limit = TUNNEL_RADIUS - 1.5;
   rocket.position.x = Math.max(-limit, Math.min(limit, rocket.position.x));
   rocket.position.y = Math.max(-limit, Math.min(limit, rocket.position.y));
 
-  // Rocket tilt based on movement
   rocket.rotation.z = -mx * 2;
   rocket.rotation.x = my * 1.5;
 
   // Flame flicker
-  if (flameMesh) {
-    flameMesh.scale.set(1, 1, 0.8 + Math.random() * 0.4 + (boosting ? 0.6 : 0));
-    flameMesh.material.opacity = 0.6 + Math.random() * 0.3;
-  }
+  flames.forEach(f => {
+    f.scale.set(1, 1, 0.7 + Math.random() * 0.5 + (boosting ? 0.8 : 0));
+    if (f.material) f.material.opacity = 0.5 + Math.random() * 0.4;
+  });
 
-  // Camera follow
+  // Shield pulse
+  rocket.children.forEach(ch => {
+    if (ch.userData && ch.userData.isShield) {
+      ch.rotation.y += dt * 0.5;
+      ch.material.opacity = 0.06 + Math.sin(t * 2) * 0.03;
+    }
+    if (ch.userData && ch.userData.isTrail) {
+      ch.position.z += Math.sin(t * 5 + ch.userData.idx) * 0.02;
+      ch.material.opacity = 0.3 + Math.sin(t * 3 + ch.userData.idx * 2) * 0.2;
+    }
+  });
+
   camera.position.x += (rocket.position.x * 0.3 - camera.position.x) * 0.08;
   camera.position.y += ((rocket.position.y + 2) - camera.position.y) * 0.08;
   camera.position.z = rocket.position.z + 8;
   camera.lookAt(rocket.position.x * 0.5, rocket.position.y * 0.5, rocket.position.z - 20);
 
-  // Point light follows rocket
   pointLight.position.copy(rocket.position);
   pointLight.position.z -= 3;
 
-  // Invulnerability timer
   if (invulnTimer > 0) {
     invulnTimer -= dt;
     rocket.visible = Math.floor(invulnTimer * 10) % 2 === 0;
@@ -699,93 +767,73 @@ function update() {
     rocket.visible = true;
   }
 
-  // Update movers and spinners
   obstacleObjects.forEach(obj => {
     if (!obj.userData) return;
-    if (obj.userData.type === 'spinner') {
-      obj.rotation.z += obj.userData.speed * dt;
-    }
+    if (obj.userData.type === 'spinner') obj.rotation.z += obj.userData.speed * dt;
     if (obj.userData.type === 'mover') {
       const d = obj.userData;
       const val = Math.sin(t * d.speed + d.offset) * d.range;
-      if (d.axis === 'x') obj.position.x = (d.baseX || (d.baseX = obj.position.x)) + val;
-      if (d.axis === 'y') obj.position.y = (d.baseY || (d.baseY = obj.position.y)) + val;
+      if (d.axis === 'x') obj.position.x = (d.baseX !== undefined ? d.baseX : (d.baseX = obj.position.x)) + val;
+      if (d.axis === 'y') obj.position.y = (d.baseY !== undefined ? d.baseY : (d.baseY = obj.position.y)) + val;
     }
   });
 
-  // Collision with obstacles
   rocketBox.setFromCenterAndSize(rocket.position, new THREE.Vector3(1.2, 1.2, 2.5));
 
   if (invulnTimer <= 0) {
     for (const obj of obstacleObjects) {
       if (!obj.userData || obj.userData.type === 'checkpoint') continue;
-      if (obj.isPoints) continue; // skip starfield
+      if (obj.isPoints) continue;
       if (Math.abs(obj.position.z - rocket.position.z) > 20) continue;
-
-      // For groups (spinners), check children
       if (obj.isGroup) {
         for (const child of obj.children) {
-          const worldPos = new THREE.Vector3();
-          child.getWorldPosition(worldPos);
-          if (worldPos.distanceTo(rocket.position) < 2.5) {
-            takeDamage();
-            break;
-          }
+          const wp = new THREE.Vector3();
+          child.getWorldPosition(wp);
+          if (wp.distanceTo(rocket.position) < 2.5) { takeDamage(cfg); break; }
         }
       } else {
         obstBox.setFromObject(obj);
-        if (rocketBox.intersectsBox(obstBox)) {
-          takeDamage();
-        }
+        if (rocketBox.intersectsBox(obstBox)) takeDamage(cfg);
       }
     }
   }
 
-  // Checkpoint collection
   checkpointObjects.forEach(cp => {
     if (cp.userData.collected) return;
     if (Math.abs(cp.position.z - rocket.position.z) < 3) {
       cp.userData.collected = true;
-      cp.material = matGlow.clone();
+      cp.material = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x4dacff, transparent: true, opacity: 0.5 });
       checkpoints++;
-      // Flash
       const flash = document.getElementById('cpFlash');
       flash.classList.add('active');
       setTimeout(() => flash.classList.remove('active'), 200);
-      // Heal
-      health = Math.min(100, health + 15);
-      if (cp.userData.isFinal) win();
+      health = Math.min(cfg.health, health + cfg.healPerCP);
+      if (cp.userData.isFinal) winLevel();
     }
   });
 
-  // Rotate checkpoints
-  checkpointObjects.forEach(cp => {
-    if (!cp.userData.collected) cp.rotation.x += dt * 1.5;
-  });
+  checkpointObjects.forEach(cp => { if (!cp.userData.collected) cp.rotation.x += dt * 1.5; });
 
-  // Update HUD
-  document.getElementById('distVal').textContent = Math.floor(distance) + 'm';
-  document.getElementById('cpVal').textContent = checkpoints + ' / ' + totalCheckpoints;
-  document.getElementById('healthBar').style.width = health + '%';
-  document.getElementById('speedVal').textContent = boosting ? '200%' : '100%';
+  document.getElementById('distVal').textContent = Math.floor(distance) + 'm / ' + courseLength + 'm';
+  document.getElementById('healthBar').style.width = (health / cfg.health * 100) + '%';
+  const speedPct = Math.round(speed / baseSpeed * 100);
+  document.getElementById('speedVal').textContent = speedPct + '%';
 }
 
-function takeDamage() {
-  health -= 20;
+function takeDamage(cfg) {
+  health -= cfg.damagePerHit;
   invulnTimer = 1.0;
-  if (health <= 0) {
-    health = 0;
-    die();
-  }
+  if (health <= 0) { health = 0; die(); }
 }
 
-// ===================== RENDER LOOP =====================
+// ===================== RENDER =====================
 function animate() {
   requestAnimationFrame(animate);
   update();
   renderer.render(scene, camera);
 }
 animate();
+showMenu();
 </script>
 </body>
 </html>
