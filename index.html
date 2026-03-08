@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ollie Online</title>
+  <title>Ollie's Universe</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,7 +15,7 @@
       -webkit-font-smoothing: none;
       image-rendering: pixelated;
       height: 100%;
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     .page {
@@ -23,60 +23,189 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       text-align: center;
       padding: 24px;
       background:
-        radial-gradient(circle at 50% 50%, rgba(30,90,255,0.15) 0%, transparent 70%),
+        radial-gradient(circle at 50% 30%, rgba(30,90,255,0.15) 0%, transparent 70%),
         repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(30,90,255,0.03) 3px, rgba(30,90,255,0.03) 4px),
         #0a1628;
     }
 
     h1 {
-      font-size: clamp(24px, 6vw, 72px);
+      font-size: clamp(20px, 5vw, 64px);
       font-weight: 400;
-      letter-spacing: 0.02em;
-      line-height: 1.6;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #4dacff;
       text-shadow:
         0 0 10px rgba(77,172,255,0.6),
         0 0 40px rgba(77,172,255,0.2),
         3px 3px 0 #0a2a5c;
+      margin-bottom: 24px;
     }
 
-    h1 .yeet {
-      display: block;
-      font-size: clamp(36px, 10vw, 120px);
-      color: #fff;
-      text-shadow:
-        0 0 20px rgba(255,255,255,0.8),
-        0 0 60px rgba(77,172,255,0.5),
-        4px 4px 0 #1a3a7c;
-      margin: 0.3em 0;
+    /* planet */
+    .planet-wrap {
+      position: relative;
+      width: clamp(80px, 15vw, 140px);
+      height: clamp(80px, 15vw, 140px);
+      margin: 8px 0 36px;
+      animation: float 4s ease-in-out infinite;
     }
 
-    .blink {
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink {
-      50% { opacity: 0; }
+    .planet {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 35%, #6ec6ff 0%, #2a7cdb 40%, #0f3a7a 80%, #091e42 100%);
+      box-shadow:
+        0 0 20px rgba(77,172,255,0.4),
+        0 0 60px rgba(77,172,255,0.15),
+        inset -8px -8px 20px rgba(0,0,0,0.5);
     }
 
-    .cursor {
-      display: inline-block;
-      width: clamp(12px, 3vw, 36px);
-      height: clamp(24px, 6vw, 72px);
-      background: #4dacff;
-      vertical-align: middle;
-      margin-left: 8px;
-      animation: blink 1s step-end infinite;
+    .ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateX(75deg);
+      width: 180%;
+      height: 180%;
+      border-radius: 50%;
+      border: 3px solid rgba(77,172,255,0.3);
+      box-shadow:
+        0 0 8px rgba(77,172,255,0.2),
+        inset 0 0 8px rgba(77,172,255,0.1);
     }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* stars */
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* buttons */
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      max-width: 700px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-btn {
+      width: clamp(100px, 25vw, 160px);
+      height: clamp(60px, 12vw, 90px);
+      border: 2px solid rgba(77,172,255,0.4);
+      border-radius: 8px;
+      background: rgba(77,172,255,0.06);
+      cursor: pointer;
+      position: relative;
+      animation: pulse-glow 3s ease-in-out infinite;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .game-btn:nth-child(2) { animation-delay: 0.4s; }
+    .game-btn:nth-child(3) { animation-delay: 0.8s; }
+    .game-btn:nth-child(4) { animation-delay: 1.2s; }
+    .game-btn:nth-child(5) { animation-delay: 1.6s; }
+
+    .game-btn:hover {
+      transform: scale(1.08);
+      border-color: rgba(77,172,255,0.8);
+      box-shadow:
+        0 0 20px rgba(77,172,255,0.4),
+        0 0 40px rgba(77,172,255,0.15),
+        inset 0 0 15px rgba(77,172,255,0.1);
+    }
+
+    .game-btn::after {
+      content: "?";
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 3vw, 28px);
+      color: rgba(77,172,255,0.3);
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow:
+          0 0 8px rgba(77,172,255,0.1),
+          0 0 20px rgba(77,172,255,0.05);
+        border-color: rgba(77,172,255,0.3);
+      }
+      50% {
+        box-shadow:
+          0 0 15px rgba(77,172,255,0.3),
+          0 0 40px rgba(77,172,255,0.1),
+          inset 0 0 10px rgba(77,172,255,0.05);
+        border-color: rgba(77,172,255,0.6);
+      }
+    }
+
+    .page > * { position: relative; z-index: 1; }
   </style>
 </head>
 <body>
+  <div class="stars" id="stars"></div>
   <div class="page">
-    <h1>I'm 11 foot 11<br>and I will<br><span class="yeet">YEET</span>you to uranus</h1><span class="cursor"></span>
+    <h1>Ollie's Universe</h1>
+
+    <div class="planet-wrap">
+      <div class="planet"></div>
+      <div class="ring"></div>
+    </div>
+
+    <div class="buttons">
+      <button class="game-btn"></button>
+      <button class="game-btn"></button>
+      <button class="game-btn"></button>
+      <button class="game-btn"></button>
+      <button class="game-btn"></button>
+    </div>
   </div>
+
+  <script>
+    // generate random stars
+    const container = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 3 + 1;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = Math.random() * 3 + 's';
+      s.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      container.appendChild(s);
+    }
+  </script>
 </body>
 </html>
