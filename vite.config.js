@@ -10,6 +10,7 @@ export default defineConfig({
         dinorun: resolve(__dirname, 'dino-run.html'),
         rocketrun: resolve(__dirname, 'rocket-run.html'),
         hamsterhunt: resolve(__dirname, 'hamster-hunt.html'),
+        reggieforest: resolve(__dirname, 'reggie-forest.html'),
       },
     },
   },
