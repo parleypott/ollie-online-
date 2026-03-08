@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket Run - Ollie's Universe</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+    cursor: none;
+  }
+  canvas { display: block; }
+
+  #hud {
+    position: fixed; top: 0; left: 0; width: 100%; padding: 16px 24px;
+    pointer-events: none; z-index: 10;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+
+  .hud-left, .hud-right { display: flex; flex-direction: column; gap: 6px; }
+  .hud-right { align-items: flex-end; }
+
+  .hud-label { font-size: 8px; color: #4dacff; text-transform: uppercase; letter-spacing: 1px; }
+  .hud-value { font-size: 16px; color: #fff; text-shadow: 0 0 10px rgba(77,172,255,0.6); }
+  .hud-small { font-size: 10px; color: #aaa; }
+
+  .health-bar {
+    width: 200px; height: 10px; background: rgba(255,255,255,0.1);
+    border-radius: 5px; overflow: hidden; border: 1px solid rgba(77,172,255,0.3);
+  }
+  .health-fill {
+    height: 100%; transition: width 0.3s; border-radius: 5px;
+    background: linear-gradient(90deg, #ff4444, #ffaa00, #44ff44);
+  }
+
+  .checkpoint-flash {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(77,172,255,0.15); pointer-events: none; z-index: 5;
+    opacity: 0; transition: opacity 0.1s;
+  }
+  .checkpoint-flash.active { opacity: 1; }
+
+  #overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 20; background: rgba(0,0,0,0.85); text-align: center;
+    cursor: default;
+  }
+
+  #overlay h1 {
+    font-size: clamp(24px, 5vw, 48px); color: #4dacff; margin-bottom: 12px;
+    text-shadow: 0 0 20px rgba(77,172,255,0.8), 4px 4px 0 #0a2a5c;
+  }
+
+  #overlay .sub { font-size: 11px; color: #aaa; margin-bottom: 30px; line-height: 1.8; }
+  #overlay .controls-info { font-size: 8px; color: #666; margin-bottom: 20px; line-height: 2; }
+
+  .start-btn {
+    font-family: 'Press Start 2P', monospace; font-size: 14px;
+    padding: 16px 40px; border: 2px solid #4dacff; border-radius: 8px;
+    background: rgba(77,172,255,0.15); color: #4dacff; cursor: pointer;
+    transition: all 0.3s; margin-bottom: 16px;
+  }
+  .start-btn:hover {
+    background: rgba(77,172,255,0.3); box-shadow: 0 0 30px rgba(77,172,255,0.4);
+    transform: scale(1.05);
+  }
+
+  .back-link {
+    font-family: 'Press Start 2P', monospace;
+    color: #555; text-decoration: none; font-size: 9px;
+    transition: color 0.2s;
+  }
+  .back-link:hover { color: #4dacff; }
+
+  #deathOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 20; background: rgba(0,0,0,0.8); text-align: center; cursor: default;
+  }
+
+  #deathOverlay h1 { font-size: 32px; color: #ff4444; margin-bottom: 16px; text-shadow: 0 0 20px rgba(255,68,68,0.6); }
+  #deathOverlay .stats { font-size: 11px; color: #aaa; margin-bottom: 24px; line-height: 2.2; }
+  #deathOverlay .stats span { color: #4dacff; }
+
+  #winOverlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 20; background: rgba(0,0,0,0.8); text-align: center; cursor: default;
+  }
+  #winOverlay h1 { font-size: 28px; color: #44ff44; margin-bottom: 16px; text-shadow: 0 0 20px rgba(68,255,68,0.6); }
+  #winOverlay .stats { font-size: 11px; color: #aaa; margin-bottom: 24px; line-height: 2.2; }
+  #winOverlay .stats span { color: #ffd700; }
+
+  .crosshair {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 20px; height: 20px; pointer-events: none; z-index: 8;
+  }
+  .crosshair::before, .crosshair::after {
+    content: ''; position: absolute; background: rgba(77,172,255,0.4);
+  }
+  .crosshair::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
+  .crosshair::after { width: 100%; height: 2px; top: 50%; transform: translateY(-50%); }
+</style>
+</head>
+<body>
+
+<div id="hud" style="display:none;">
+  <div class="hud-left">
+    <div><span class="hud-label">Distance</span></div>
+    <div><span class="hud-value" id="distVal">0m</span></div>
+    <div><span class="hud-label">Checkpoint</span></div>
+    <div><span class="hud-small" id="cpVal">0 / 10</span></div>
+  </div>
+  <div class="hud-right">
+    <div><span class="hud-label">Shield</span></div>
+    <div class="health-bar"><div class="health-fill" id="healthBar" style="width:100%"></div></div>
+    <div><span class="hud-label">Speed</span></div>
+    <div><span class="hud-small" id="speedVal">100%</span></div>
+  </div>
+</div>
+
+<div class="crosshair" id="crosshair" style="display:none;"></div>
+<div class="checkpoint-flash" id="cpFlash"></div>
+
+<div id="overlay">
+  <h1>ROCKET RUN</h1>
+  <div class="sub">Navigate a massive 3D obstacle course<br>Don't crash!</div>
+  <div class="controls-info">
+    WASD or ARROWS = Move &bull; MOUSE = Look<br>
+    SHIFT = Boost &bull; Reach the end to win!
+  </div>
+  <button class="start-btn" onclick="startGame()">LAUNCH</button>
+  <a href="index.html" class="back-link">&larr; Back to Ollie's Universe</a>
+</div>
+
+<div id="deathOverlay">
+  <h1>DESTROYED</h1>
+  <div class="stats">
+    Distance: <span id="deathDist">0m</span><br>
+    Checkpoints: <span id="deathCP">0/10</span>
+  </div>
+  <button class="start-btn" onclick="startGame()">RETRY</button>
+  <a href="index.html" class="back-link">&larr; Back</a>
+</div>
+
+<div id="winOverlay">
+  <h1>COURSE COMPLETE!</h1>
+  <div class="stats">
+    You conquered the obstacle course!<br>
+    Final Time: <span id="winTime">0s</span>
+  </div>
+  <button class="start-btn" onclick="startGame()">PLAY AGAIN</button>
+  <a href="index.html" class="back-link">&larr; Back</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===================== SETUP =====================
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000022, 0.0025);
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 800);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(0x000011);
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Lighting
+const ambLight = new THREE.AmbientLight(0x334466, 0.6);
+scene.add(ambLight);
+const dirLight = new THREE.DirectionalLight(0x4dacff, 0.8);
+dirLight.position.set(5, 10, -5);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x4dacff, 1, 50);
+scene.add(pointLight);
+
+// ===================== MATERIALS =====================
+const matObstacle = new THREE.MeshPhongMaterial({ color: 0x334455, emissive: 0x111122, shininess: 30 });
+const matObstRed = new THREE.MeshPhongMaterial({ color: 0x882222, emissive: 0x220000 });
+const matObstGreen = new THREE.MeshPhongMaterial({ color: 0x228844, emissive: 0x002200 });
+const matObstPurple = new THREE.MeshPhongMaterial({ color: 0x663388, emissive: 0x110022 });
+const matWall = new THREE.MeshPhongMaterial({ color: 0x2a3a5c, emissive: 0x0a1020 });
+const matCheckpoint = new THREE.MeshPhongMaterial({ color: 0x44aaff, emissive: 0x2266aa, transparent: true, opacity: 0.4 });
+const matGlow = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x4dacff, transparent: true, opacity: 0.5 });
+const matFloor = new THREE.MeshPhongMaterial({ color: 0x1a2a44, emissive: 0x050a15 });
+const matRocket = new THREE.MeshPhongMaterial({ color: 0xcccccc, emissive: 0x222222, shininess: 80 });
+const matFlame = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0xff4400, transparent: true, opacity: 0.8 });
+
+// ===================== GAME STATE =====================
+let gameState = 'menu'; // menu, playing, dead, won
+let health = 100;
+let distance = 0;
+let checkpoints = 0;
+let totalCheckpoints = 10;
+let speed = 0.8;
+let baseSpeed = 0.8;
+let boostSpeed = 1.5;
+let startTime = 0;
+let invulnTimer = 0;
+
+// Input
+const keys = {};
+let mouseX = 0, mouseY = 0;
+let pointerLocked = false;
+
+document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keyup', e => keys[e.code] = false);
+document.addEventListener('mousemove', e => {
+  if (pointerLocked) {
+    mouseX += e.movementX * 0.002;
+    mouseY += e.movementY * 0.002;
+    mouseY = Math.max(-0.8, Math.min(0.8, mouseY));
+  }
+});
+
+document.addEventListener('pointerlockchange', () => {
+  pointerLocked = document.pointerLockElement === renderer.domElement;
+});
+
+// ===================== ROCKET =====================
+let rocket, flameMesh;
+
+function createRocket() {
+  const group = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.CylinderGeometry(0.3, 0.4, 2.5, 8);
+  const body = new THREE.Mesh(bodyGeo, matRocket);
+  body.rotation.x = Math.PI / 2;
+  group.add(body);
+
+  // Nose cone
+  const noseGeo = new THREE.ConeGeometry(0.3, 0.8, 8);
+  const nose = new THREE.Mesh(noseGeo, new THREE.MeshPhongMaterial({ color: 0xff3333, emissive: 0x440000 }));
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.z = -1.6;
+  group.add(nose);
+
+  // Fins
+  const finGeo = new THREE.BoxGeometry(0.05, 0.6, 0.5);
+  const finMat = new THREE.MeshPhongMaterial({ color: 0x4dacff, emissive: 0x112244 });
+  for (let i = 0; i < 4; i++) {
+    const fin = new THREE.Mesh(finGeo, finMat);
+    const angle = (i / 4) * Math.PI * 2;
+    fin.position.set(Math.cos(angle) * 0.4, Math.sin(angle) * 0.4, 1.0);
+    fin.rotation.z = angle;
+    group.add(fin);
+  }
+
+  // Engine flame
+  const flameGeo = new THREE.ConeGeometry(0.25, 1.2, 6);
+  flameMesh = new THREE.Mesh(flameGeo, matFlame);
+  flameMesh.rotation.x = Math.PI / 2;
+  flameMesh.position.z = 2.0;
+  group.add(flameMesh);
+
+  return group;
+}
+
+// ===================== OBSTACLE COURSE =====================
+const obstacleObjects = [];
+const checkpointObjects = [];
+const COURSE_LENGTH = 2000;
+const TUNNEL_RADIUS = 12;
+
+function buildCourse() {
+  // Clear old
+  obstacleObjects.forEach(o => scene.remove(o));
+  checkpointObjects.forEach(o => scene.remove(o));
+  obstacleObjects.length = 0;
+  checkpointObjects.length = 0;
+
+  // Floor/tunnel segments
+  for (let z = 0; z > -COURSE_LENGTH - 100; z -= 40) {
+    // Floor
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.5, 40), matFloor);
+    floor.position.set(0, -TUNNEL_RADIUS, z);
+    scene.add(floor);
+    obstacleObjects.push(floor);
+
+    // Ceiling
+    const ceil = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.5, 40), matFloor);
+    ceil.position.set(0, TUNNEL_RADIUS, z);
+    scene.add(ceil);
+    obstacleObjects.push(ceil);
+
+    // Walls
+    const wallL = new THREE.Mesh(new THREE.BoxGeometry(0.5, TUNNEL_RADIUS * 2, 40), matFloor);
+    wallL.position.set(-TUNNEL_RADIUS, 0, z);
+    scene.add(wallL);
+    obstacleObjects.push(wallL);
+
+    const wallR = new THREE.Mesh(new THREE.BoxGeometry(0.5, TUNNEL_RADIUS * 2, 40), matFloor);
+    wallR.position.set(TUNNEL_RADIUS, 0, z);
+    scene.add(wallR);
+    obstacleObjects.push(wallR);
+
+    // Edge glow strips
+    if (z % 80 === 0) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 0.1, 0.5), matGlow);
+      strip.position.set(0, -TUNNEL_RADIUS + 0.3, z);
+      scene.add(strip);
+      obstacleObjects.push(strip);
+    }
+  }
+
+  // Generate obstacles in sections
+  let z = -30;
+  let section = 0;
+
+  while (z > -COURSE_LENGTH + 50) {
+    section++;
+    const difficulty = Math.min(section / 8, 1); // 0 to 1
+
+    // Every ~200m place a checkpoint
+    if (section % 4 === 0 && checkpointObjects.length < totalCheckpoints) {
+      const cpRing = new THREE.Mesh(new THREE.TorusGeometry(TUNNEL_RADIUS * 0.6, 0.5, 8, 24), matCheckpoint);
+      cpRing.position.set(0, 0, z);
+      cpRing.userData = { type: 'checkpoint', collected: false };
+      scene.add(cpRing);
+      checkpointObjects.push(cpRing);
+      z -= 15;
+    }
+
+    // Pick obstacle pattern
+    const pattern = Math.floor(Math.random() * 12);
+
+    if (pattern === 0) {
+      // Wall with hole
+      const holeX = (Math.random() - 0.5) * TUNNEL_RADIUS;
+      const holeY = (Math.random() - 0.5) * TUNNEL_RADIUS * 0.5;
+      const holeSize = Math.max(3.5 - difficulty * 1.2, 2.2);
+      addWallWithHole(z, holeX, holeY, holeSize);
+      z -= 20;
+    }
+    else if (pattern === 1) {
+      // Horizontal bars
+      const count = 2 + Math.floor(difficulty * 3);
+      for (let i = 0; i < count; i++) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 2, 1.2, 1.2), matObstRed);
+        const yPos = -TUNNEL_RADIUS + (i + 1) * (TUNNEL_RADIUS * 2 / (count + 1));
+        bar.position.set(0, yPos, z - i * 8);
+        bar.userData = { type: 'obstacle' };
+        scene.add(bar);
+        obstacleObjects.push(bar);
+      }
+      z -= count * 8 + 10;
+    }
+    else if (pattern === 2) {
+      // Spinning cross (marked for rotation)
+      const arm1 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.6, 1.5, 1.5), matObstPurple);
+      const arm2 = new THREE.Mesh(new THREE.BoxGeometry(1.5, TUNNEL_RADIUS * 1.6, 1.5), matObstPurple);
+      const pivot = new THREE.Group();
+      pivot.add(arm1);
+      pivot.add(arm2);
+      pivot.position.set(0, 0, z);
+      pivot.userData = { type: 'spinner', speed: 0.5 + difficulty * 1.0 };
+      scene.add(pivot);
+      obstacleObjects.push(pivot);
+      z -= 25;
+    }
+    else if (pattern === 3) {
+      // Pillars
+      const numPillars = 3 + Math.floor(difficulty * 4);
+      for (let i = 0; i < numPillars; i++) {
+        const px = (Math.random() - 0.5) * TUNNEL_RADIUS * 1.4;
+        const py = (Math.random() - 0.5) * TUNNEL_RADIUS * 1.0;
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.8 + Math.random() * 0.8, 0.8 + Math.random() * 0.8, 3 + Math.random() * 4, 8), matObstacle);
+        pillar.position.set(px, py, z - i * 6);
+        pillar.rotation.x = Math.random() * Math.PI;
+        pillar.userData = { type: 'obstacle' };
+        scene.add(pillar);
+        obstacleObjects.push(pillar);
+      }
+      z -= numPillars * 6 + 10;
+    }
+    else if (pattern === 4) {
+      // Moving wall (side to side)
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.2, TUNNEL_RADIUS * 1.8, 1.5), matObstGreen);
+      wall.position.set(0, 0, z);
+      wall.userData = { type: 'mover', axis: 'x', range: TUNNEL_RADIUS * 0.6, speed: 1 + difficulty * 1.5, offset: Math.random() * Math.PI * 2 };
+      scene.add(wall);
+      obstacleObjects.push(wall);
+      z -= 22;
+    }
+    else if (pattern === 5) {
+      // Vertical slats you weave through
+      const num = 4 + Math.floor(difficulty * 3);
+      for (let i = 0; i < num; i++) {
+        const slat = new THREE.Mesh(new THREE.BoxGeometry(1.2, TUNNEL_RADIUS * 2, 1), matObstacle);
+        const xOff = (i % 2 === 0) ? -TUNNEL_RADIUS * 0.35 : TUNNEL_RADIUS * 0.35;
+        slat.position.set(xOff, 0, z - i * 7);
+        slat.userData = { type: 'obstacle' };
+        scene.add(slat);
+        obstacleObjects.push(slat);
+      }
+      z -= num * 7 + 10;
+    }
+    else if (pattern === 6) {
+      // Double wall squeeze
+      const gap = Math.max(4 - difficulty * 1.5, 2.5);
+      const w1 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS - gap/2, TUNNEL_RADIUS * 2, 2), matWall);
+      w1.position.set(-TUNNEL_RADIUS/2 - gap/4, 0, z);
+      w1.userData = { type: 'obstacle' };
+      scene.add(w1);
+      obstacleObjects.push(w1);
+
+      const w2 = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS - gap/2, TUNNEL_RADIUS * 2, 2), matWall);
+      w2.position.set(TUNNEL_RADIUS/2 + gap/4, 0, z);
+      w2.userData = { type: 'obstacle' };
+      scene.add(w2);
+      obstacleObjects.push(w2);
+      z -= 18;
+    }
+    else if (pattern === 7) {
+      // Rising/falling blocks
+      const num = 3 + Math.floor(difficulty * 3);
+      for (let i = 0; i < num; i++) {
+        const block = new THREE.Mesh(new THREE.BoxGeometry(3 + Math.random()*2, 3 + Math.random()*2, 2), matObstRed);
+        block.position.set((Math.random()-0.5)*TUNNEL_RADIUS, 0, z - i*10);
+        block.userData = { type: 'mover', axis: 'y', range: TUNNEL_RADIUS * 0.5, speed: 0.8 + difficulty * 1.2, offset: i * 1.5 };
+        scene.add(block);
+        obstacleObjects.push(block);
+      }
+      z -= num * 10 + 10;
+    }
+    else if (pattern === 8) {
+      // Ring of death (big ring with gap)
+      const segments = 6 + Math.floor(difficulty * 4);
+      const gapIndex = Math.floor(Math.random() * segments);
+      const pivot = new THREE.Group();
+      for (let i = 0; i < segments; i++) {
+        if (i === gapIndex) continue;
+        const angle = (i / segments) * Math.PI * 2;
+        const block = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 1.5), matObstPurple);
+        block.position.set(Math.cos(angle) * TUNNEL_RADIUS * 0.6, Math.sin(angle) * TUNNEL_RADIUS * 0.6, 0);
+        block.rotation.z = angle;
+        pivot.add(block);
+      }
+      pivot.position.set(0, 0, z);
+      pivot.userData = { type: 'spinner', speed: 0.3 + difficulty * 0.8 };
+      scene.add(pivot);
+      obstacleObjects.push(pivot);
+      z -= 22;
+    }
+    else if (pattern === 9) {
+      // Zigzag walls
+      for (let i = 0; i < 5; i++) {
+        const side = i % 2 === 0 ? -1 : 1;
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(TUNNEL_RADIUS * 1.0, TUNNEL_RADIUS * 2, 1.5), matWall);
+        wall.position.set(side * TUNNEL_RADIUS * 0.35, 0, z - i * 10);
+        wall.userData = { type: 'obstacle' };
+        scene.add(wall);
+        obstacleObjects.push(wall);
+      }
+      z -= 60;
+    }
+    else if (pattern === 10) {
+      // Checkerboard grid
+      const size = 3;
+      for (let gx = -2; gx <= 2; gx++) {
+        for (let gy = -2; gy <= 2; gy++) {
+          if ((gx + gy) % 2 === 0) continue;
+          const block = new THREE.Mesh(new THREE.BoxGeometry(size, size, 1.5), matObstacle);
+          block.position.set(gx * (size + 0.5), gy * (size + 0.5), z);
+          block.userData = { type: 'obstacle' };
+          scene.add(block);
+          obstacleObjects.push(block);
+        }
+      }
+      z -= 20;
+    }
+    else {
+      // Asteroid field - random spheres
+      const num = 5 + Math.floor(difficulty * 6);
+      for (let i = 0; i < num; i++) {
+        const r = 0.8 + Math.random() * 1.5;
+        const sphere = new THREE.Mesh(new THREE.SphereGeometry(r, 6, 6), matObstRed);
+        sphere.position.set(
+          (Math.random()-0.5) * TUNNEL_RADIUS * 1.4,
+          (Math.random()-0.5) * TUNNEL_RADIUS * 1.0,
+          z - i * 5
+        );
+        sphere.userData = { type: 'mover', axis: Math.random() > 0.5 ? 'x' : 'y', range: 2 + Math.random()*3, speed: 0.5 + Math.random() * 1.5, offset: Math.random() * 10 };
+        scene.add(sphere);
+        obstacleObjects.push(sphere);
+      }
+      z -= num * 5 + 15;
+    }
+  }
+
+  // Final checkpoint at the end
+  const finalCP = new THREE.Mesh(new THREE.TorusGeometry(TUNNEL_RADIUS * 0.7, 0.8, 8, 24), matCheckpoint);
+  finalCP.position.set(0, 0, -COURSE_LENGTH + 20);
+  finalCP.userData = { type: 'checkpoint', collected: false, isFinal: true };
+  scene.add(finalCP);
+  checkpointObjects.push(finalCP);
+
+  // Starfield background
+  const starGeo = new THREE.BufferGeometry();
+  const starVerts = [];
+  for (let i = 0; i < 3000; i++) {
+    starVerts.push(
+      (Math.random()-0.5) * 400,
+      (Math.random()-0.5) * 400,
+      -Math.random() * COURSE_LENGTH * 1.5
+    );
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.7 });
+  const starField = new THREE.Points(starGeo, starMat);
+  scene.add(starField);
+  obstacleObjects.push(starField);
+}
+
+function addWallWithHole(z, hx, hy, holeSize) {
+  // Build wall as 4 pieces around a hole
+  const wallThick = 1.5;
+  const R = TUNNEL_RADIUS;
+  const hs = holeSize;
+
+  // Left of hole
+  if (hx - hs/2 > -R) {
+    const w = (hx - hs/2) + R;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, R*2, wallThick), matWall);
+    m.position.set(-R + w/2, 0, z);
+    m.userData = { type: 'obstacle' };
+    scene.add(m);
+    obstacleObjects.push(m);
+  }
+  // Right of hole
+  if (hx + hs/2 < R) {
+    const w = R - (hx + hs/2);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, R*2, wallThick), matWall);
+    m.position.set(R - w/2, 0, z);
+    m.userData = { type: 'obstacle' };
+    scene.add(m);
+    obstacleObjects.push(m);
+  }
+  // Above hole
+  if (hy + hs/2 < R) {
+    const h = R - (hy + hs/2);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(hs, h, wallThick), matWall);
+    m.position.set(hx, R - h/2, z);
+    m.userData = { type: 'obstacle' };
+    scene.add(m);
+    obstacleObjects.push(m);
+  }
+  // Below hole
+  if (hy - hs/2 > -R) {
+    const h = (hy - hs/2) + R;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(hs, h, wallThick), matWall);
+    m.position.set(hx, -R + h/2, z);
+    m.userData = { type: 'obstacle' };
+    scene.add(m);
+    obstacleObjects.push(m);
+  }
+}
+
+// ===================== GAME FUNCTIONS =====================
+function startGame() {
+  // Clean old scene
+  while(scene.children.length > 0) scene.remove(scene.children[0]);
+  scene.add(ambLight);
+  scene.add(dirLight);
+  scene.add(pointLight);
+
+  // Reset state
+  health = 100;
+  distance = 0;
+  checkpoints = 0;
+  speed = baseSpeed;
+  invulnTimer = 0;
+  mouseX = 0;
+  mouseY = 0;
+
+  // Build course
+  buildCourse();
+
+  // Create rocket
+  rocket = createRocket();
+  rocket.position.set(0, 0, 0);
+  scene.add(rocket);
+
+  // Camera
+  camera.position.set(0, 2, 8);
+
+  // UI
+  document.getElementById('overlay').style.display = 'none';
+  document.getElementById('deathOverlay').style.display = 'none';
+  document.getElementById('winOverlay').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('crosshair').style.display = 'block';
+
+  gameState = 'playing';
+  startTime = performance.now();
+
+  renderer.domElement.requestPointerLock();
+}
+
+function die() {
+  gameState = 'dead';
+  document.exitPointerLock();
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('crosshair').style.display = 'none';
+  document.getElementById('deathDist').textContent = Math.floor(distance) + 'm';
+  document.getElementById('deathCP').textContent = checkpoints + '/' + totalCheckpoints;
+  document.getElementById('deathOverlay').style.display = 'flex';
+}
+
+function win() {
+  gameState = 'won';
+  document.exitPointerLock();
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('crosshair').style.display = 'none';
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+  document.getElementById('winTime').textContent = elapsed + 's';
+  document.getElementById('winOverlay').style.display = 'flex';
+}
+
+// ===================== UPDATE =====================
+const clock = new THREE.Clock();
+const rocketBox = new THREE.Box3();
+const obstBox = new THREE.Box3();
+
+function update() {
+  if (gameState !== 'playing') return;
+
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  // Boost
+  const boosting = keys['ShiftLeft'] || keys['ShiftRight'];
+  speed = boosting ? boostSpeed : baseSpeed;
+
+  // Move rocket forward
+  rocket.position.z -= speed;
+  distance = -rocket.position.z;
+
+  // Steer
+  const moveSpeed = 15 * dt;
+  let mx = 0, my = 0;
+  if (keys['KeyA'] || keys['ArrowLeft']) mx -= moveSpeed;
+  if (keys['KeyD'] || keys['ArrowRight']) mx += moveSpeed;
+  if (keys['KeyW'] || keys['ArrowUp']) my += moveSpeed;
+  if (keys['KeyS'] || keys['ArrowDown']) my -= moveSpeed;
+
+  // Mouse steering
+  mx += mouseX * 20 * dt;
+  my -= mouseY * 20 * dt;
+  mouseX *= 0.9;
+  mouseY *= 0.9;
+
+  rocket.position.x += mx;
+  rocket.position.y += my;
+
+  // Clamp to tunnel
+  const limit = TUNNEL_RADIUS - 1.5;
+  rocket.position.x = Math.max(-limit, Math.min(limit, rocket.position.x));
+  rocket.position.y = Math.max(-limit, Math.min(limit, rocket.position.y));
+
+  // Rocket tilt based on movement
+  rocket.rotation.z = -mx * 2;
+  rocket.rotation.x = my * 1.5;
+
+  // Flame flicker
+  if (flameMesh) {
+    flameMesh.scale.set(1, 1, 0.8 + Math.random() * 0.4 + (boosting ? 0.6 : 0));
+    flameMesh.material.opacity = 0.6 + Math.random() * 0.3;
+  }
+
+  // Camera follow
+  camera.position.x += (rocket.position.x * 0.3 - camera.position.x) * 0.08;
+  camera.position.y += ((rocket.position.y + 2) - camera.position.y) * 0.08;
+  camera.position.z = rocket.position.z + 8;
+  camera.lookAt(rocket.position.x * 0.5, rocket.position.y * 0.5, rocket.position.z - 20);
+
+  // Point light follows rocket
+  pointLight.position.copy(rocket.position);
+  pointLight.position.z -= 3;
+
+  // Invulnerability timer
+  if (invulnTimer > 0) {
+    invulnTimer -= dt;
+    rocket.visible = Math.floor(invulnTimer * 10) % 2 === 0;
+  } else {
+    rocket.visible = true;
+  }
+
+  // Update movers and spinners
+  obstacleObjects.forEach(obj => {
+    if (!obj.userData) return;
+    if (obj.userData.type === 'spinner') {
+      obj.rotation.z += obj.userData.speed * dt;
+    }
+    if (obj.userData.type === 'mover') {
+      const d = obj.userData;
+      const val = Math.sin(t * d.speed + d.offset) * d.range;
+      if (d.axis === 'x') obj.position.x = (d.baseX || (d.baseX = obj.position.x)) + val;
+      if (d.axis === 'y') obj.position.y = (d.baseY || (d.baseY = obj.position.y)) + val;
+    }
+  });
+
+  // Collision with obstacles
+  rocketBox.setFromCenterAndSize(rocket.position, new THREE.Vector3(1.2, 1.2, 2.5));
+
+  if (invulnTimer <= 0) {
+    for (const obj of obstacleObjects) {
+      if (!obj.userData || obj.userData.type === 'checkpoint') continue;
+      if (obj.isPoints) continue; // skip starfield
+      if (Math.abs(obj.position.z - rocket.position.z) > 20) continue;
+
+      // For groups (spinners), check children
+      if (obj.isGroup) {
+        for (const child of obj.children) {
+          const worldPos = new THREE.Vector3();
+          child.getWorldPosition(worldPos);
+          if (worldPos.distanceTo(rocket.position) < 2.5) {
+            takeDamage();
+            break;
+          }
+        }
+      } else {
+        obstBox.setFromObject(obj);
+        if (rocketBox.intersectsBox(obstBox)) {
+          takeDamage();
+        }
+      }
+    }
+  }
+
+  // Checkpoint collection
+  checkpointObjects.forEach(cp => {
+    if (cp.userData.collected) return;
+    if (Math.abs(cp.position.z - rocket.position.z) < 3) {
+      cp.userData.collected = true;
+      cp.material = matGlow.clone();
+      checkpoints++;
+      // Flash
+      const flash = document.getElementById('cpFlash');
+      flash.classList.add('active');
+      setTimeout(() => flash.classList.remove('active'), 200);
+      // Heal
+      health = Math.min(100, health + 15);
+      if (cp.userData.isFinal) win();
+    }
+  });
+
+  // Rotate checkpoints
+  checkpointObjects.forEach(cp => {
+    if (!cp.userData.collected) cp.rotation.x += dt * 1.5;
+  });
+
+  // Update HUD
+  document.getElementById('distVal').textContent = Math.floor(distance) + 'm';
+  document.getElementById('cpVal').textContent = checkpoints + ' / ' + totalCheckpoints;
+  document.getElementById('healthBar').style.width = health + '%';
+  document.getElementById('speedVal').textContent = boosting ? '200%' : '100%';
+}
+
+function takeDamage() {
+  health -= 20;
+  invulnTimer = 1.0;
+  if (health <= 0) {
+    health = 0;
+    die();
+  }
+}
+
+// ===================== RENDER LOOP =====================
+function animate() {
+  requestAnimationFrame(animate);
+  update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

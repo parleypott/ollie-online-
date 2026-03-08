@@ -8,6 +8,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         picktheplot: resolve(__dirname, 'pick-the-plot.html'),
         dinorun: resolve(__dirname, 'dino-run.html'),
+        rocketrun: resolve(__dirname, 'rocket-run.html'),
       },
     },
   },
