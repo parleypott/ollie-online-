@@ -267,6 +267,7 @@ function spawnHamsters(lvl) {
       lastSeenX:0, lastSeenY:0,
       animPhase: Math.random()*Math.PI*2,
       dir: 0, legPhase:0,
+      bfsTimer: 0,
     });
   }
 }
@@ -416,21 +417,51 @@ function update() {
         for(let t=0;t<30;t++){
           const rx=1+Math.floor(Math.random()*(mW-2));
           const ry=1+Math.floor(Math.random()*(mH-2));
-          if(maze[ry][rx]===1){h.path=bfs(Math.floor(h.x),Math.floor(h.y),rx,ry);h.pathIdx=0;break;}
+          if(maze[ry][rx]===1){h.path=bfs(Math.floor(h.x),Math.floor(h.y),rx,ry);h.pathIdx=1;break;}
         }
       }
-      if(canSee){h.state='chase';h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;}
-      moveH(h,c.hPatrol,dt);
+      if(canSee){h.state='chase';h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;h.bfsTimer=0;}
+      else moveH(h,c.hPatrol,dt);
     } else if(h.state==='chase'){
       anyChasing=true;
-      // Always path toward player - never gives up once it sees you
-      h.path=bfs(Math.floor(h.x),Math.floor(h.y),Math.floor(px),Math.floor(py));h.pathIdx=0;
-      moveH(h,c.hChase,dt);
+      if(canSee){h.lastSeenX=px;h.lastSeenY=py;h.chaseTimer=0;}
+      else{
+        h.chaseTimer+=dt;
+        if(h.chaseTimer>=c.hLoseTime){
+          // Lost sight — rush to last known position
+          h.state='search';
+          h.searchTimer=0;
+          h.path=bfs(Math.floor(h.x),Math.floor(h.y),Math.floor(h.lastSeenX),Math.floor(h.lastSeenY));
+          h.pathIdx=1;
+        }
+      }
+      // Recalculate path periodically (not every frame)
+      if(h.state==='chase'){
+        h.bfsTimer-=dt;
+        if(h.bfsTimer<=0||h.pathIdx>=h.path.length){
+          h.path=bfs(Math.floor(h.x),Math.floor(h.y),Math.floor(px),Math.floor(py));
+          h.pathIdx=1;
+          h.bfsTimer=0.2;
+        }
+        moveH(h,c.hChase,dt);
+      }
+      if(dist<0.6){gotCaught();return;}
+    } else if(h.state==='search'){
+      anyChasing=true;
+      if(canSee){
+        h.state='chase';h.chaseTimer=0;h.lastSeenX=px;h.lastSeenY=py;h.bfsTimer=0;
+      } else if(h.pathIdx>=h.path.length){
+        // Reached last known position — linger then give up
+        h.searchTimer+=dt;
+        if(h.searchTimer>2){h.state='patrol';h.path=[];h.pathIdx=0;}
+      } else {
+        moveH(h,c.hChase*0.85,dt);
+      }
       if(dist<0.6){gotCaught();return;}
     }
 
-    h.animPhase+=dt*(h.state==='chase'?14:6);
-    h.legPhase+=dt*(h.state==='chase'?18:8);
+    h.animPhase+=dt*(h.state==='chase'?14:h.state==='search'?10:6);
+    h.legPhase+=dt*(h.state==='chase'?18:h.state==='search'?14:8);
   });
 
   // Danger flash
@@ -445,21 +476,26 @@ function update() {
   document.getElementById('sprintFill').style.width=(Math.max(0,1-sprintAmt/c.sprintMax)*100)+'%';
 
   const st=document.getElementById('hudStatus');
-  if(anyChasing){st.textContent='CHASING!';st.style.color='#ff4444';}
+  const anySearch=hamsters.some(h=>h.state==='search');
+  const anyChase=hamsters.some(h=>h.state==='chase');
+  if(anyChase){st.textContent='CHASING!';st.style.color='#ff4444';}
+  else if(anySearch){st.textContent='Searching...';st.style.color='#ff8800';}
   else if(closestDist<8){st.textContent='Nearby...';st.style.color='#ffaa00';}
   else{st.textContent='Patrolling';st.style.color='#44ff44';}
 }
 
 function moveH(h,spd,dt){
   if(!h.path.length||h.pathIdx>=h.path.length) return;
-  const tx=h.path[h.pathIdx][0]+0.5, ty=h.path[h.pathIdx][1]+0.5;
-  const dx=tx-h.x, dy=ty-h.y;
-  const d=Math.sqrt(dx*dx+dy*dy);
-  if(d>0.01) h.dir=Math.atan2(dy,dx);
-  if(d<0.15){h.pathIdx++;return;}
-  const mv=spd*dt;
-  if(mv>=d){h.x=tx;h.y=ty;h.pathIdx++;}
-  else{h.x+=dx/d*mv;h.y+=dy/d*mv;}
+  let remaining=spd*dt;
+  while(remaining>0.001&&h.pathIdx<h.path.length){
+    const tx=h.path[h.pathIdx][0]+0.5, ty=h.path[h.pathIdx][1]+0.5;
+    const dx=tx-h.x, dy=ty-h.y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d>0.01) h.dir=Math.atan2(dy,dx);
+    if(d<0.15){h.pathIdx++;continue;}
+    if(remaining>=d){h.x=tx;h.y=ty;remaining-=d;h.pathIdx++;}
+    else{h.x+=dx/d*remaining;h.y+=dy/d*remaining;remaining=0;}
+  }
 }
 
 // ============ DRAW HAMSTER ============
