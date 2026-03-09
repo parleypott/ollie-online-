@@ -11,6 +11,7 @@ export default defineConfig({
         rocketrun: resolve(__dirname, 'rocket-run.html'),
         hamsterhunt: resolve(__dirname, 'hamster-hunt.html'),
         reggieforest: resolve(__dirname, 'reggie-forest.html'),
+        laserdefense: resolve(__dirname, 'laser-defense.html'),
       },
     },
   },

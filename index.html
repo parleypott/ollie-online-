@@ -101,6 +101,30 @@
       height: 100%;
     }
 
+    .turret-wrap {
+      position: relative;
+      width: clamp(80px, 15vw, 140px);
+      height: clamp(80px, 15vw, 140px);
+      animation: float 4s ease-in-out infinite;
+      animation-delay: 1.5s;
+    }
+
+    .turret-wrap canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .turret-caption {
+      font-size: clamp(5px, 1.2vw, 9px);
+      color: #44ddff;
+      text-shadow: 0 0 10px rgba(68,221,255,0.6), 0 0 30px rgba(68,221,255,0.3);
+      text-align: center;
+      letter-spacing: 0.05em;
+      animation: caption-pulse 2s ease-in-out infinite;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
     .sideeye-caption {
       font-size: clamp(5px, 1.2vw, 9px);
       color: #ff44ff;
@@ -191,6 +215,7 @@
     .game-btn:nth-child(3) { animation-delay: 0.8s; }
     .game-btn:nth-child(4) { animation-delay: 1.2s; }
     .game-btn:nth-child(5) { animation-delay: 1.6s; }
+    .game-btn:nth-child(6) { animation-delay: 2.0s; }
 
     .game-btn:hover {
       transform: scale(1.08);
@@ -266,6 +291,12 @@
           <canvas id="sideEyeCanvas" width="300" height="300"></canvas>
         </div>
       </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="turret-caption">LASER DEFENSE</div>
+        <div class="turret-wrap">
+          <canvas id="turretCanvas" width="300" height="300"></canvas>
+        </div>
+      </div>
     </div>
 
     <div class="buttons">
@@ -274,6 +305,7 @@
       <button class="game-btn has-label" onclick="location.href='rocket-run.html'"><span class="btn-label">Rocket<br>Run</span></button>
       <button class="game-btn has-label" onclick="location.href='hamster-hunt.html'"><span class="btn-label">Hamster<br>Hunt</span></button>
       <button class="game-btn has-label" onclick="location.href='reggie-forest.html'"><span class="btn-label">Reggie in<br>the Forest</span></button>
+      <button class="game-btn has-label" onclick="location.href='laser-defense.html'"><span class="btn-label">Laser<br>Defense</span></button>
     </div>
   </div>
 
@@ -854,6 +886,119 @@
           offY = 0;
         }
         drawFace(offX, offY);
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+
+    // Draw animated laser turret
+    (function(){
+      const tc = document.getElementById('turretCanvas');
+      const c = tc.getContext('2d');
+      const W = 300, H = 300;
+      const cx = W/2, cy = H/2;
+
+      function drawTurret(angle) {
+        c.clearRect(0, 0, W, H);
+
+        // Background glow ring
+        const ringGrad = c.createRadialGradient(cx, cy, 40, cx, cy, 130);
+        ringGrad.addColorStop(0, 'rgba(68,221,255,0.08)');
+        ringGrad.addColorStop(0.5, 'rgba(68,221,255,0.03)');
+        ringGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        c.fillStyle = ringGrad;
+        c.beginPath(); c.arc(cx, cy, 130, 0, Math.PI*2); c.fill();
+
+        // Orbiting enemy dots
+        for (let i = 0; i < 5; i++) {
+          const a = angle * 0.3 + (Math.PI*2/5)*i;
+          const r = 95 + Math.sin(angle*0.7 + i*2) * 15;
+          const ex = cx + Math.cos(a) * r;
+          const ey = cy + Math.sin(a) * r;
+          const colors = ['#44ff66','#ffdd44','#ff4444','#cc44ff','#44ffff'];
+          const sz = 6 + Math.sin(angle + i) * 2;
+          c.shadowColor = colors[i];
+          c.shadowBlur = 8;
+          c.fillStyle = colors[i];
+          c.beginPath(); c.arc(ex, ey, sz, 0, Math.PI*2); c.fill();
+        }
+        c.shadowBlur = 0;
+
+        // Laser beam (rotating, hitting an enemy)
+        const beamTarget = angle * 0.3;
+        const beamR = 95 + Math.sin(angle*0.7) * 15;
+        const bx = cx + Math.cos(beamTarget) * beamR;
+        const by = cy + Math.sin(beamTarget) * beamR;
+        const barrelLen = 35;
+        const sx = cx + Math.cos(beamTarget) * barrelLen;
+        const sy = cy + Math.sin(beamTarget) * barrelLen;
+
+        // Beam flash (pulsing)
+        const beamAlpha = 0.4 + Math.sin(angle * 8) * 0.3;
+        c.strokeStyle = `rgba(68,221,255,${beamAlpha * 0.4})`;
+        c.lineWidth = 6;
+        c.beginPath(); c.moveTo(sx, sy); c.lineTo(bx, by); c.stroke();
+        c.strokeStyle = `rgba(200,240,255,${beamAlpha * 0.8})`;
+        c.lineWidth = 2;
+        c.beginPath(); c.moveTo(sx, sy); c.lineTo(bx, by); c.stroke();
+        c.strokeStyle = `rgba(255,255,255,${beamAlpha})`;
+        c.lineWidth = 1;
+        c.beginPath(); c.moveTo(sx, sy); c.lineTo(bx, by); c.stroke();
+
+        // Base platform
+        c.fillStyle = '#1a2a44';
+        c.strokeStyle = '#44ddff';
+        c.lineWidth = 2;
+        c.beginPath(); c.arc(cx, cy, 28, 0, Math.PI*2); c.fill(); c.stroke();
+
+        // Inner ring
+        c.strokeStyle = 'rgba(68,221,255,0.4)';
+        c.lineWidth = 1;
+        c.beginPath(); c.arc(cx, cy, 16, 0, Math.PI*2); c.stroke();
+
+        // Core glow
+        const coreGrad = c.createRadialGradient(cx, cy, 2, cx, cy, 14);
+        coreGrad.addColorStop(0, 'rgba(68,221,255,0.5)');
+        coreGrad.addColorStop(1, 'rgba(68,221,255,0)');
+        c.fillStyle = coreGrad;
+        c.beginPath(); c.arc(cx, cy, 14, 0, Math.PI*2); c.fill();
+
+        // Barrel
+        const bLen = 35;
+        const bW = 6;
+        const tipX = cx + Math.cos(beamTarget) * bLen;
+        const tipY = cy + Math.sin(beamTarget) * bLen;
+        const perpX = Math.cos(beamTarget + Math.PI/2) * bW;
+        const perpY = Math.sin(beamTarget + Math.PI/2) * bW;
+
+        c.beginPath();
+        c.moveTo(cx + perpX, cy + perpY);
+        c.lineTo(tipX + perpX, tipY + perpY);
+        c.lineTo(tipX - perpX, tipY - perpY);
+        c.lineTo(cx - perpX, cy - perpY);
+        c.closePath();
+        const barrelGrad = c.createLinearGradient(cx + perpX, cy + perpY, cx - perpX, cy - perpY);
+        barrelGrad.addColorStop(0, '#3a5577');
+        barrelGrad.addColorStop(0.5, '#4a7799');
+        barrelGrad.addColorStop(1, '#3a5577');
+        c.fillStyle = barrelGrad;
+        c.fill();
+        c.strokeStyle = '#44ddff';
+        c.lineWidth = 1;
+        c.stroke();
+
+        // Barrel tip glow
+        c.shadowColor = '#44ddff';
+        c.shadowBlur = 10;
+        c.fillStyle = 'rgba(68,221,255,0.8)';
+        c.beginPath(); c.arc(tipX, tipY, 4, 0, Math.PI*2); c.fill();
+        c.shadowBlur = 0;
+      }
+
+      let t = 0;
+      function animate() {
+        t += 0.02;
+        drawTurret(t);
         requestAnimationFrame(animate);
       }
       animate();
