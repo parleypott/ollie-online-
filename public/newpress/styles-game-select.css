@@ -1,0 +1,165 @@
+/* ============================================================
+   Game Select — corner FAB + overlay
+   ============================================================ */
+
+.gs-fab {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 90;
+  background: var(--pal-ink);
+  color: var(--pal-yellow);
+  border: 3px solid var(--pal-yellow);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-fun, 'Fredoka', sans-serif);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0 var(--pal-red);
+  cursor: pointer;
+  transition: all 120ms;
+}
+.gs-fab:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--pal-red);
+  background: var(--pal-red);
+  color: var(--pal-paper);
+  border-color: var(--pal-paper);
+}
+.gs-fab-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  width: 22px;
+  height: 22px;
+}
+.gs-fab-grid span {
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.gs-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 17, 24, 0.85);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fade-in 220ms;
+  overflow: auto;
+}
+.gs-modal-inner {
+  background: var(--pal-paper);
+  border: 3px solid var(--pal-ink);
+  max-width: 1100px;
+  width: 100%;
+  padding: 28px 32px 32px;
+  box-shadow: 12px 12px 0 var(--pal-yellow);
+}
+.gs-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--pal-ink);
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+}
+.gs-modal-title {
+  font-family: var(--np-font-display);
+  font-size: 40px;
+  font-weight: 400;
+  margin: 4px 0 0;
+  font-style: italic;
+}
+.gs-modal-close {
+  background: none;
+  border: 2px solid var(--pal-ink);
+  width: 40px; height: 40px;
+  font-size: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.gs-modal-close:hover { background: var(--pal-ink); color: var(--pal-paper); }
+
+.gs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.gs-card {
+  background: var(--gs-accent);
+  color: var(--pal-paper);
+  border: 3px solid var(--pal-ink);
+  padding: 20px 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 120ms;
+  position: relative;
+  font-family: var(--font-fun, 'Fredoka', sans-serif);
+  min-height: 160px;
+}
+.gs-card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 6px 6px 0 var(--pal-ink);
+}
+.gs-card.is-active {
+  box-shadow: 4px 4px 0 var(--pal-ink);
+  outline: 4px solid var(--pal-yellow);
+  outline-offset: 2px;
+}
+.gs-card-emoji {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 4px;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.25));
+}
+.gs-card-name {
+  font-family: var(--font-fun, 'Fredoka', sans-serif);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1;
+}
+.gs-card-es {
+  font-family: var(--np-font-display);
+  font-style: italic;
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+.gs-card-desc {
+  font-family: var(--np-font-mono);
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.95;
+  margin-top: auto;
+}
+.gs-card-active-tag {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--pal-yellow);
+  color: var(--pal-ink);
+  font-family: var(--np-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 3px 8px;
+  border: 1.5px solid var(--pal-ink);
+}
+
+@media (max-width: 800px) {
+  .gs-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 500px) {
+  .gs-grid { grid-template-columns: 1fr; }
+  .gs-fab-label { display: none; }
+}
