@@ -102,8 +102,28 @@
 <script type="text/babel">
 const TWEAK_DEFAULTS = { "featuredMode": "cafe" };
 
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return React.createElement('div', {
+        style: { padding: 40, textAlign: 'center', fontFamily: 'monospace' }
+      },
+        React.createElement('h2', null, 'Something went wrong'),
+        React.createElement('p', null, this.state.error.message),
+        React.createElement('button', {
+          onClick: () => this.setState({ error: null }),
+          style: { padding: '8px 24px', fontSize: 14, cursor: 'pointer', marginTop: 12 }
+        }, 'Try Again')
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App = () => {
-  const { values, setTweak } = useTweaks(TWEAK_DEFAULTS);
+  const [values, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const [screen, setScreen] = React.useState('lobby');
   const [questions, setQuestions] = React.useState(() => window.pickQuestions(8));
   const [score, setScore] = React.useState(0);
@@ -184,7 +204,7 @@ const App = () => {
   );
 };
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App/></ErrorBoundary>);
 </script>
 </body>
 </html>
