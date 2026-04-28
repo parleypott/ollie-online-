@@ -77,27 +77,7 @@
     pointer-events: none;
     transition: opacity 220ms;
   }
-  .back-home {
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 1000;
-    padding: 6px 14px;
-    font-family: ui-monospace, 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--pal-ink);
-    background: var(--pal-paper);
-    border: 2px solid var(--pal-ink);
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    transition: background 0.15s, color 0.15s;
-  }
-  .back-home:hover {
-    background: var(--pal-ink);
-    color: var(--pal-paper);
-  }
+  .app-bar-brand { cursor: pointer; }
 </style>
 
 <link rel="stylesheet" href="newpress/bundle.css"/>
@@ -105,7 +85,6 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Instrument+Sans:wght@400;500;600;700&family=Fredoka:wght@400;600;700&display=swap" media="print" onload="this.media='all'"/>
 </head>
 <body>
-<a href="index.html" class="back-home">&larr; Ollie's Universe</a>
 <div class="boot" id="boot">
   <div class="boot-logo">¡Palabra<em>!</em></div>
   <div class="boot-tag">Spanish Quiz Arcade · Cargando…</div>
@@ -133,6 +112,15 @@ const App = () => {
 
   const mode = window.GAME_MODES.find(m => m.id === values.featuredMode) || window.GAME_MODES[0];
 
+  // Hide boot splash only after app has mounted
+  React.useEffect(() => {
+    const boot = document.getElementById('boot');
+    if (boot) {
+      boot.classList.add('is-done');
+      setTimeout(() => boot.remove(), 300);
+    }
+  }, []);
+
   const startGame = () => {
     setQuestions(window.pickQuestions(8));
     setScore(0);
@@ -150,7 +138,7 @@ const App = () => {
   return (
     <>
       <header className="app-bar">
-        <div className="app-bar-brand">
+        <div className="app-bar-brand" onClick={goLobby}>
           <div className="app-bar-logo">¡Palabra<em>!</em></div>
           <div className="app-bar-tag">A Spanish Quiz Arcade</div>
         </div>
@@ -197,14 +185,6 @@ const App = () => {
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-
-requestAnimationFrame(() => {
-  const boot = document.getElementById('boot');
-  if (boot) {
-    boot.classList.add('is-done');
-    setTimeout(() => boot.remove(), 260);
-  }
-});
 </script>
 </body>
 </html>
