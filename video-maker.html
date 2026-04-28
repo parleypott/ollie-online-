@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Maker - Ollie's Universe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background: #0a1628;
+      color: #e8e6f0;
+      font-family: 'Press Start 2P', monospace;
+      -webkit-font-smoothing: none;
+      image-rendering: pixelated;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .back-link {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      color: #4dacff;
+      text-decoration: none;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      z-index: 10;
+      text-shadow: 0 0 8px rgba(77,172,255,0.4);
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #80c8ff;
+      text-shadow: 0 0 15px rgba(77,172,255,0.8);
+    }
+
+    .page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 60px 24px 40px;
+      position: relative;
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(30,90,255,0.15) 0%, transparent 70%),
+        repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(30,90,255,0.03) 3px, rgba(30,90,255,0.03) 4px),
+        #0a1628;
+    }
+
+    h1 {
+      font-size: clamp(16px, 4vw, 40px);
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #4dacff;
+      text-shadow:
+        0 0 10px rgba(77,172,255,0.6),
+        0 0 40px rgba(77,172,255,0.2),
+        3px 3px 0 #0a2a5c;
+      margin-bottom: 24px;
+    }
+
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .prompt-input {
+      width: 100%;
+      padding: 14px 18px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(8px, 1.8vw, 12px);
+      color: #e8e6f0;
+      background: rgba(77,172,255,0.06);
+      border: 2px solid rgba(77,172,255,0.4);
+      border-radius: 8px;
+      outline: none;
+      resize: none;
+      line-height: 1.8;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .prompt-input::placeholder {
+      color: rgba(77,172,255,0.3);
+    }
+
+    .prompt-input:focus {
+      border-color: rgba(77,172,255,0.8);
+      box-shadow: 0 0 20px rgba(77,172,255,0.2), inset 0 0 10px rgba(77,172,255,0.05);
+    }
+
+    .generate-btn {
+      padding: 12px 32px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 1.8vw, 13px);
+      color: #0a1628;
+      background: linear-gradient(180deg, #4dacff 0%, #2a8cee 100%);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 15px rgba(77,172,255,0.3), 0 4px 0 #1a5caa;
+    }
+
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(77,172,255,0.5), 0 6px 0 #1a5caa;
+    }
+
+    .generate-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 10px rgba(77,172,255,0.3), 0 2px 0 #1a5caa;
+    }
+
+    .generate-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .video-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .video-container.visible {
+      display: flex;
+    }
+
+    .video-frame {
+      border: 2px solid rgba(77,172,255,0.4);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(77,172,255,0.15), inset 0 0 30px rgba(0,0,0,0.3);
+      background: #000;
+    }
+
+    .loading-text {
+      display: none;
+      font-size: clamp(8px, 1.5vw, 11px);
+      color: #4dacff;
+      text-shadow: 0 0 8px rgba(77,172,255,0.4);
+      animation: loading-pulse 1s ease-in-out infinite;
+    }
+
+    .loading-text.visible {
+      display: block;
+    }
+
+    @keyframes loading-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .extend-btn {
+      display: none;
+      padding: 10px 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(7px, 1.5vw, 10px);
+      color: #ffd700;
+      background: rgba(255,215,0,0.08);
+      border: 2px solid rgba(255,215,0,0.4);
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .extend-btn.visible {
+      display: inline-block;
+    }
+
+    .extend-btn:hover {
+      transform: scale(1.05);
+      border-color: rgba(255,215,0,0.8);
+      box-shadow: 0 0 20px rgba(255,215,0,0.3);
+    }
+
+    .extend-btn:active {
+      transform: scale(0.97);
+    }
+
+    .duration-label {
+      font-size: clamp(6px, 1.2vw, 9px);
+      color: rgba(77,172,255,0.5);
+      margin-top: -8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  <a href="index.html" class="back-link">&larr; Back</a>
+
+  <div class="page">
+    <h1>Video Maker</h1>
+
+    <div class="input-area">
+      <textarea class="prompt-input" id="promptInput" rows="3" placeholder="Type what you want to see... (e.g. a spaceship flying through asteroids)"></textarea>
+      <button class="generate-btn" id="generateBtn" onclick="generateVideo()">Generate Video</button>
+    </div>
+
+    <div class="loading-text" id="loadingText">Generating your video...</div>
+
+    <div class="video-container" id="videoContainer">
+      <canvas class="video-frame" id="videoCanvas" width="640" height="360"></canvas>
+      <div class="duration-label" id="durationLabel"></div>
+      <button class="extend-btn" id="extendBtn" onclick="extendVideo()">Extend Video</button>
+    </div>
+  </div>
+
+  <script>
+    // Stars background
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 3 + 1;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 100 + '%';
+      s.style.animationDelay = Math.random() * 3 + 's';
+      s.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      starsContainer.appendChild(s);
+    }
+
+    // Video generation state
+    let animFrame = null;
+    let videoRunning = false;
+    let videoStartTime = 0;
+    let videoDuration = 5; // seconds
+    let extensions = 0;
+    let sceneObjects = [];
+    let prompt = '';
+
+    const canvas = document.getElementById('videoCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Simple hash for seed from string
+    function hashStr(s) {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+      }
+      return Math.abs(h);
+    }
+
+    // Seeded random
+    function seededRandom(seed) {
+      let s = seed;
+      return function() {
+        s = (s * 16807 + 0) % 2147483647;
+        return (s - 1) / 2147483646;
+      };
+    }
+
+    // Color palette based on prompt keywords
+    function getSceneColors(text) {
+      const t = text.toLowerCase();
+      if (t.includes('fire') || t.includes('lava') || t.includes('volcano') || t.includes('sun')) {
+        return { bg1: '#1a0800', bg2: '#3a1000', primary: '#ff6622', secondary: '#ffaa00', accent: '#ff2200', particles: '#ffd700' };
+      }
+      if (t.includes('ocean') || t.includes('water') || t.includes('sea') || t.includes('fish') || t.includes('underwater')) {
+        return { bg1: '#001828', bg2: '#002848', primary: '#00aaff', secondary: '#00ddcc', accent: '#0066cc', particles: '#88eeff' };
+      }
+      if (t.includes('forest') || t.includes('tree') || t.includes('jungle') || t.includes('nature') || t.includes('garden')) {
+        return { bg1: '#001a08', bg2: '#003818', primary: '#22cc44', secondary: '#88ff44', accent: '#006622', particles: '#aaffaa' };
+      }
+      if (t.includes('candy') || t.includes('rainbow') || t.includes('unicorn') || t.includes('party')) {
+        return { bg1: '#1a0028', bg2: '#280040', primary: '#ff44cc', secondary: '#ffaa44', accent: '#aa44ff', particles: '#ffff44' };
+      }
+      if (t.includes('snow') || t.includes('ice') || t.includes('winter') || t.includes('frozen')) {
+        return { bg1: '#0a1828', bg2: '#102838', primary: '#aaddff', secondary: '#ffffff', accent: '#4488cc', particles: '#eef8ff' };
+      }
+      if (t.includes('night') || t.includes('moon') || t.includes('dark') || t.includes('scary') || t.includes('ghost') || t.includes('halloween')) {
+        return { bg1: '#080010', bg2: '#0a0020', primary: '#8844cc', secondary: '#cc88ff', accent: '#440088', particles: '#ddaaff' };
+      }
+      // Default: space theme
+      return { bg1: '#0a0a2a', bg2: '#0a1628', primary: '#4dacff', secondary: '#44ddff', accent: '#2244aa', particles: '#ffffff' };
+    }
+
+    // Detect scene type from keywords
+    function getSceneType(text) {
+      const t = text.toLowerCase();
+      if (t.includes('space') || t.includes('rocket') || t.includes('ship') || t.includes('star') || t.includes('galaxy') || t.includes('asteroid')) return 'space';
+      if (t.includes('ocean') || t.includes('water') || t.includes('sea') || t.includes('fish') || t.includes('underwater') || t.includes('swim')) return 'ocean';
+      if (t.includes('forest') || t.includes('tree') || t.includes('jungle') || t.includes('nature') || t.includes('garden')) return 'forest';
+      if (t.includes('fire') || t.includes('lava') || t.includes('volcano') || t.includes('dragon') || t.includes('sun')) return 'fire';
+      if (t.includes('snow') || t.includes('ice') || t.includes('winter') || t.includes('frozen')) return 'snow';
+      if (t.includes('candy') || t.includes('rainbow') || t.includes('unicorn') || t.includes('party')) return 'party';
+      if (t.includes('city') || t.includes('car') || t.includes('building') || t.includes('road') || t.includes('drive')) return 'city';
+      if (t.includes('sky') || t.includes('fly') || t.includes('cloud') || t.includes('bird') || t.includes('plane') || t.includes('airplane')) return 'sky';
+      if (t.includes('night') || t.includes('moon') || t.includes('ghost') || t.includes('scary') || t.includes('halloween')) return 'night';
+      return 'space'; // default
+    }
+
+    // Build scene objects based on prompt
+    function buildScene(text, seed) {
+      const rand = seededRandom(seed);
+      const type = getSceneType(text);
+      const colors = getSceneColors(text);
+      const objs = [];
+
+      // Background stars/particles (always)
+      for (let i = 0; i < 60; i++) {
+        objs.push({
+          type: 'bgParticle',
+          x: rand() * W,
+          y: rand() * H,
+          size: rand() * 3 + 0.5,
+          speed: rand() * 0.5 + 0.1,
+          brightness: rand(),
+          color: colors.particles
+        });
+      }
+
+      if (type === 'space') {
+        // Spaceship
+        objs.push({ type: 'spaceship', x: W * 0.3, y: H * 0.5, color: colors.primary });
+        // Asteroids
+        for (let i = 0; i < 8 + extensions * 3; i++) {
+          objs.push({
+            type: 'asteroid',
+            x: W + rand() * W,
+            y: rand() * H,
+            size: rand() * 25 + 10,
+            speed: rand() * 3 + 1,
+            rotation: rand() * Math.PI * 2,
+            rotSpeed: (rand() - 0.5) * 0.05,
+            color: '#' + Math.floor(rand() * 0x444444 + 0x666666).toString(16)
+          });
+        }
+        // Shooting stars
+        for (let i = 0; i < 3; i++) {
+          objs.push({
+            type: 'shootingStar',
+            x: rand() * W,
+            y: rand() * H * 0.4,
+            speed: rand() * 4 + 3,
+            delay: rand() * 3,
+            color: colors.secondary
+          });
+        }
+      } else if (type === 'ocean') {
+        // Fish
+        for (let i = 0; i < 10 + extensions * 3; i++) {
+          const fishColors = ['#ff6644', '#44ccff', '#ffcc22', '#ff44aa', '#44ff88', '#ff8844', '#aa44ff'];
+          objs.push({
+            type: 'fish',
+            x: rand() * W,
+            y: rand() * H * 0.7 + H * 0.15,
+            size: rand() * 15 + 8,
+            speed: (rand() - 0.5) * 2,
+            wobble: rand() * Math.PI * 2,
+            color: fishColors[Math.floor(rand() * fishColors.length)]
+          });
+        }
+        // Bubbles
+        for (let i = 0; i < 15 + extensions * 5; i++) {
+          objs.push({
+            type: 'bubble',
+            x: rand() * W,
+            y: H + rand() * H,
+            size: rand() * 8 + 3,
+            speed: rand() * 1.5 + 0.5,
+            wobbleSpeed: rand() * 2 + 1
+          });
+        }
+        // Seaweed
+        for (let i = 0; i < 6; i++) {
+          objs.push({ type: 'seaweed', x: rand() * W, height: rand() * 80 + 40, color: '#22aa44' });
+        }
+      } else if (type === 'forest') {
+        // Trees
+        for (let i = 0; i < 8 + extensions * 2; i++) {
+          objs.push({
+            type: 'tree',
+            x: rand() * W,
+            height: rand() * 80 + 60,
+            width: rand() * 30 + 20,
+            color: '#' + Math.floor(rand() * 0x004400 + 0x228800).toString(16).padStart(6, '0')
+          });
+        }
+        // Fireflies
+        for (let i = 0; i < 20 + extensions * 5; i++) {
+          objs.push({
+            type: 'firefly',
+            x: rand() * W,
+            y: rand() * H,
+            speed: rand() * 0.5 + 0.2,
+            phase: rand() * Math.PI * 2,
+            color: '#ffee44'
+          });
+        }
+      } else if (type === 'fire') {
+        // Flames
+        for (let i = 0; i < 30 + extensions * 10; i++) {
+          objs.push({
+            type: 'flame',
+            x: rand() * W,
+            y: H,
+            size: rand() * 20 + 5,
+            speed: rand() * 3 + 1,
+            life: rand(),
+            color: rand() > 0.5 ? '#ff6622' : '#ffaa00'
+          });
+        }
+        // Embers
+        for (let i = 0; i < 20 + extensions * 5; i++) {
+          objs.push({
+            type: 'ember',
+            x: rand() * W,
+            y: rand() * H,
+            size: rand() * 3 + 1,
+            speedX: (rand() - 0.5) * 2,
+            speedY: -(rand() * 2 + 0.5),
+            color: '#ffd700'
+          });
+        }
+      } else if (type === 'snow') {
+        // Snowflakes
+        for (let i = 0; i < 40 + extensions * 10; i++) {
+          objs.push({
+            type: 'snowflake',
+            x: rand() * W,
+            y: rand() * H - H,
+            size: rand() * 5 + 2,
+            speed: rand() * 1.5 + 0.3,
+            wobble: rand() * Math.PI * 2,
+            wobbleSpeed: rand() * 2 + 0.5
+          });
+        }
+        // Snow mountains
+        for (let i = 0; i < 4; i++) {
+          objs.push({
+            type: 'mountain',
+            x: rand() * W,
+            width: rand() * 150 + 100,
+            height: rand() * 100 + 60,
+            color: '#' + Math.floor(rand() * 0x222222 + 0xbbccdd).toString(16)
+          });
+        }
+      } else if (type === 'party') {
+        // Confetti
+        for (let i = 0; i < 50 + extensions * 15; i++) {
+          const confettiColors = ['#ff4488', '#44ff88', '#ffdd44', '#44ddff', '#ff8844', '#aa44ff', '#ff4444'];
+          objs.push({
+            type: 'confetti',
+            x: rand() * W,
+            y: rand() * H - H,
+            size: rand() * 8 + 3,
+            speed: rand() * 2 + 0.5,
+            wobble: rand() * Math.PI * 2,
+            rotation: rand() * Math.PI * 2,
+            rotSpeed: (rand() - 0.5) * 0.1,
+            color: confettiColors[Math.floor(rand() * confettiColors.length)]
+          });
+        }
+        // Disco ball
+        objs.push({ type: 'discoBall', x: W / 2, y: 60 });
+      } else if (type === 'city') {
+        // Buildings
+        for (let i = 0; i < 12 + extensions * 3; i++) {
+          objs.push({
+            type: 'building',
+            x: rand() * W,
+            width: rand() * 50 + 30,
+            height: rand() * 150 + 80,
+            color: '#' + Math.floor(rand() * 0x222222 + 0x112233).toString(16).padStart(6, '0'),
+            windows: Math.floor(rand() * 4 + 2)
+          });
+        }
+        // Cars
+        for (let i = 0; i < 4 + extensions * 2; i++) {
+          const carColors = ['#ff4444', '#44aaff', '#ffcc22', '#44ff66', '#ff44cc'];
+          objs.push({
+            type: 'car',
+            x: rand() * W,
+            y: H - 40,
+            speed: rand() * 3 + 1,
+            color: carColors[Math.floor(rand() * carColors.length)]
+          });
+        }
+      } else if (type === 'sky') {
+        // Clouds
+        for (let i = 0; i < 8 + extensions * 2; i++) {
+          objs.push({
+            type: 'cloud',
+            x: rand() * W * 1.5 - W * 0.25,
+            y: rand() * H * 0.6,
+            size: rand() * 50 + 30,
+            speed: rand() * 0.5 + 0.2
+          });
+        }
+        // Bird/plane
+        objs.push({ type: 'flyer', x: -50, y: H * 0.3, speed: 2, color: colors.primary });
+      } else if (type === 'night') {
+        // Moon
+        objs.push({ type: 'moon', x: W * 0.75, y: H * 0.2 });
+        // Ghosts
+        for (let i = 0; i < 5 + extensions * 2; i++) {
+          objs.push({
+            type: 'ghost',
+            x: rand() * W,
+            y: rand() * H * 0.6 + H * 0.1,
+            size: rand() * 20 + 15,
+            speed: rand() * 1 + 0.3,
+            phase: rand() * Math.PI * 2
+          });
+        }
+        // Bats
+        for (let i = 0; i < 6 + extensions * 3; i++) {
+          objs.push({
+            type: 'bat',
+            x: rand() * W,
+            y: rand() * H * 0.5,
+            speed: rand() * 2 + 1,
+            wingPhase: rand() * Math.PI * 2
+          });
+        }
+      }
+
+      return { objects: objs, colors, type };
+    }
+
+    // Draw a single frame
+    function drawFrame(t, scene) {
+      const { objects: objs, colors, type } = scene;
+
+      // Background gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, colors.bg1);
+      bgGrad.addColorStop(1, colors.bg2);
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Ocean water layer
+      if (type === 'ocean') {
+        const waterGrad = ctx.createLinearGradient(0, 0, 0, H);
+        waterGrad.addColorStop(0, 'rgba(0,40,80,0.3)');
+        waterGrad.addColorStop(1, 'rgba(0,20,60,0.8)');
+        ctx.fillStyle = waterGrad;
+        ctx.fillRect(0, 0, W, H);
+        // Light rays
+        ctx.save();
+        for (let i = 0; i < 5; i++) {
+          const rx = W * 0.2 + i * W * 0.15;
+          ctx.fillStyle = 'rgba(100,200,255,0.03)';
+          ctx.beginPath();
+          ctx.moveTo(rx - 10, 0);
+          ctx.lineTo(rx + 30, H);
+          ctx.lineTo(rx - 30, H);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // City ground
+      if (type === 'city') {
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(0, H - 50, W, 50);
+        ctx.fillStyle = '#333344';
+        ctx.fillRect(0, H - 50, W, 3);
+        // Road lines
+        for (let i = 0; i < 20; i++) {
+          ctx.fillStyle = '#ffcc44';
+          ctx.fillRect(((i * 60 + t * 60) % (W + 60)) - 30, H - 32, 30, 3);
+        }
+      }
+
+      // Sort and draw objects
+      for (const obj of objs) {
+        ctx.save();
+        switch (obj.type) {
+          case 'bgParticle': {
+            const twinkle = 0.3 + Math.sin(t * 2 + obj.x + obj.y) * 0.7;
+            ctx.globalAlpha = twinkle * obj.brightness;
+            ctx.fillStyle = obj.color;
+            const px = (obj.x - t * obj.speed * 30 % W + W) % W;
+            ctx.beginPath();
+            ctx.arc(px, obj.y, obj.size, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'spaceship': {
+            const sy = obj.y + Math.sin(t * 2) * 20;
+            const sx = obj.x + Math.sin(t * 0.5) * 30;
+            // Engine glow
+            ctx.shadowColor = '#ff6600';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = '#ff8844';
+            ctx.beginPath();
+            ctx.ellipse(sx - 25, sy, 8 + Math.sin(t * 10) * 3, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            // Body
+            ctx.fillStyle = '#aabbcc';
+            ctx.beginPath();
+            ctx.moveTo(sx + 30, sy);
+            ctx.lineTo(sx - 15, sy - 12);
+            ctx.lineTo(sx - 20, sy);
+            ctx.lineTo(sx - 15, sy + 12);
+            ctx.closePath();
+            ctx.fill();
+            // Cockpit
+            ctx.fillStyle = '#44ddff';
+            ctx.beginPath();
+            ctx.arc(sx + 15, sy, 6, 0, Math.PI * 2);
+            ctx.fill();
+            // Wing
+            ctx.fillStyle = '#8899aa';
+            ctx.beginPath();
+            ctx.moveTo(sx - 5, sy - 10);
+            ctx.lineTo(sx - 15, sy - 22);
+            ctx.lineTo(sx - 18, sy - 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(sx - 5, sy + 10);
+            ctx.lineTo(sx - 15, sy + 22);
+            ctx.lineTo(sx - 18, sy + 10);
+            ctx.closePath();
+            ctx.fill();
+            break;
+          }
+          case 'asteroid': {
+            let ax = (obj.x - t * obj.speed * 40) % (W + 100);
+            if (ax < -50) ax += W + 100;
+            const rot = obj.rotation + t * obj.rotSpeed * 20;
+            ctx.translate(ax, obj.y);
+            ctx.rotate(rot);
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            const s = obj.size;
+            for (let i = 0; i < 8; i++) {
+              const a = (i / 8) * Math.PI * 2;
+              const r = s * (0.7 + Math.sin(i * 3.7) * 0.3);
+              if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+              else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            break;
+          }
+          case 'shootingStar': {
+            if (t > obj.delay) {
+              const st = (t - obj.delay) % 4;
+              if (st < 1) {
+                const sx = obj.x + st * 200;
+                const sy = obj.y + st * 100;
+                ctx.strokeStyle = obj.color;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 1 - st;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(sx - 40, sy - 20);
+                ctx.stroke();
+                ctx.shadowColor = obj.color;
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            break;
+          }
+          case 'fish': {
+            const fx = (obj.x + t * obj.speed * 40 + W) % W;
+            const fy = obj.y + Math.sin(t * 2 + obj.wobble) * 15;
+            const dir = obj.speed >= 0 ? 1 : -1;
+            ctx.translate(fx, fy);
+            ctx.scale(dir, 1);
+            // Body
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, obj.size, obj.size * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Tail
+            ctx.beginPath();
+            ctx.moveTo(-obj.size, 0);
+            ctx.lineTo(-obj.size - 8, -6);
+            ctx.lineTo(-obj.size - 8, 6);
+            ctx.closePath();
+            ctx.fill();
+            // Eye
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(obj.size * 0.4, -2, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(obj.size * 0.5, -2, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'bubble': {
+            const by = (obj.y - t * obj.speed * 40) % (H + 50);
+            const bx = obj.x + Math.sin(t * obj.wobbleSpeed + obj.x) * 15;
+            if (by > -20) {
+              ctx.strokeStyle = 'rgba(150,220,255,0.4)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.arc(bx, by < 0 ? by + H + 50 : by, obj.size, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.fillStyle = 'rgba(200,240,255,0.08)';
+              ctx.fill();
+              // Shine
+              ctx.fillStyle = 'rgba(255,255,255,0.3)';
+              ctx.beginPath();
+              ctx.arc(bx - obj.size * 0.3, (by < 0 ? by + H + 50 : by) - obj.size * 0.3, obj.size * 0.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            break;
+          }
+          case 'seaweed': {
+            const baseY = H;
+            ctx.strokeStyle = obj.color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(obj.x, baseY);
+            for (let j = 0; j < 5; j++) {
+              const py = baseY - (obj.height / 5) * (j + 1);
+              const px = obj.x + Math.sin(t * 1.5 + j * 0.8 + obj.x * 0.01) * 12;
+              ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            break;
+          }
+          case 'tree': {
+            const baseY = H - 20;
+            // Trunk
+            ctx.fillStyle = '#553311';
+            ctx.fillRect(obj.x - 6, baseY - obj.height * 0.4, 12, obj.height * 0.4);
+            // Canopy layers
+            for (let j = 0; j < 3; j++) {
+              const cy = baseY - obj.height * 0.3 - j * obj.height * 0.25;
+              const cw = obj.width * (1 - j * 0.25);
+              const sway = Math.sin(t * 0.8 + obj.x * 0.01 + j) * 3;
+              ctx.fillStyle = obj.color;
+              ctx.globalAlpha = 1 - j * 0.15;
+              ctx.beginPath();
+              ctx.moveTo(obj.x + sway - cw / 2, cy);
+              ctx.lineTo(obj.x + sway, cy - obj.height * 0.3);
+              ctx.lineTo(obj.x + sway + cw / 2, cy);
+              ctx.closePath();
+              ctx.fill();
+            }
+            break;
+          }
+          case 'firefly': {
+            const fx = obj.x + Math.sin(t * obj.speed * 2 + obj.phase) * 40;
+            const fy = obj.y + Math.cos(t * obj.speed * 1.5 + obj.phase * 2) * 30;
+            const glow = 0.3 + Math.sin(t * 3 + obj.phase) * 0.7;
+            ctx.globalAlpha = glow;
+            ctx.shadowColor = obj.color;
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.arc(fx % W, fy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'flame': {
+            const ft = (t * obj.speed + obj.life * 10) % 3;
+            const fx = obj.x + Math.sin(t * 3 + obj.x) * 8;
+            const fy = obj.y - ft * (H * 0.35);
+            const alpha = Math.max(0, 1 - ft / 2.5);
+            const sz = obj.size * (1 - ft / 3);
+            if (alpha > 0 && sz > 0) {
+              ctx.globalAlpha = alpha * 0.7;
+              ctx.fillStyle = obj.color;
+              ctx.beginPath();
+              ctx.arc(fx, fy, sz, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            break;
+          }
+          case 'ember': {
+            const et = t * 1.5;
+            const ex = (obj.x + obj.speedX * et * 30) % W;
+            const ey = (obj.y + obj.speedY * et * 30 + H) % H;
+            const glow = 0.3 + Math.sin(t * 5 + obj.x) * 0.7;
+            ctx.globalAlpha = glow;
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.arc(ex < 0 ? ex + W : ex, ey, obj.size, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'snowflake': {
+            const sx = obj.x + Math.sin(t * obj.wobbleSpeed + obj.wobble) * 20;
+            const sy = (obj.y + t * obj.speed * 50) % (H + 20);
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(sx, sy, obj.size, 0, Math.PI * 2);
+            ctx.fill();
+            // Sparkle
+            if (Math.sin(t * 4 + obj.wobble) > 0.7) {
+              ctx.globalAlpha = 0.4;
+              ctx.beginPath();
+              ctx.arc(sx, sy, obj.size * 1.8, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            break;
+          }
+          case 'mountain': {
+            const baseY = H;
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.moveTo(obj.x - obj.width / 2, baseY);
+            ctx.lineTo(obj.x, baseY - obj.height);
+            ctx.lineTo(obj.x + obj.width / 2, baseY);
+            ctx.closePath();
+            ctx.fill();
+            // Snow cap
+            ctx.fillStyle = '#eef4ff';
+            ctx.beginPath();
+            ctx.moveTo(obj.x - obj.width * 0.12, baseY - obj.height * 0.75);
+            ctx.lineTo(obj.x, baseY - obj.height);
+            ctx.lineTo(obj.x + obj.width * 0.12, baseY - obj.height * 0.75);
+            ctx.closePath();
+            ctx.fill();
+            break;
+          }
+          case 'confetti': {
+            const cx2 = obj.x + Math.sin(t * 2 + obj.wobble) * 30;
+            const cy2 = (obj.y + t * obj.speed * 60) % (H + 40);
+            const rot = obj.rotation + t * obj.rotSpeed * 15;
+            ctx.translate(cx2, cy2);
+            ctx.rotate(rot);
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(-obj.size / 2, -obj.size / 4, obj.size, obj.size / 2);
+            break;
+          }
+          case 'discoBall': {
+            const dy = obj.y + Math.sin(t * 0.5) * 5;
+            // String
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(obj.x, 0);
+            ctx.lineTo(obj.x, dy - 20);
+            ctx.stroke();
+            // Ball
+            const ballGrad = ctx.createRadialGradient(obj.x - 5, dy - 5, 2, obj.x, dy, 20);
+            ballGrad.addColorStop(0, '#eee');
+            ballGrad.addColorStop(0.5, '#999');
+            ballGrad.addColorStop(1, '#555');
+            ctx.fillStyle = ballGrad;
+            ctx.beginPath();
+            ctx.arc(obj.x, dy, 20, 0, Math.PI * 2);
+            ctx.fill();
+            // Reflection squares
+            for (let i = 0; i < 12; i++) {
+              const a = (i / 12) * Math.PI * 2 + t * 2;
+              const rx = obj.x + Math.cos(a) * 12;
+              const ry = dy + Math.sin(a) * 12;
+              ctx.fillStyle = 'rgba(255,255,255,0.5)';
+              ctx.fillRect(rx - 2, ry - 2, 4, 4);
+            }
+            // Light beams
+            for (let i = 0; i < 8; i++) {
+              const a = (i / 8) * Math.PI * 2 + t * 1.5;
+              const beamColors = ['rgba(255,68,136,0.1)', 'rgba(68,255,136,0.1)', 'rgba(255,221,68,0.1)', 'rgba(68,221,255,0.1)'];
+              ctx.strokeStyle = beamColors[i % 4];
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(obj.x, dy);
+              ctx.lineTo(obj.x + Math.cos(a) * 300, dy + Math.sin(a) * 300);
+              ctx.stroke();
+            }
+            break;
+          }
+          case 'building': {
+            const baseY = H - 50;
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(obj.x - obj.width / 2, baseY - obj.height, obj.width, obj.height);
+            // Windows
+            const winRows = Math.floor(obj.height / 25);
+            const winCols = obj.windows;
+            for (let r = 0; r < winRows; r++) {
+              for (let c2 = 0; c2 < winCols; c2++) {
+                const wx = obj.x - obj.width / 2 + 8 + c2 * ((obj.width - 16) / Math.max(winCols - 1, 1));
+                const wy = baseY - obj.height + 15 + r * 25;
+                const lit = Math.sin(t * 0.5 + r + c2 + obj.x * 0.1) > 0;
+                ctx.fillStyle = lit ? '#ffdd88' : '#223344';
+                ctx.fillRect(wx - 4, wy - 5, 8, 10);
+              }
+            }
+            break;
+          }
+          case 'car': {
+            const cx2 = (obj.x + t * obj.speed * 50) % (W + 60) - 30;
+            // Body
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.roundRect(cx2 - 18, obj.y - 10, 36, 14, 3);
+            ctx.fill();
+            // Roof
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.roundRect(cx2 - 10, obj.y - 18, 20, 10, 2);
+            ctx.fill();
+            // Wheels
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(cx2 - 10, obj.y + 4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(cx2 + 10, obj.y + 4, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Headlight
+            ctx.fillStyle = '#ffff88';
+            ctx.beginPath();
+            ctx.arc(cx2 + 18, obj.y - 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'cloud': {
+            const cx2 = (obj.x + t * obj.speed * 20) % (W + 200) - 100;
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.beginPath();
+            ctx.arc(cx2, obj.y, obj.size, 0, Math.PI * 2);
+            ctx.arc(cx2 + obj.size * 0.6, obj.y - obj.size * 0.2, obj.size * 0.7, 0, Math.PI * 2);
+            ctx.arc(cx2 - obj.size * 0.5, obj.y + obj.size * 0.1, obj.size * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'flyer': {
+            const fx = (obj.x + t * obj.speed * 40) % (W + 100) - 50;
+            const fy = obj.y + Math.sin(t * 1.5) * 20;
+            // Bird body
+            ctx.fillStyle = obj.color;
+            ctx.beginPath();
+            ctx.ellipse(fx, fy, 12, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Wings
+            const wingUp = Math.sin(t * 8) * 12;
+            ctx.strokeStyle = obj.color;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(fx - 5, fy);
+            ctx.quadraticCurveTo(fx - 15, fy - 10 + wingUp, fx - 22, fy - 5 + wingUp);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(fx + 5, fy);
+            ctx.quadraticCurveTo(fx + 15, fy - 10 + wingUp, fx + 22, fy - 5 + wingUp);
+            ctx.stroke();
+            break;
+          }
+          case 'moon': {
+            // Glow
+            const moonGlow = ctx.createRadialGradient(obj.x, obj.y, 20, obj.x, obj.y, 80);
+            moonGlow.addColorStop(0, 'rgba(255,255,200,0.15)');
+            moonGlow.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = moonGlow;
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, 80, 0, Math.PI * 2);
+            ctx.fill();
+            // Moon body
+            ctx.fillStyle = '#eee8cc';
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, 35, 0, Math.PI * 2);
+            ctx.fill();
+            // Craters
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.beginPath();
+            ctx.arc(obj.x - 10, obj.y - 8, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(obj.x + 12, obj.y + 5, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(obj.x - 5, obj.y + 15, 5, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          }
+          case 'ghost': {
+            const gx = obj.x + Math.sin(t * obj.speed + obj.phase) * 50;
+            const gy = obj.y + Math.cos(t * obj.speed * 0.7 + obj.phase) * 20;
+            const s = obj.size;
+            ctx.globalAlpha = 0.5 + Math.sin(t * 2 + obj.phase) * 0.2;
+            ctx.fillStyle = '#eeeeff';
+            ctx.beginPath();
+            ctx.arc(gx, gy - s * 0.2, s * 0.7, Math.PI, 0);
+            ctx.lineTo(gx + s * 0.7, gy + s * 0.5);
+            // Wavy bottom
+            for (let w = 0; w < 4; w++) {
+              const wx = gx + s * 0.7 - (w + 1) * (s * 1.4 / 4);
+              const wy = gy + s * 0.5 + (w % 2 === 0 ? -5 : 5);
+              ctx.lineTo(wx, wy);
+            }
+            ctx.closePath();
+            ctx.fill();
+            // Eyes
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(gx - 5, gy - s * 0.2, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(gx + 5, gy - s * 0.2, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Mouth
+            ctx.beginPath();
+            ctx.arc(gx, gy + 2, 4, 0, Math.PI);
+            ctx.fill();
+            break;
+          }
+          case 'bat': {
+            const bx = (obj.x + t * obj.speed * 30) % (W + 40) - 20;
+            const by = obj.y + Math.sin(t * 2 + obj.wingPhase) * 15;
+            const wingAng = Math.sin(t * 10 + obj.wingPhase) * 0.5;
+            ctx.fillStyle = '#220033';
+            // Body
+            ctx.beginPath();
+            ctx.ellipse(bx, by, 5, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Wings
+            ctx.beginPath();
+            ctx.moveTo(bx - 4, by);
+            ctx.quadraticCurveTo(bx - 15, by - 12 + wingAng * 15, bx - 20, by - 2 + wingAng * 10);
+            ctx.lineTo(bx - 4, by + 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(bx + 4, by);
+            ctx.quadraticCurveTo(bx + 15, by - 12 + wingAng * 15, bx + 20, by - 2 + wingAng * 10);
+            ctx.lineTo(bx + 4, by + 2);
+            ctx.closePath();
+            ctx.fill();
+            break;
+          }
+        }
+        ctx.restore();
+      }
+
+      // Overlay text - show the prompt text briefly at the start
+      if (t < 2) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, 2 - t);
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        const words = prompt.split(' ');
+        let lines = [];
+        let line = '';
+        for (const w of words) {
+          if ((line + ' ' + w).length > 30) {
+            lines.push(line);
+            line = w;
+          } else {
+            line = line ? line + ' ' + w : w;
+          }
+        }
+        if (line) lines.push(line);
+        lines.forEach((l, i) => {
+          ctx.fillText(l, W / 2, H / 2 - (lines.length * 10) + i * 22);
+        });
+        ctx.restore();
+      }
+    }
+
+    // Animation loop
+    function animate() {
+      if (!videoRunning) return;
+      const elapsed = (Date.now() - videoStartTime) / 1000;
+
+      if (elapsed >= videoDuration) {
+        // Show last frame and stop
+        drawFrame(videoDuration, currentScene);
+        videoRunning = false;
+        document.getElementById('extendBtn').classList.add('visible');
+        document.getElementById('durationLabel').textContent = `Duration: ${videoDuration}s`;
+        return;
+      }
+
+      drawFrame(elapsed, currentScene);
+      document.getElementById('durationLabel').textContent = `${elapsed.toFixed(1)}s / ${videoDuration}s`;
+      animFrame = requestAnimationFrame(animate);
+    }
+
+    let currentScene = null;
+
+    function generateVideo() {
+      const input = document.getElementById('promptInput').value.trim();
+      if (!input) return;
+
+      prompt = input;
+      extensions = 0;
+      videoDuration = 5;
+
+      // Stop any running animation
+      if (animFrame) cancelAnimationFrame(animFrame);
+      videoRunning = false;
+
+      const btn = document.getElementById('generateBtn');
+      const loading = document.getElementById('loadingText');
+      const container = document.getElementById('videoContainer');
+      const extendBtn = document.getElementById('extendBtn');
+
+      btn.disabled = true;
+      extendBtn.classList.remove('visible');
+      container.classList.remove('visible');
+      loading.classList.add('visible');
+
+      // Fake loading delay for effect
+      setTimeout(() => {
+        loading.classList.remove('visible');
+        container.classList.add('visible');
+        btn.disabled = false;
+
+        const seed = hashStr(input);
+        currentScene = buildScene(input, seed);
+
+        videoStartTime = Date.now();
+        videoRunning = true;
+        animate();
+      }, 1500);
+    }
+
+    function extendVideo() {
+      if (!currentScene) return;
+      extensions++;
+      videoDuration += 5;
+
+      document.getElementById('extendBtn').classList.remove('visible');
+
+      // Rebuild scene with more objects from extensions
+      const seed = hashStr(prompt) + extensions;
+      const rand = seededRandom(seed);
+      const type = currentScene.type;
+      const colors = currentScene.colors;
+
+      // Add extra objects for the extension
+      if (type === 'space') {
+        for (let i = 0; i < 4; i++) {
+          currentScene.objects.push({
+            type: 'asteroid',
+            x: W + rand() * W,
+            y: rand() * H,
+            size: rand() * 25 + 10,
+            speed: rand() * 3 + 1,
+            rotation: rand() * Math.PI * 2,
+            rotSpeed: (rand() - 0.5) * 0.05,
+            color: '#' + Math.floor(rand() * 0x444444 + 0x666666).toString(16)
+          });
+        }
+      } else if (type === 'ocean') {
+        for (let i = 0; i < 3; i++) {
+          const fishColors = ['#ff6644', '#44ccff', '#ffcc22', '#ff44aa', '#44ff88'];
+          currentScene.objects.push({
+            type: 'fish',
+            x: rand() * W,
+            y: rand() * H * 0.7 + H * 0.15,
+            size: rand() * 15 + 8,
+            speed: (rand() - 0.5) * 2,
+            wobble: rand() * Math.PI * 2,
+            color: fishColors[Math.floor(rand() * fishColors.length)]
+          });
+        }
+        for (let i = 0; i < 5; i++) {
+          currentScene.objects.push({
+            type: 'bubble',
+            x: rand() * W,
+            y: H + rand() * H,
+            size: rand() * 8 + 3,
+            speed: rand() * 1.5 + 0.5,
+            wobbleSpeed: rand() * 2 + 1
+          });
+        }
+      } else if (type === 'party') {
+        for (let i = 0; i < 15; i++) {
+          const confettiColors = ['#ff4488', '#44ff88', '#ffdd44', '#44ddff', '#ff8844', '#aa44ff'];
+          currentScene.objects.push({
+            type: 'confetti',
+            x: rand() * W,
+            y: rand() * H - H,
+            size: rand() * 8 + 3,
+            speed: rand() * 2 + 0.5,
+            wobble: rand() * Math.PI * 2,
+            rotation: rand() * Math.PI * 2,
+            rotSpeed: (rand() - 0.5) * 0.1,
+            color: confettiColors[Math.floor(rand() * confettiColors.length)]
+          });
+        }
+      } else if (type === 'snow') {
+        for (let i = 0; i < 10; i++) {
+          currentScene.objects.push({
+            type: 'snowflake',
+            x: rand() * W,
+            y: rand() * H - H,
+            size: rand() * 5 + 2,
+            speed: rand() * 1.5 + 0.3,
+            wobble: rand() * Math.PI * 2,
+            wobbleSpeed: rand() * 2 + 0.5
+          });
+        }
+      } else if (type === 'fire') {
+        for (let i = 0; i < 10; i++) {
+          currentScene.objects.push({
+            type: 'flame',
+            x: rand() * W,
+            y: H,
+            size: rand() * 20 + 5,
+            speed: rand() * 3 + 1,
+            life: rand(),
+            color: rand() > 0.5 ? '#ff6622' : '#ffaa00'
+          });
+        }
+      } else if (type === 'night') {
+        for (let i = 0; i < 3; i++) {
+          currentScene.objects.push({
+            type: 'ghost',
+            x: rand() * W,
+            y: rand() * H * 0.6 + H * 0.1,
+            size: rand() * 20 + 15,
+            speed: rand() * 1 + 0.3,
+            phase: rand() * Math.PI * 2
+          });
+        }
+      } else {
+        // Generic: add more background particles
+        for (let i = 0; i < 10; i++) {
+          currentScene.objects.push({
+            type: 'bgParticle',
+            x: rand() * W,
+            y: rand() * H,
+            size: rand() * 3 + 0.5,
+            speed: rand() * 0.5 + 0.1,
+            brightness: rand(),
+            color: colors.particles
+          });
+        }
+      }
+
+      // Resume animation
+      videoStartTime = Date.now() - (videoDuration - 5) * 1000;
+      videoRunning = true;
+      animate();
+    }
+
+    // Allow Enter key to generate
+    document.getElementById('promptInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        generateVideo();
+      }
+    });
+  </script>
+</body>
+</html>
